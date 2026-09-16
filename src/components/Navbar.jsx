@@ -5,7 +5,7 @@ function Navbar() {
         <header className="border-b border-gray-200 bg-white shadow-md">
             <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
                 <Link to="/" className="text-xl font-semibold text-gray-900">
-                    Sanokip
+                    MapMind Group
                 </Link>
 
                 <div className="hidden md:flex items-center gap-6 space-x-6 text-sm">
