@@ -56,7 +56,7 @@ function Blog() {
 
                     <div className="flex flex-col md:flex-row md:justify-between gap-6 mt-2">
                         <h1 className="text-2xl font-semibold">
-                            Blog & Reports
+                            Blog & News
                         </h1>
                         <p className="max-w-md text-sm text-gray-400">
                             Technical Articles, Geographic Write-ups, Urban Planning, Environment, Land Administration, GIS.

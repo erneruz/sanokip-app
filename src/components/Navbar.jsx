@@ -2,7 +2,7 @@ import {Link} from "react-router-dom";
 
 function Navbar() {
     return (
-        <header className="border-b border-gray-200 bg-white shadow-md">
+        <header className="border-b border-gray-200 bg-white shadow-md backdrop-blur-md sticky top-0 z-50">
             <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
                 <Link to="/" className="text-xl font-semibold text-gray-900">
                     MapMind Group
@@ -22,7 +22,7 @@ function Navbar() {
                     </Link>
 
                     <Link to="/blog" className="hover:text-blue-600 text-gray-500 transition-colors duration-300">
-                        Blog & Reports
+                        Blog & News
                     </Link>
 
                     <Link to="/community" className="hover:text-blue-600 text-gray-500 transition-colors duration-300">
