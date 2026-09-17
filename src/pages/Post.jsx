@@ -74,7 +74,7 @@ function Post() {
         setError("");
 
         const data = await getPostBySlug(slug);
-
+        // console.log("post data:", data);
         setPost(data);
       } catch (err) {
         console.error("Error loading post:", err);

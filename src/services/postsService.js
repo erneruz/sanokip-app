@@ -36,6 +36,7 @@ export async function getPostBySlug(slug) {
       title,
       slug,
       excerpt,
+      content,
       cover_image_url,
       author_first_name,
       author_second_name,
