@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 const navigate = [
   { label: 'About', to: '/about' },
   { label: 'Services', to: '/services' },
-  { label: "Map'n Kawa", to: '/mapn-kawa' },
-  { label: 'Blog & Reports', to: '/blog' },
+  { label: 'Blog & News', to: '/blog' },
+  { label: "Community", to: '/community' },
 ]
 
 const company = [
