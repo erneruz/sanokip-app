@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@keyframes scroll-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-scroll {
+  animation: scroll-left 15s linear infinite;
+}
+
 
 /* :root {
   --text: #6b6375;
