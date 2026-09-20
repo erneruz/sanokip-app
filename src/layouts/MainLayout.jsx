@@ -1,13 +1,15 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar";
-// import Footer from "../components/Footer";
+import PartnersMarquee from '../components/PartnersMarquee'
+import Footer from "../components/Footer";
 
 function MainLayout() {
   return (
     <>
       <Navbar />
       <Outlet />
-      {/* <Footer /> */}
+      <PartnersMarquee />
+      <Footer />
     </>
   );
 }
