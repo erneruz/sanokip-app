@@ -5,9 +5,9 @@ export default function PartnersMarquee() {
   const track = [...partners, ...partners]
 
   return (
-    <section className="bg-white py-10">
+    <section className="bg-gray-100 py-5 border-t border-gray-200">
       {/* match this max-w + px to whatever your blog section uses */}
-      <div className="mx-auto max-w-6xl px-6 md:px-12">
+      <div className="mx-auto max-w-6xl px-6 py-16">
         <h2 className="mb-6 text-sm font-semibold text-gray-900">
           Trusted Partners
         </h2>
