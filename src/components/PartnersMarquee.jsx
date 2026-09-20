@@ -19,12 +19,12 @@ export default function PartnersMarquee() {
                             href={partner.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="h-16 w-auto shrink-0 object-contain grayscale opacity-70 transition hover:grayscale-0 hover:opacity-100"
+                            className="h-16 w-auto shrink-0 object-contain grayscale opacity-90 transition hover:grayscale-0 hover:opacity-100"
                                 >
                                 <img
                                     src={partner.logo}
                                     alt={partner.name}
-                                    className="h-16 w-auto object-contain grayscale opacity-70 transition hover:grayscale-0 hover:opacity-100"
+                                    className="h-14 w-auto object-contain grayscale opacity-90 transition hover:grayscale-0 hover:opacity-100"
                                 />
                         </a>
                     ))}
