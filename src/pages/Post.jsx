@@ -3,12 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 
 import { getPostBySlug } from "../services/postsService";
-
-import {
-  submitReaction,
-  getVisitorReaction,
-  getReactionCounts,
-} from "../services/reactionService";
+import PostReactions from "../components/PostReactions";
 
 
 function Post() {
@@ -22,45 +17,9 @@ function Post() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
-  // --------------------------------------------------
-  // REACTION STATE
-  // --------------------------------------------------
-
-  const [visitorId, setVisitorId] = useState(null);
-
-  const [userReaction, setUserReaction] = useState(null);
-
-  const [likes, setLikes] = useState(0);
-  const [dislikes, setDislikes] = useState(0);
-
-  const [reactionLoading, setReactionLoading] = useState(false);
-
-  const [reactionError, setReactionError] = useState("");
-
   const readingTime = post?.content
-  ? Math.ceil(post.content.trim().split(/\s+/).length / 200)
-  : 0;
-
-
-  // --------------------------------------------------
-  // CREATE / GET VISITOR ID
-  // --------------------------------------------------
-
-  useEffect(() => {
-    let id = localStorage.getItem("blog_visitor_id");
-
-    if (!id) {
-      id = crypto.randomUUID();
-
-      localStorage.setItem(
-        "blog_visitor_id",
-        id
-      );
-    }
-
-    setVisitorId(id);
-  }, []);
+    ? Math.ceil(post.content.trim().split(/\s+/).length / 200)
+    : 0;
 
 
   // --------------------------------------------------
@@ -74,7 +33,6 @@ function Post() {
         setError("");
 
         const data = await getPostBySlug(slug);
-        // console.log("post data:", data);
         setPost(data);
       } catch (err) {
         console.error("Error loading post:", err);
@@ -87,97 +45,6 @@ function Post() {
 
     loadPost();
   }, [slug]);
-
-
-  // --------------------------------------------------
-  // LOAD REACTIONS
-  // --------------------------------------------------
-
-  useEffect(() => {
-    async function loadReactions() {
-      if (!post?.id || !visitorId) {
-        return;
-      }
-
-      try {
-        setReactionError("");
-
-        // Get the visitor's existing reaction
-        const currentReaction =
-          await getVisitorReaction({
-            postId: post.id,
-            visitorId,
-          });
-
-        setUserReaction(currentReaction);
-
-        // Get total reaction counts
-        const counts =
-          await getReactionCounts(post.id);
-
-        setLikes(counts.likes);
-        setDislikes(counts.dislikes);
-
-      } catch (err) {
-        console.error(
-          "Error loading reactions:",
-          err
-        );
-
-        setReactionError(
-          "Unable to load reactions."
-        );
-      }
-    }
-
-    loadReactions();
-  }, [post?.id, visitorId]);
-
-
-  // --------------------------------------------------
-  // SUBMIT REACTION
-  // --------------------------------------------------
-
-  async function handleReaction(reaction) {
-    if (!post?.id || !visitorId) {
-      return;
-    }
-
-    try {
-      setReactionLoading(true);
-      setReactionError("");
-
-      // Save reaction to Supabase
-      await submitReaction({
-        postId: post.id,
-        visitorId,
-        reaction,
-      });
-
-      // Update selected reaction immediately
-      setUserReaction(reaction);
-
-      // Update counts
-      const counts =
-        await getReactionCounts(post.id);
-
-      setLikes(counts.likes);
-      setDislikes(counts.dislikes);
-
-    } catch (err) {
-      console.error(
-        "Error submitting reaction:",
-        err
-      );
-
-      setReactionError(
-        "Unable to save your reaction. Please try again."
-      );
-
-    } finally {
-      setReactionLoading(false);
-    }
-  }
 
 
   // --------------------------------------------------
@@ -345,143 +212,7 @@ function Post() {
       {/* REACTIONS */}
       {/* -------------------------------------------- */}
 
-      <section className="mt-12 pt-8 border-t border-gray-200">
-
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-
-          Was this article helpful?
-
-        </h2>
-
-
-        <div className="flex items-center gap-3">
-
-          {/* LIKE BUTTON */}
-
-          <button
-            type="button"
-            onClick={() =>
-              handleReaction("like")
-            }
-            disabled={reactionLoading}
-            className={`
-              flex items-center gap-2
-              px-5 py-3
-              rounded-lg
-              border
-              transition
-              duration-200
-
-              ${
-                userReaction === "like"
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              }
-
-              ${
-                reactionLoading
-                  ? "opacity-60 cursor-not-allowed"
-                  : "cursor-pointer"
-              }
-            `}
-          >
-
-            <span className="text-lg">
-              👍
-            </span>
-
-            <span>
-              Like
-            </span>
-
-            <span className="font-semibold">
-              {likes}
-            </span>
-
-          </button>
-
-
-          {/* DISLIKE BUTTON */}
-
-          <button
-            type="button"
-            onClick={() =>
-              handleReaction("dislike")
-            }
-            disabled={reactionLoading}
-            className={`
-              flex items-center gap-2
-              px-5 py-3
-              rounded-lg
-              border
-              transition
-              duration-200
-
-              ${
-                userReaction === "dislike"
-                  ? "bg-red-600 text-white border-red-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              }
-
-              ${
-                reactionLoading
-                  ? "opacity-60 cursor-not-allowed"
-                  : "cursor-pointer"
-              }
-            `}
-          >
-
-            <span className="text-lg">
-              👎
-            </span>
-
-            <span>
-              Dislike
-            </span>
-
-            <span className="font-semibold">
-              {dislikes}
-            </span>
-
-          </button>
-
-        </div>
-
-
-        {/* ------------------------------------------ */}
-        {/* REACTION MESSAGE */}
-        {/* ------------------------------------------ */}
-
-        {userReaction && (
-          <p className="text-sm text-gray-500 mt-4">
-
-            You reacted with{" "}
-
-            <span className="font-medium">
-              {userReaction === "like"
-                ? "👍 Like"
-                : "👎 Dislike"}
-            </span>
-
-            .
-
-          </p>
-        )}
-
-
-        {/* ------------------------------------------ */}
-        {/* ERROR MESSAGE */}
-        {/* ------------------------------------------ */}
-
-        {reactionError && (
-          <p className="text-sm text-red-600 mt-4">
-
-            {reactionError}
-
-          </p>
-        )}
-
-      </section>
+      <PostReactions postId={post.id} />
 
     </main>
   );
