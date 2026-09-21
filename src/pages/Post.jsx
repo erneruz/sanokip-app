@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 
 import { getPostBySlug } from "../services/postsService";
 import PostReactions from "../components/PostReactions";
+import CommentsSection from "../components/CommentsSection";
 
 
 function Post() {
@@ -213,6 +214,13 @@ function Post() {
       {/* -------------------------------------------- */}
 
       <PostReactions postId={post.id} />
+
+
+      {/* -------------------------------------------- */}
+      {/* COMMENTS */}
+      {/* -------------------------------------------- */}
+
+      <CommentsSection postId={post.id} />
 
     </main>
   );
