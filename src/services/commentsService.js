@@ -31,7 +31,7 @@ export async function submitComment({
       email,
       comment,
       parent_id: parentId,
-      status: "pending",
+      status: "approved",
     })
     .select()
     .single();
@@ -43,6 +43,8 @@ export async function submitComment({
   return data;
 }
 
+// ── added: admin delete ─────────────────────────────────────────────
+
 export async function deleteComment(commentId) {
   const { error } = await supabase.from("comments").delete().eq("id", commentId);
 
@@ -50,3 +52,5 @@ export async function deleteComment(commentId) {
     throw error;
   }
 }
+
+// ── end added ────────────────────────────────────────────────────────
