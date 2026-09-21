@@ -1,10 +1,18 @@
-import {useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom'; // ← added: read/write ?page= in the URL
 import PostCard from '../components/PostCard';
-import {getPublishedPosts} from '../services/postsService';
+import Pagination from '../components/Pagination'; // ← added
+import { getPaginatedPosts } from '../services/postsService'; // ← changed: was getPublishedPosts
 
 
 function Blog() {
-    
+
+    // ── added: track current page from the URL, default to 1 ──────────
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = Number(searchParams.get('page')) || 1;
+    const [totalPages, setTotalPages] = useState(1);
+    // ─────────────────────────────────────────────────────────────────
+
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -16,19 +24,33 @@ function Blog() {
 
 
     useEffect(() => {
+        let cancelled = false; // ← added: guard against a stale page's response overwriting a newer one
+
         async function loadPosts() {
             try {
-                const data = await getPublishedPosts();
-                setPosts(data);
+                setLoading(true); // ← added: re-show loading state on every page change, not just first load
+                const { posts, totalPages } = await getPaginatedPosts(currentPage); // ← changed
+                if (cancelled) return; // ← added
+                setPosts(posts);
+                setTotalPages(totalPages); // ← added
             } catch (error) {
-                setError("Unable to load posts. Please try again later.");
+                if (!cancelled) setError("Unable to load posts. Please try again later.");
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false); // ← changed: guarded with !cancelled
             }
         }
 
         loadPosts();
-    }, []);
+
+        return () => { cancelled = true; }; // ← added
+    }, [currentPage]); // ← changed: was [], now re-fetches whenever the page changes
+
+    // ── added: update the URL when a page button is clicked, and scroll up ──
+    function handlePageChange(page) {
+        setSearchParams({ page: String(page) });
+        window.scrollTo(0, 0);
+    }
+    // ──────────────────────────────────────────────────────────────────────
 
     if (loading) {
         return (
@@ -75,44 +97,18 @@ function Blog() {
                         ))}
                     </div>
                 )}
+
+                {/* ── added: pagination controls ── */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                />
+                {/* ──────────────────────────────── */}
             </section>
         </main>
     )
 }
-
-
-export async function searchPosts(searchTerm) {
-    const { data, error } = await supabase
-        .from("posts")
-        .select(`
-        id,
-        title,
-        slug,
-        excerpt,
-        cover_image_url,
-        author_first_name,
-        author_second_name,
-        published_at,
-        categories (
-            id,
-            name,
-            slug
-        )
-        `)
-        .eq("status", "published")
-        .ilike("title", `%${searchTerm}%`)
-        .order("published_at", {
-        ascending: false,
-        });
-
-    if (error) {
-        throw error;
-    }
-
-    return data ?? [];
-    }
-
-
 
 
 export default Blog;

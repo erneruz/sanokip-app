@@ -98,3 +98,37 @@ export async function getPaginatedPosts(page = 1) {
 }
 
 // ── end added ───────────────────────────────────────────────────────
+
+
+// ── added: search by title ──────────────────────────────────────────
+
+export async function searchPosts(searchTerm) {
+  const { data, error } = await supabase
+    .from('posts')
+    .select(`
+      id,
+      title,
+      slug,
+      excerpt,
+      cover_image_url,
+      author_first_name,
+      author_second_name,
+      published_at,
+      categories (
+        id,
+        name,
+        slug
+      )
+    `)
+    .eq('status', 'published')
+    .ilike('title', `%${searchTerm}%`)
+    .order('published_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}
+
+// ── end added ──────────────────────────────────────────────────────
