@@ -1,15 +1,13 @@
-import {supabase} from "../supabase";
-
+// src/services/commentsService.js
+import { supabase } from "../supabase";
 
 export async function getApprovedComments(postId) {
   const { data, error } = await supabase
     .from("comments")
-    .select("id, name, comment, created_at")
+    .select("id, name, comment, parent_id, created_at")
     .eq("post_id", postId)
     .eq("status", "approved")
-    .order("created_at", {
-      ascending: false,
-    });
+    .order("created_at", { ascending: false });
 
   if (error) {
     throw error;
@@ -21,8 +19,9 @@ export async function getApprovedComments(postId) {
 export async function submitComment({
   postId,
   name,
-  email,
+  email = null,
   comment,
+  parentId = null,
 }) {
   const { data, error } = await supabase
     .from("comments")
@@ -31,6 +30,7 @@ export async function submitComment({
       name,
       email,
       comment,
+      parent_id: parentId,
       status: "pending",
     })
     .select()
@@ -41,4 +41,12 @@ export async function submitComment({
   }
 
   return data;
+}
+
+export async function deleteComment(commentId) {
+  const { error } = await supabase.from("comments").delete().eq("id", commentId);
+
+  if (error) {
+    throw error;
+  }
 }
