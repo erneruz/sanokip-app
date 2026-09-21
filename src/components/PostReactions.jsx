@@ -39,7 +39,6 @@ export default function PostReactions({ postId }) {
     setSubmitting(true)
     setError(null)
 
-    // optimistic update: reflect the click immediately, correct it if the save fails
     setMyReaction(reaction)
     setCounts((prev) => adjustCounts(prev, previousReaction, reaction))
 
@@ -65,8 +64,8 @@ export default function PostReactions({ postId }) {
           disabled={submitting}
           className={
             myReaction === 'like'
-              ? 'flex items-center gap-2 rounded-md border-2 border-black px-4 py-2 text-sm font-medium'
-              : 'flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50'
+              ? 'flex items-center gap-2 rounded-md border-2 border-black px-4 py-2 text-sm font-medium cursor-pointer disabled:cursor-not-allowed'
+              : 'flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed'
           }
         >
           <span>👍</span> Like <span className="text-gray-500">{counts.likes}</span>
@@ -77,8 +76,8 @@ export default function PostReactions({ postId }) {
           disabled={submitting}
           className={
             myReaction === 'dislike'
-              ? 'flex items-center gap-2 rounded-md border-2 border-black px-4 py-2 text-sm font-medium'
-              : 'flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50'
+              ? 'flex items-center gap-2 rounded-md border-2 border-black px-4 py-2 text-sm font-medium cursor-pointer disabled:cursor-not-allowed'
+              : 'flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed'
           }
         >
           <span>👎</span> Dislike <span className="text-gray-500">{counts.dislikes}</span>
