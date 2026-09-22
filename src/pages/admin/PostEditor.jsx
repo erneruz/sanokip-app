@@ -1,8 +1,26 @@
 // src/pages/admin/PostEditor.jsx
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
+import { Editor } from '@tinymce/tinymce-react'
+
+// self-hosted TinyMCE assets — these imports are what let it run without a cloud API key
+import 'tinymce/tinymce'
+import 'tinymce/icons/default'
+import 'tinymce/themes/silver'
+import 'tinymce/models/dom'
+import 'tinymce/skins/ui/oxide/skin.css'
+import 'tinymce/skins/content/default/content.css'
+import 'tinymce/plugins/lists'
+import 'tinymce/plugins/link'
+import 'tinymce/plugins/image'
+import 'tinymce/plugins/table'
+import 'tinymce/plugins/charmap'
+import 'tinymce/plugins/emoticons'
+import 'tinymce/plugins/emoticons/js/emojis'
+import 'tinymce/plugins/code'
+import 'tinymce/plugins/wordcount'
+import 'tinymce/plugins/autoresize'
+
 import {
   getPostById,
   createPost,
@@ -27,7 +45,7 @@ export default function PostEditor() {
   const { id } = useParams()
   const isEditing = Boolean(id)
   const navigate = useNavigate()
-  const quillRef = useRef(null)
+  const editorRef = useRef(null)
 
   const [form, setForm] = useState(emptyPost)
   const [categories, setCategories] = useState([])
@@ -74,53 +92,12 @@ export default function PostEditor() {
     }
   }
 
-  // Called when the Quill toolbar's image button is clicked
-  function imageHandler() {
-    const input = document.createElement('input')
-    input.setAttribute('type', 'file')
-    input.setAttribute('accept', 'image/*')
-    input.click()
-
-    input.onchange = async () => {
-      const file = input.files[0]
-      if (!file) return
-
-      try {
-        const url = await uploadCoverImage(file)
-        const editor = quillRef.current.getEditor()
-        const range = editor.getSelection(true)
-        editor.insertEmbed(range.index, 'image', url)
-      } catch (err) {
-        console.error('Inline image upload failed:', err)
-      }
-    }
+  // Called by TinyMCE whenever an image is dropped/pasted/inserted into the content
+  async function handleEditorImageUpload(blobInfo) {
+    const file = new File([blobInfo.blob()], blobInfo.filename(), { type: blobInfo.blob().type })
+    const url = await uploadCoverImage(file)
+    return url
   }
-
-  const modules = {
-    toolbar: {
-      container: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ color: [] }, { background: [] }],
-        [{ script: 'sub' }, { script: 'super' }],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ indent: '-1' }, { indent: '+1' }],
-        [{ align: [] }],
-        ['blockquote', 'code-block'],
-        ['link', 'image'],
-        ['clean'],
-      ],
-      handlers: { image: imageHandler },
-    },
-  }
-
-  const formats = [
-    'header', 'bold', 'italic', 'underline', 'strike',
-    'color', 'background', 'script',
-    'list', 'bullet', 'indent', 'align',
-    'blockquote', 'code-block',
-    'link', 'image',
-  ]
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -222,15 +199,28 @@ export default function PostEditor() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Content</label>
-          <ReactQuill
-            ref={quillRef}
-            theme="snow"
-            value={form.content}
-            onChange={(value) => updateField('content', value)}
-            modules={modules}
-            formats={formats}
-            className="mt-1 bg-white"
-          />
+          <div className="mt-1 rounded-md border border-gray-300">
+            <Editor
+              licenseKey="gpl"
+              onInit={(_evt, editor) => (editorRef.current = editor)}
+              value={form.content}
+              onEditorChange={(value) => updateField('content', value)}
+              init={{
+                license_key: 'gpl',
+                height: 500,
+                menubar: false,
+                plugins: ['lists', 'link', 'image', 'table', 'charmap', 'emoticons', 'code', 'wordcount', 'autoresize'],
+                toolbar:
+                  'undo redo | fontfamily fontsize | blocks | ' +
+                  'bold italic underline strikethrough | forecolor backcolor removeformat | ' +
+                  'bullist numlist | alignleft aligncenter alignright alignjustify | outdent indent | ' +
+                  'link image | emoticons | table | charmap | code',
+                images_upload_handler: handleEditorImageUpload,
+                skin: false,
+                content_css: false,
+              }}
+            />
+          </div>
         </div>
 
         <div>
