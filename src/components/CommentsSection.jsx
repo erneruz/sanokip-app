@@ -64,7 +64,7 @@ export default function CommentsSection({ postId }) {
   return (
     <section id="comments" className="mt-12 border-t border-gray-200 pt-8">
       <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-        <span>💬</span> Comment {comments.length}
+        <span>💬</span> Comments ({comments.length}) 
       </h2>
 
       <div className="mt-6">
