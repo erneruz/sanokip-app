@@ -200,7 +200,7 @@ function Post() {
       {/* -------------------------------------------- */}
 
       <article
-        className="prose max-w-none mt-8"
+        className="prose max-w-none mt-8 break-words [&_img]:max-w-full [&_img]:h-auto"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
 

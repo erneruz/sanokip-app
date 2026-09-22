@@ -99,15 +99,28 @@ export default function PostEditor() {
   const modules = {
     toolbar: {
       container: [
-        [{ header: [2, 3, false] }],
-        ['bold', 'italic', 'underline'],
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ script: 'sub' }, { script: 'super' }],
         [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ indent: '-1' }, { indent: '+1' }],
+        [{ align: [] }],
+        ['blockquote', 'code-block'],
         ['link', 'image'],
         ['clean'],
       ],
       handlers: { image: imageHandler },
     },
   }
+
+  const formats = [
+    'header', 'bold', 'italic', 'underline', 'strike',
+    'color', 'background', 'script',
+    'list', 'bullet', 'indent', 'align',
+    'blockquote', 'code-block',
+    'link', 'image',
+  ]
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -215,6 +228,7 @@ export default function PostEditor() {
             value={form.content}
             onChange={(value) => updateField('content', value)}
             modules={modules}
+            formats={formats}
             className="mt-1 bg-white"
           />
         </div>
