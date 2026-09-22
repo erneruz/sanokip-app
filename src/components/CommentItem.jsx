@@ -39,13 +39,13 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
         <p className="mt-1 text-gray-700">{comment.comment}</p>
 
         <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-          <button onClick={() => setShowReplyForm((v) => !v)} className="font-medium hover:text-gray-900">
+          <button onClick={() => setShowReplyForm((v) => !v)} className="cursor-pointer font-medium hover:text-gray-900">
             Reply
           </button>
 
           {replyCount > 0 && (
-            <button onClick={() => setShowReplies((v) => !v)} className="font-medium hover:text-gray-900">
-              {showReplies ? 'Hide replies' : `View ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
+            <button onClick={() => setShowReplies((v) => !v)} className="cursor-pointer font-medium hover:text-gray-900">
+              {showReplies ? `Hide replies` : `View ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
             </button>
           )}
         </div>
