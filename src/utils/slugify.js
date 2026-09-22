@@ -1,0 +1,8 @@
+// src/utils/slugify.js
+export function slugify(title) {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+}

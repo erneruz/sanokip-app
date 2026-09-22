@@ -132,3 +132,67 @@ export async function searchPosts(searchTerm) {
 }
 
 // ── end added ──────────────────────────────────────────────────────
+
+
+
+// src/services/postsService.js (additions)
+
+export async function getAllPostsForAdmin() {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('id, title, slug, status, published_at, categories (name)')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getPostById(id) {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createPost(post) {
+  const { data, error } = await supabase
+    .from('posts')
+    .insert(post)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updatePost(id, post) {
+  const { data, error } = await supabase
+    .from('posts')
+    .update({ ...post, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deletePost(id) {
+  const { error } = await supabase.from('posts').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function uploadCoverImage(file) {
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${crypto.randomUUID()}.${fileExt}`
+
+  const { error } = await supabase.storage.from('post-images').upload(fileName, file)
+  if (error) throw error
+
+  const { data } = supabase.storage.from('post-images').getPublicUrl(fileName)
+  return data.publicUrl
+}
