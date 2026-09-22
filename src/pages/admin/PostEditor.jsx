@@ -1,6 +1,8 @@
 // src/pages/admin/PostEditor.jsx
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import ReactQuill from 'react-quill-new'
+import 'react-quill-new/dist/quill.snow.css'
 import {
   getPostById,
   createPost,
