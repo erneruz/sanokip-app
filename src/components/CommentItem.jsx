@@ -1,12 +1,15 @@
 // src/components/CommentItem.jsx
 import { useState } from 'react'
 import CommentForm from './CommentForm'
+import { useAuth } from '../context/AuthContext'
+
 
 function initials(name) {
   return name.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase()
 }
 
 export default function CommentItem({ comment, onReply, onDelete, replying, isReply = false }) {
+  const { user } = useAuth()
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [showReplies, setShowReplies] = useState(true)
 
@@ -42,6 +45,12 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
           <button onClick={() => setShowReplyForm((v) => !v)} className="cursor-pointer font-medium hover:text-gray-900">
             Reply
           </button>
+
+          {user && (
+            <button onClick={() => onDelete(comment.id)} className="cursor-pointer font-medium text-red-500 hover:text-red-700">
+              Delete
+            </button>
+          )}
 
           {replyCount > 0 && (
             <button onClick={() => setShowReplies((v) => !v)} className="cursor-pointer font-medium hover:text-gray-900">
