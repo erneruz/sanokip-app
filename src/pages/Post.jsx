@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
 
 import { getPostBySlug } from "../services/postsService";
 import PostReactions from "../components/PostReactions";
@@ -200,13 +199,10 @@ function Post() {
       {/* ARTICLE CONTENT */}
       {/* -------------------------------------------- */}
 
-      <article className="prose max-w-none mt-8">
-
-        <ReactMarkdown>
-          {post.content}
-        </ReactMarkdown>
-
-      </article>
+      <article
+        className="prose max-w-none mt-8"
+        dangerouslySetInnerHTML={{ __html: post.content }}
+      />
 
 
       {/* -------------------------------------------- */}

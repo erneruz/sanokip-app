@@ -1,8 +1,8 @@
 // src/pages/admin/PostEditor.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import ReactQuill from 'react-quill-new'
-import 'react-quill-new/dist/quill.snow.css'
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import {
   getPostById,
   createPost,
@@ -27,6 +27,7 @@ export default function PostEditor() {
   const { id } = useParams()
   const isEditing = Boolean(id)
   const navigate = useNavigate()
+  const quillRef = useRef(null)
 
   const [form, setForm] = useState(emptyPost)
   const [categories, setCategories] = useState([])
@@ -71,6 +72,41 @@ export default function PostEditor() {
     } finally {
       setUploadingCover(false)
     }
+  }
+
+  // Called when the Quill toolbar's image button is clicked
+  function imageHandler() {
+    const input = document.createElement('input')
+    input.setAttribute('type', 'file')
+    input.setAttribute('accept', 'image/*')
+    input.click()
+
+    input.onchange = async () => {
+      const file = input.files[0]
+      if (!file) return
+
+      try {
+        const url = await uploadCoverImage(file)
+        const editor = quillRef.current.getEditor()
+        const range = editor.getSelection(true)
+        editor.insertEmbed(range.index, 'image', url)
+      } catch (err) {
+        console.error('Inline image upload failed:', err)
+      }
+    }
+  }
+
+  const modules = {
+    toolbar: {
+      container: [
+        [{ header: [2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link', 'image'],
+        ['clean'],
+      ],
+      handlers: { image: imageHandler },
+    },
   }
 
   async function handleSubmit(e) {
@@ -172,15 +208,14 @@ export default function PostEditor() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Content <span className="font-normal text-gray-400">(Markdown supported — ## heading, **bold**, - list item)</span>
-          </label>
-          <textarea
-            rows={14}
-            required
+          <label className="block text-sm font-medium text-gray-700">Content</label>
+          <ReactQuill
+            ref={quillRef}
+            theme="snow"
             value={form.content}
-            onChange={(e) => updateField('content', e.target.value)}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
+            onChange={(value) => updateField('content', value)}
+            modules={modules}
+            className="mt-1 bg-white"
           />
         </div>
 
