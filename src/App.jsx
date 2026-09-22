@@ -1,4 +1,5 @@
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop';
 import Blog from './pages/Blog';
 import Post from './pages/Post';
@@ -8,17 +9,19 @@ import MainLayout from './layouts/MainLayout';
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/posts/:slug" element={<Post />} />
-          <Route path="/about" element={<About />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/posts/:slug" element={<Post />} />
+            <Route path="/about" element={<About />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
