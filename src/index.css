@@ -14,3 +14,9 @@
 .animate-scroll:hover {
   animation-play-state: paused;
 }
+
+
+html, body {
+  margin: 0;
+  padding: 0;
+}

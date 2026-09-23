@@ -1,5 +1,5 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -19,17 +19,17 @@ function App() {
         <ScrollToTop />
         <Routes>
           <Route element={<MainLayout />}>
+            <Route path="/" element={<Navigate to="/blog" replace />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/posts/:slug" element={<Post />} />
             <Route path="/about" element={<About />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
 
           <Route path="/admin/login" element={<Login />} />
           <Route path="/admin" element={<ProtectedRoute><AdminPosts /></ProtectedRoute>} />
           <Route path="/admin/posts/new" element={<ProtectedRoute><PostEditor /></ProtectedRoute>} />
           <Route path="/admin/posts/:id/edit" element={<ProtectedRoute><PostEditor /></ProtectedRoute>} />
-
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
