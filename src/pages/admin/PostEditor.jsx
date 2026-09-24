@@ -21,6 +21,7 @@ const emptyPost = {
   author_second_name: '',
   status: 'draft',
   cover_image_url: null,
+  published_at: null, // ← added: track existing published_at so edits don't overwrite it
 }
 
 export default function PostEditor() {
@@ -50,6 +51,7 @@ export default function PostEditor() {
         author_second_name: post.author_second_name ?? '',
         status: post.status ?? 'draft',
         cover_image_url: post.cover_image_url ?? null,
+        published_at: post.published_at ?? null, // ← added
       })
     })
   }, [id, isEditing])
@@ -84,11 +86,17 @@ export default function PostEditor() {
     setSaving(true)
     setError(null)
 
+    // ── changed: only set published_at the first time a post is published;
+    //    on later edits, keep whatever published_at already existed ──────
     const payload = {
       ...form,
       slug: slugify(form.title),
-      published_at: form.status === 'published' ? new Date().toISOString() : null,
+      published_at:
+        form.status === 'published'
+          ? form.published_at ?? new Date().toISOString() // keep existing, or stamp now if never published before
+          : null, // still draft → no publish date
     }
+    // ─────────────────────────────────────────────────────────────────────
 
     try {
       if (isEditing) {
