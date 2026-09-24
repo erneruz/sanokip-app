@@ -1,6 +1,9 @@
 // src/layouts/AdminLayout.jsx
+import { useState, useEffect } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getProfile } from '../services/profileService' // ← added
+import ProfileMenu from '../components/ProfileMenu' // ← added
 
 const navSections = [
   {
@@ -26,6 +29,16 @@ const navSections = [
 
 export default function AdminLayout() {
   const { signOut, user } = useAuth()
+
+  // ── added: load profile (name, avatar) for the profile menu trigger ──
+  const [profile, setProfile] = useState(null)
+  useEffect(() => {
+    if (!user?.id) return
+    getProfile(user.id)
+      .then(setProfile)
+      .catch((err) => console.error('Failed to load profile:', err))
+  }, [user?.id])
+  // ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -69,15 +82,11 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="border-t border-white/10 px-6 py-4">
-          <p className="truncate text-xs text-white/50">{user?.email}</p>
-          <button
-            onClick={signOut}
-            className="mt-2 w-full cursor-pointer rounded-lg border border-white/20 py-2 text-sm text-white/80 hover:bg-white/5"
-          >
-            Sign out
-          </button>
+        {/* ── changed: replaced static email + sign-out block with ProfileMenu popup ── */}
+        <div className="border-t border-white/10 px-3 py-3">
+          <ProfileMenu profile={profile} email={user?.email} onSignOut={signOut} />
         </div>
+        {/* ─────────────────────────────────────────────────────────────────────── */}
       </aside>
 
       {/* -------------------------------------------- */}
