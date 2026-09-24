@@ -11,6 +11,7 @@ import About from './pages/About'
 import NotFound from './pages/NotFound'
 import Login from './pages/admin/Login'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminProfile from './pages/admin/AdminProfile'
 import AdminPosts from './pages/admin/AdminPosts'
 import PostEditor from './pages/admin/PostEditor'
 import ComingSoon from './pages/admin/ComingSoon'
@@ -33,6 +34,7 @@ function App() {
 
           <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
             <Route index element={<AdminDashboard />} />
+            <Route path="adminprofile" element={<AdminProfile />} />
             <Route path="posts" element={<AdminPosts />} />
             <Route path="posts/new" element={<PostEditor />} />
             <Route path="posts/:id/edit" element={<PostEditor />} />
