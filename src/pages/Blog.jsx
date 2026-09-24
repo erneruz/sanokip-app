@@ -1,56 +1,64 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom'; // ← added: read/write ?page= in the URL
+import { useSearchParams } from 'react-router-dom';
 import PostCard from '../components/PostCard';
-import Pagination from '../components/Pagination'; // ← added
-import { getPaginatedPosts } from '../services/postsService'; // ← changed: was getPublishedPosts
+import Pagination from '../components/Pagination';
+import { getPaginatedPosts, getCategoriesWithCounts } from '../services/postsService';
 
 
 function Blog() {
 
-    // ── added: track current page from the URL, default to 1 ──────────
     const [searchParams, setSearchParams] = useSearchParams();
     const currentPage = Number(searchParams.get('page')) || 1;
+    const selectedCategory = searchParams.get('category') || 'all';
     const [totalPages, setTotalPages] = useState(1);
-    // ─────────────────────────────────────────────────────────────────
 
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-
-    const [selectedCategory, setSelectedCategory] = useState("all");
-    const filteredPosts = selectedCategory === "all" ? posts : posts.filter(post => post.categories?.slug === selectedCategory);
-
-
+    // ── added: category list with counts, fetched once ─────────────────
+    const [categories, setCategories] = useState([]);
 
     useEffect(() => {
-        let cancelled = false; // ← added: guard against a stale page's response overwriting a newer one
+        getCategoriesWithCounts()
+            .then(setCategories)
+            .catch(() => {}); // fail silently — filter bar just won't show if this errors
+    }, []);
+    // ─────────────────────────────────────────────────────────────────
+
+    useEffect(() => {
+        let cancelled = false;
 
         async function loadPosts() {
             try {
-                setLoading(true); // ← added: re-show loading state on every page change, not just first load
-                const { posts, totalPages } = await getPaginatedPosts(currentPage); // ← changed
-                if (cancelled) return; // ← added
+                setLoading(true);
+                const { posts, totalPages } = await getPaginatedPosts(currentPage, selectedCategory);
+                if (cancelled) return;
                 setPosts(posts);
-                setTotalPages(totalPages); // ← added
+                setTotalPages(totalPages);
             } catch (error) {
                 if (!cancelled) setError("Unable to load posts. Please try again later.");
             } finally {
-                if (!cancelled) setLoading(false); // ← changed: guarded with !cancelled
+                if (!cancelled) setLoading(false);
             }
         }
 
         loadPosts();
 
-        return () => { cancelled = true; }; // ← added
-    }, [currentPage]); // ← changed: was [], now re-fetches whenever the page changes
+        return () => { cancelled = true; };
+    }, [currentPage, selectedCategory]);
 
-    // ── added: update the URL when a page button is clicked, and scroll up ──
     function handlePageChange(page) {
-        setSearchParams({ page: String(page) });
+        const next = { page: String(page) };
+        if (selectedCategory !== 'all') next.category = selectedCategory;
+        setSearchParams(next);
         window.scrollTo(0, 0);
     }
-    // ──────────────────────────────────────────────────────────────────────
+
+    function handleCategoryChange(slug) {
+        setSearchParams(slug === 'all' ? { page: '1' } : { page: '1', category: slug });
+        window.scrollTo(0, 0);
+    }
 
     if (loading) {
         return (
@@ -88,11 +96,32 @@ function Blog() {
             </section>
 
             <section className="max-w-6xl mx-auto py-10 px-6">
-                {filteredPosts.length === 0 ? (
+
+                {/* ── added: category filter bar, visually separated from the posts grid ── */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-10">
+                    <div className="flex flex-wrap gap-2.5">
+                        {categories.map((cat) => (
+                            <button
+                                key={cat.slug}
+                                onClick={() => handleCategoryChange(cat.slug)}
+                                className={`cursor-pointer px-4 py-1.5 rounded-md text-sm border transition-shadow shadow-sm hover:shadow-md ${
+                                    selectedCategory === cat.slug
+                                        ? 'bg-black text-white border-black'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                                }`}
+                            >
+                                {cat.name} <span className="font-bold">({cat.count})</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                {/* ──────────────────────────────────────────────────────────────────────── */}
+
+                {posts.length === 0 ? (
                     <p> No published posts are available</p>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredPosts.map((post) => (
+                        {posts.map((post) => (
                             <PostCard key={post.id} post={post} />
                         ))}
                     </div>

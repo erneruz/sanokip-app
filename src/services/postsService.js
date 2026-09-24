@@ -62,11 +62,11 @@ export async function getPostBySlug(slug) {
 
 const PAGE_SIZE = 9;
 
-export async function getPaginatedPosts(page = 1) {
+export async function getPaginatedPosts(page = 1, categorySlug = 'all') { // ← changed: added categorySlug param
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const { data, count, error } = await supabase
+  let query = supabase
     .from('posts')
     .select(`
       id,
@@ -77,13 +77,21 @@ export async function getPaginatedPosts(page = 1) {
       author_first_name,
       author_second_name,
       published_at,
-      categories (
+      categories${categorySlug !== 'all' ? '!inner' : ''} (
         id,
         name,
         slug
       )
     `, { count: 'exact' })
-    .eq('status', 'published')
+    .eq('status', 'published');
+
+  // ── added: server-side category filter ──────────────────────────
+  if (categorySlug !== 'all') {
+    query = query.eq('categories.slug', categorySlug);
+  }
+  // ─────────────────────────────────────────────────────────────────
+
+  const { data, count, error } = await query
     .order('published_at', { ascending: false })
     .range(from, to);
 
@@ -99,6 +107,60 @@ export async function getPaginatedPosts(page = 1) {
 
 // ── end added ───────────────────────────────────────────────────────
 
+// ── added: categories with post counts, in fixed display order ──────
+
+const CATEGORY_ORDER = [
+  'Articles',
+  'Industry Trends',
+  'GIS',
+  'Urban Planning',
+  'Land Administration',
+  'Environment',
+  'Other',
+];
+
+export async function getCategoriesWithCounts() {
+  const { data: categories, error: catError } = await supabase
+    .from('categories')
+    .select('id, name, slug');
+
+  if (catError) {
+    throw catError;
+  }
+
+  const { data: posts, error: postError } = await supabase
+    .from('posts')
+    .select('categories (id)')
+    .eq('status', 'published');
+
+  if (postError) {
+    throw postError;
+  }
+
+  const counts = posts.reduce((acc, p) => {
+    const catId = p.categories?.id;
+    if (catId) acc[catId] = (acc[catId] || 0) + 1;
+    return acc;
+  }, {});
+
+  const sortedCategories = [...categories].sort((a, b) => {
+    const aIndex = CATEGORY_ORDER.indexOf(a.name);
+    const bIndex = CATEGORY_ORDER.indexOf(b.name);
+    const aRank = aIndex === -1 ? CATEGORY_ORDER.length : aIndex;
+    const bRank = bIndex === -1 ? CATEGORY_ORDER.length : bIndex;
+    return aRank - bRank;
+  });
+
+  return [
+    { id: 'all', name: 'All', slug: 'all', count: posts.length },
+    ...sortedCategories.map((c) => ({
+      ...c,
+      count: counts[c.id] || 0,
+    })),
+  ];
+}
+
+// ── end added ───────────────────────────────────────────────────────
 
 // ── added: search by title ──────────────────────────────────────────
 
@@ -132,7 +194,6 @@ export async function searchPosts(searchTerm) {
 }
 
 // ── end added ──────────────────────────────────────────────────────
-
 
 
 // src/services/postsService.js (additions)
