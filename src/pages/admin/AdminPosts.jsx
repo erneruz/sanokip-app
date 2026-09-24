@@ -2,10 +2,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getAllPostsForAdmin, deletePost } from '../../services/postsService'
-import { useAuth } from '../../context/AuthContext'
 
 export default function AdminPosts() {
-  const { signOut } = useAuth()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -36,17 +34,12 @@ export default function AdminPosts() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <main className="px-8 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Manage Posts</h1>
-        <div className="flex gap-3">
-          <Link to="/admin/posts/new" className="cursor-pointer rounded-md bg-black px-4 py-2 text-sm text-white">
-            + New Post
-          </Link>
-          <button onClick={signOut} className="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm">
-            Sign out
-          </button>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Manage Posts</h1>
+        <Link to="/admin/posts/new" className="cursor-pointer rounded-md bg-black px-4 py-2 text-sm text-white">
+          + New Post
+        </Link>
       </div>
 
       {loading ? (

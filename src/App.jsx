@@ -1,41 +1,50 @@
-// App.jsx
-import { lazy, Suspense } from 'react'
+// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './layouts/MainLayout'
+import AdminLayout from './layouts/AdminLayout'
 import Blog from './pages/Blog'
 import Post from './pages/Post'
 import About from './pages/About'
 import NotFound from './pages/NotFound'
-
-// Lazy-loaded — their CSS/JS only loads when these routes are visited
-const Login = lazy(() => import('./pages/admin/Login'))
-const AdminPosts = lazy(() => import('./pages/admin/AdminPosts'))
-const PostEditor = lazy(() => import('./pages/admin/PostEditor'))
+import Login from './pages/admin/Login'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminPosts from './pages/admin/AdminPosts'
+import PostEditor from './pages/admin/PostEditor'
+import ComingSoon from './pages/admin/ComingSoon'
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
-          <Routes>
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<Navigate to="/blog" replace />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/posts/:slug" element={<Post />} />
-              <Route path="/about" element={<About />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Navigate to="/blog" replace />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/posts/:slug" element={<Post />} />
+            <Route path="/about" element={<About />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
 
-            <Route path="/admin/login" element={<Login />} />
-            <Route path="/admin" element={<ProtectedRoute><AdminPosts /></ProtectedRoute>} />
-            <Route path="/admin/posts/new" element={<ProtectedRoute><PostEditor /></ProtectedRoute>} />
-            <Route path="/admin/posts/:id/edit" element={<ProtectedRoute><PostEditor /></ProtectedRoute>} />
-          </Routes>
-        </Suspense>
+          <Route path="/admin/login" element={<Login />} />
+
+          <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="posts" element={<AdminPosts />} />
+            <Route path="posts/new" element={<PostEditor />} />
+            <Route path="posts/:id/edit" element={<PostEditor />} />
+            <Route path="users" element={<ComingSoon title="Users" />} />
+            <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
+            <Route path="messages" element={<ComingSoon title="Messages" />} />
+            <Route path="publications" element={<ComingSoon title="Publications" />} />
+            <Route path="events" element={<ComingSoon title="Events" />} />
+            <Route path="services" element={<ComingSoon title="Services" />} />
+            <Route path="projects" element={<ComingSoon title="Projects" />} />
+          </Route>
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   )
