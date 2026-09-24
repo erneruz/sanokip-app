@@ -1,4 +1,5 @@
-import { supabase } from "./supabase";
+// import { supabase } from "./supabase";
+import { supabase } from "../supabase";
 
 /**
  * Submit or update a visitor's reaction to a post.
