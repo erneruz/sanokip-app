@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom'
 
 const navigate = [
+  { label: 'Home', to: '/blog' },
   { label: 'About', to: '/about' },
   { label: 'Services', to: '/services' },
   { label: 'Blog & News', to: '/blog' },
