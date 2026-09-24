@@ -1,8 +1,26 @@
 // src/pages/admin/PostEditor.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { Editor } from '@tinymce/tinymce-react'
 
-import RichTextEditor from '../../components/RichTextEditor'
+// self-hosted TinyMCE assets — these imports are what let it run without a cloud API key
+import 'tinymce/tinymce'
+import 'tinymce/icons/default'
+import 'tinymce/themes/silver'
+import 'tinymce/models/dom'
+// import 'tinymce/skins/ui/oxide/skin.css'
+// import 'tinymce/skins/content/default/content.css'
+import 'tinymce/plugins/lists'
+import 'tinymce/plugins/link'
+import 'tinymce/plugins/image'
+import 'tinymce/plugins/table'
+import 'tinymce/plugins/charmap'
+import 'tinymce/plugins/emoticons'
+import 'tinymce/plugins/emoticons/js/emojis'
+import 'tinymce/plugins/code'
+import 'tinymce/plugins/wordcount'
+import 'tinymce/plugins/autoresize'
+
 import {
   getPostById,
   createPost,
@@ -27,6 +45,7 @@ export default function PostEditor() {
   const { id } = useParams()
   const isEditing = Boolean(id)
   const navigate = useNavigate()
+  const editorRef = useRef(null)
 
   const [form, setForm] = useState(emptyPost)
   const [categories, setCategories] = useState([])
@@ -73,10 +92,11 @@ export default function PostEditor() {
     }
   }
 
-  // Called by the rich text editor when an image is picked from the toolbar.
-  // Takes a File and must resolve to the public image URL.
-  async function handleEditorImageUpload(file) {
-    return uploadCoverImage(file)
+  // Called by TinyMCE whenever an image is dropped/pasted/inserted into the content
+  async function handleEditorImageUpload(blobInfo) {
+    const file = new File([blobInfo.blob()], blobInfo.filename(), { type: blobInfo.blob().type })
+    const url = await uploadCoverImage(file)
+    return url
   }
 
   async function handleSubmit(e) {
@@ -179,11 +199,26 @@ export default function PostEditor() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Content</label>
-          <div className="mt-1">
-            <RichTextEditor
+          <div className="mt-1 rounded-md border border-gray-300">
+            <Editor
+              licenseKey="gpl"
+              onInit={(_evt, editor) => (editorRef.current = editor)}
               value={form.content}
-              onChange={(html) => updateField('content', html)}
-              onImageUpload={handleEditorImageUpload}
+              onEditorChange={(value) => updateField('content', value)}
+              init={{
+                license_key: 'gpl',
+                height: 500,
+                menubar: false,
+                plugins: ['lists', 'link', 'image', 'table', 'charmap', 'emoticons', 'code', 'wordcount', 'autoresize'],
+                toolbar:
+                  'undo redo | fontfamily fontsize | blocks | ' +
+                  'bold italic underline strikethrough | forecolor backcolor removeformat | ' +
+                  'bullist numlist | alignleft aligncenter alignright alignjustify | outdent indent | ' +
+                  'link image | emoticons | table | charmap | code',
+                images_upload_handler: handleEditorImageUpload,
+                skin: false,
+                content_css: false,
+              }}
             />
           </div>
         </div>
