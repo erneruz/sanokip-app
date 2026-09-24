@@ -5,17 +5,36 @@ export async function getProfile(userId) {
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
 
   if (error) throw error
-  return data
+
+  // No row yet for this user — return a minimal shape instead of throwing,
+  // so the edit modal has something sane to work with.
+  return data ?? { id: userId, first_name: '', last_name: '', email: '', phone: '', bio: '', academic_profile: '', experience: '', avatar_url: null }
 }
 
 export async function updateProfile(userId, updates) {
+  // Only send editable fields — never let stray keys like created_at overwrite anything.
+  const { first_name, last_name, email, phone, bio, academic_profile, experience, avatar_url } = updates
+
+  const payload = {
+    id: userId,
+    first_name,
+    last_name,
+    email,
+    phone,
+    bio,
+    academic_profile,
+    experience,
+    ...(avatar_url !== undefined ? { avatar_url } : {}),
+    updated_at: new Date().toISOString(),
+  }
+
+  // upsert: creates the row if it doesn't exist yet, updates it if it does.
   const { data, error } = await supabase
     .from('profiles')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', userId)
+    .upsert(payload, { onConflict: 'id' })
     .select()
     .single()
 
