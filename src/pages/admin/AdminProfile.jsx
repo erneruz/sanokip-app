@@ -1,60 +1,48 @@
 // src/pages/admin/AdminProfile.jsx
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { getProfile, updateProfile, uploadAvatar } from '../../services/profileService'
+import { getFullProfile } from '../../services/profileService'
+import ProfileEditor from './ProfileEditor'
 
 export default function AdminProfile() {
   const { user } = useAuth()
   const [profile, setProfile] = useState(null)
+  const [academic, setAcademic] = useState([])
+  const [certifications, setCertifications] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({})
-  const [saving, setSaving] = useState(false)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [toast, setToast] = useState(null)
 
   useEffect(() => {
     if (!user?.id) return
-    getProfile(user.id)
-      .then((data) => {
-        setProfile(data)
-        setForm(data)
-      })
-      .catch((err) => console.error('Failed to load profile:', err))
-      .finally(() => setLoading(false))
+    loadProfile()
   }, [user?.id])
 
-  function updateField(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }))
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  function loadProfile() {
+    setLoading(true)
+    return getFullProfile(user.id)
+      .then(({ profile, academic, certifications }) => {
+        setProfile(profile)
+        setAcademic(academic)
+        setCertifications(certifications)
+      })
+      .catch((err) => {
+        console.error('Failed to load profile:', err)
+        setToast({ type: 'error', message: 'Could not load profile.' })
+      })
+      .finally(() => setLoading(false))
   }
 
-  async function handleAvatarUpload(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setUploadingAvatar(true)
-    try {
-      const url = await uploadAvatar(file)
-      const updated = await updateProfile(user.id, { avatar_url: url })
-      setProfile(updated)
-      setForm(updated)
-    } catch (err) {
-      console.error('Avatar upload failed:', err)
-    } finally {
-      setUploadingAvatar(false)
-    }
-  }
-
-  async function handleSave() {
-    setSaving(true)
-    try {
-      const updated = await updateProfile(user.id, form)
-      setProfile(updated)
-      setForm(updated)
-      setEditing(false)
-    } catch (err) {
-      console.error('Save failed:', err)
-    } finally {
-      setSaving(false)
-    }
+  function handleEditorSaved() {
+    setModalOpen(false)
+    setToast({ type: 'success', message: 'Profile saved successfully.' })
+    loadProfile()
   }
 
   if (loading) {
@@ -65,14 +53,19 @@ export default function AdminProfile() {
 
   return (
     <main className="px-8 py-10">
-      {/* ── Header card: black-to-white gradient banner + avatar ── */}
+      {toast && (
+        <div className={`fixed right-6 top-6 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          {toast.message}
+        </div>
+      )}
+
+      {/* ── Header card ── */}
       <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
         <div className="h-36 bg-gradient-to-r from-black to-gray-300" />
-
         <div className="px-8 pb-6">
           <div className="-mt-14 flex items-end justify-between">
             <div className="flex items-end gap-4">
-              <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full ring-4 ring-white bg-gray-100">
+              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full ring-4 ring-white bg-gray-100">
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt={displayName} className="h-full w-full object-cover" />
                 ) : (
@@ -80,25 +73,23 @@ export default function AdminProfile() {
                     {displayName?.[0]?.toUpperCase() ?? '?'}
                   </div>
                 )}
-                {editing && (
-                  <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/50 text-xs text-white opacity-0 transition hover:opacity-100">
-                    {uploadingAvatar ? 'Uploading…' : 'Change'}
-                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-                  </label>
-                )}
               </div>
               <div className="pb-1">
                 <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
+                {profile?.current_position && (
+                  <p className="text-sm text-gray-700">
+                    {profile.current_position}
+                    {profile.organization ? ` at ${profile.organization}` : ''}
+                  </p>
+                )}
                 <p className="text-sm text-gray-500">{profile?.email ?? user?.email}</p>
+                {profile?.location && <p className="text-xs text-gray-400">{profile.location}</p>}
               </div>
             </div>
 
-            <button
-              onClick={() => (editing ? handleSave() : setEditing(true))}
-              disabled={saving}
-              className="cursor-pointer rounded-md bg-black px-5 py-2 text-sm text-white disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : editing ? 'Save Changes' : 'Edit Profile'}
+            <button onClick={() => setModalOpen(true)}
+              className="cursor-pointer rounded-md bg-black px-5 py-2 text-sm text-white hover:bg-gray-800">
+              Edit Profile
             </button>
           </div>
         </div>
@@ -107,76 +98,111 @@ export default function AdminProfile() {
       {/* ── Content grid ── */}
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left: Personal information */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 lg:col-span-1">
-          <h2 className="text-sm font-semibold text-gray-900">Personal Information</h2>
-          <div className="mt-4 space-y-4">
-            <Field
-              label="First Name"
-              editing={editing}
-              value={form.first_name}
-              onChange={(v) => updateField('first_name', v)}
-            />
-            <Field
-              label="Last Name"
-              editing={editing}
-              value={form.last_name}
-              onChange={(v) => updateField('last_name', v)}
-            />
-            <Field
-              label="Email"
-              editing={editing}
-              value={form.email}
-              onChange={(v) => updateField('email', v)}
-            />
-            <Field
-              label="Phone"
-              editing={editing}
-              value={form.phone}
-              onChange={(v) => updateField('phone', v)}
-            />
+        <div className="space-y-6 lg:col-span-1">
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <h2 className="text-sm font-semibold text-gray-900">Contact & Basic Info</h2>
+            <div className="mt-4 space-y-4">
+              <ReadField label="Phone" value={profile?.phone} />
+              <ReadField label="Organization / Institution" value={profile?.organization} />
+              <ReadField label="Country / Location" value={profile?.location} />
+              <ReadField
+                label="Website"
+                value={profile?.website}
+                isLink
+              />
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <h2 className="text-sm font-semibold text-gray-900">Areas of Expertise</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {profile?.areas_of_expertise?.length ? (
+                profile.areas_of_expertise.map((tag) => (
+                  <span key={tag} className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">{tag}</span>
+                ))
+              ) : (
+                <p className="text-sm text-gray-400">—</p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Right: Bio, Academic Profile, Experience */}
+        {/* Right: Bio, Academic, Certifications */}
         <div className="space-y-6 lg:col-span-2">
-          <TextSection
-            title="Biography"
-            editing={editing}
-            value={form.bio}
-            onChange={(v) => updateField('bio', v)}
-            placeholder="Write a short bio…"
-          />
-          <TextSection
-            title="Academic Profile"
-            editing={editing}
-            value={form.academic_profile}
-            onChange={(v) => updateField('academic_profile', v)}
-            placeholder="Degrees, institutions, publications…"
-          />
-          <TextSection
-            title="Experience"
-            editing={editing}
-            value={form.experience}
-            onChange={(v) => updateField('experience', v)}
-            placeholder="Roles, companies, years…"
-          />
+          <ReadSection title="Biography" value={profile?.bio} />
+
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <h2 className="text-sm font-semibold text-gray-900">Academic Information</h2>
+            {academic.length ? (
+              <div className="mt-4 space-y-4">
+                {academic.map((a) => (
+                  <div key={a.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                    <p className="text-sm font-medium text-gray-900">
+                      {a.degree}{a.field ? ` in ${a.field}` : ''}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {a.institution}{a.country ? `, ${a.country}` : ''}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {a.start_year || '—'} – {a.completion_year || 'Present'}
+                      {a.specialization ? ` · ${a.specialization}` : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-gray-400">—</p>
+            )}
+          </div>
+
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <h2 className="text-sm font-semibold text-gray-900">Professional Qualifications & Certifications</h2>
+            {certifications.length ? (
+              <div className="mt-4 space-y-4">
+                {certifications.map((c) => (
+                  <div key={c.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                    <p className="text-sm font-medium text-gray-900">{c.certification_name}</p>
+                    <p className="text-sm text-gray-600">
+                      {c.certification_body}
+                      {c.certification_number ? ` · No. ${c.certification_number}` : ''}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {c.year_obtained ? `Obtained ${c.year_obtained}` : ''}
+                      {c.expiry_date ? ` · Expires ${c.expiry_date}` : ''}
+                      {c.specialization ? ` · ${c.specialization}` : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-gray-400">—</p>
+            )}
+          </div>
         </div>
       </div>
+
+      {modalOpen && (
+        <ProfileEditor
+          profileId={user.id}
+          initialProfile={profile}
+          initialAcademic={academic}
+          initialCertifications={certifications}
+          onClose={() => setModalOpen(false)}
+          onSaved={handleEditorSaved}
+        />
+      )}
     </main>
   )
 }
 
-function Field({ label, value, editing, onChange }) {
+function ReadField({ label, value, isLink }) {
   return (
     <div>
       <p className="text-xs text-gray-500">{label}</p>
-      {editing ? (
-        <input
-          type="text"
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value)}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-        />
+      {isLink && value ? (
+        <a href={value} target="_blank" rel="noopener noreferrer" className="mt-1 block truncate text-sm font-medium text-blue-600 hover:underline">
+          {value}
+        </a>
       ) : (
         <p className="mt-1 text-sm font-medium text-gray-900">{value || '—'}</p>
       )}
@@ -184,21 +210,11 @@ function Field({ label, value, editing, onChange }) {
   )
 }
 
-function TextSection({ title, value, editing, onChange, placeholder }) {
+function ReadSection({ title, value }) {
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
       <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
-      {editing ? (
-        <textarea
-          rows={4}
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="mt-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-        />
-      ) : (
-        <p className="mt-3 whitespace-pre-line text-sm text-gray-600">{value || '—'}</p>
-      )}
+      <p className="mt-3 whitespace-pre-line text-sm text-gray-600">{value || '—'}</p>
     </div>
   )
 }
