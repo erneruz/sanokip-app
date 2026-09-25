@@ -65,7 +65,7 @@ export default function AdminProfile() {
         <div className="px-8 pb-6">
           <div className="-mt-14 flex items-end justify-between">
             <div className="flex items-end gap-4">
-              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full ring-4 ring-white bg-gray-100">
+              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full ring-4 ring-white bg-gray-100 shadow-md">
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt={displayName} className="h-full w-full object-cover" />
                 ) : (
@@ -74,7 +74,7 @@ export default function AdminProfile() {
                   </div>
                 )}
               </div>
-              <div className="pb-1">
+              <div className="rounded-xl bg-white/70 px-4 py-2 backdrop-blur-sm">
                 <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
                 {profile?.current_position && (
                   <p className="text-sm text-gray-700">
