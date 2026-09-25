@@ -89,7 +89,7 @@ function Blog() {
                             Blog & News
                         </h1>
                         <p className="max-w-md text-sm text-gray-400">
-                            Technical Articles, Geographic Write-ups, Urban Planning, Environment, Land Administration, GIS.
+                            Technical Articles, Geographic Write-ups, Science & Discovery, Research & Insights, Land Administration, GIS.
                         </p>
                     </div>
                 </div>
