@@ -8,6 +8,7 @@ import AdminLayout from './layouts/AdminLayout'
 import Blog from './pages/Blog'
 import Post from './pages/Post'
 import About from './pages/About'
+import AuthorProfile from './pages/AuthorProfile'
 import NotFound from './pages/NotFound'
 import Login from './pages/admin/Login'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -28,6 +29,7 @@ function App() {
             <Route path="/posts/:slug" element={<Post />} />
             <Route path="/about" element={<About />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/authors/:authorId" element={<AuthorProfile />} />
           </Route>
 
           <Route path="/admin/login" element={<Login />} />
