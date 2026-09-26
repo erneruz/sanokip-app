@@ -1,3 +1,4 @@
+// src/services/profileService.js
 import { supabase } from '../supabase'
 
 export async function getProfile(userId) {
@@ -24,6 +25,23 @@ export async function getProfile(userId) {
     avatar_url: null,
   }
 }
+
+// ── added: public-safe profile fetch — never selects email or phone ──────────
+
+export async function getPublicProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(
+      'id, first_name, last_name, bio, current_position, organization, location, website, areas_of_expertise, avatar_url'
+    )
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+// ── end added ──────────────────────────────────────────────────────────────
 
 export async function getAcademicQualifications(profileId) {
   const { data, error } = await supabase
@@ -56,6 +74,19 @@ export async function getFullProfile(userId) {
   ])
   return { profile, academic, certifications }
 }
+
+// ── added: same as getFullProfile, but uses the public-safe profile fetch ────
+
+export async function getPublicFullProfile(userId) {
+  const [profile, academic, certifications] = await Promise.all([
+    getPublicProfile(userId),
+    getAcademicQualifications(userId),
+    getCertifications(userId),
+  ])
+  return { profile, academic, certifications }
+}
+
+// ── end added ──────────────────────────────────────────────────────────────
 
 export async function updateProfile(userId, updates) {
   const {

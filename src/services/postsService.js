@@ -1,3 +1,4 @@
+// src/services/postsService.js
 import { supabase } from '../supabase';
 
 export async function getPublishedPosts() {
@@ -62,7 +63,7 @@ export async function getPostBySlug(slug) {
 
 const PAGE_SIZE = 9;
 
-export async function getPaginatedPosts(page = 1, categorySlug = 'all') { // ← changed: added categorySlug param
+export async function getPaginatedPosts(page = 1, categorySlug = 'all') {
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -257,3 +258,34 @@ export async function uploadCoverImage(file) {
   const { data } = supabase.storage.from('post-images').getPublicUrl(fileName)
   return data.publicUrl
 }
+
+// ── added: list a specific author's published posts, for their public profile page ──
+
+export async function getPostsByAuthor(authorId) {
+  const { data, error } = await supabase
+    .from('posts')
+    .select(`
+      id,
+      title,
+      slug,
+      excerpt,
+      cover_image_url,
+      published_at,
+      categories (
+        id,
+        name,
+        slug
+      )
+    `)
+    .eq('author_id', authorId)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}
+
+// ── end added ────────────────────────────────────────────────────────

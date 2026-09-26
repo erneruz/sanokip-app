@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
+import { useAuth } from '../../context/AuthContext' // ← added
 import RichTextEditor from '../../components/RichTextEditor'
 import {
   getPostById,
@@ -17,17 +18,17 @@ const emptyPost = {
   excerpt: '',
   content: '',
   category_id: '',
-  author_first_name: '',
-  author_second_name: '',
+  author_id: null, // ← changed: replaces author_first_name / author_second_name
   status: 'draft',
   cover_image_url: null,
-  published_at: null, // ← added: track existing published_at so edits don't overwrite it
+  published_at: null,
 }
 
 export default function PostEditor() {
   const { id } = useParams()
   const isEditing = Boolean(id)
   const navigate = useNavigate()
+  const { user } = useAuth() // ← added
 
   const [form, setForm] = useState(emptyPost)
   const [categories, setCategories] = useState([])
@@ -47,11 +48,10 @@ export default function PostEditor() {
         excerpt: post.excerpt ?? '',
         content: post.content ?? '',
         category_id: post.category_id ?? '',
-        author_first_name: post.author_first_name ?? '',
-        author_second_name: post.author_second_name ?? '',
+        author_id: post.author_id ?? null, // ← changed: replaces author_first_name / author_second_name
         status: post.status ?? 'draft',
         cover_image_url: post.cover_image_url ?? null,
-        published_at: post.published_at ?? null, // ← added
+        published_at: post.published_at ?? null,
       })
     })
   }, [id, isEditing])
@@ -86,15 +86,16 @@ export default function PostEditor() {
     setSaving(true)
     setError(null)
 
-    // ── changed: only set published_at the first time a post is published;
-    //    on later edits, keep whatever published_at already existed ──────
+    // ── changed: attach the logged-in admin as author on a new post; keep the
+    //    original author on an edit, so editing someone's post never reassigns it ──
     const payload = {
       ...form,
       slug: slugify(form.title),
+      author_id: isEditing ? form.author_id : user.id,
       published_at:
         form.status === 'published'
-          ? form.published_at ?? new Date().toISOString() // keep existing, or stamp now if never published before
-          : null, // still draft → no publish date
+          ? form.published_at ?? new Date().toISOString()
+          : null,
     }
     // ─────────────────────────────────────────────────────────────────────
 
@@ -128,28 +129,8 @@ export default function PostEditor() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Author first name</label>
-            <input
-              type="text"
-              required
-              value={form.author_first_name}
-              onChange={(e) => updateField('author_first_name', e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Author last name</label>
-            <input
-              type="text"
-              required
-              value={form.author_second_name}
-              onChange={(e) => updateField('author_second_name', e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-        </div>
+        {/* ── removed: Author first name / Author last name fields — author is
+            now attached automatically from the logged-in admin's profile ── */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Category</label>
