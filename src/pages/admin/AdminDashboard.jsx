@@ -9,6 +9,34 @@ import {
   IconUsers, IconQuote, IconMail, IconBook, IconCalendar, IconWrench, IconFolder,
 } from '../../components/icons'
 
+function StatCard({ label, value, icon: Icon, to }) {
+  const cardClasses =
+    'group relative rounded-2xl bg-gradient-to-br from-black to-gray-700 p-5 text-white shadow-sm transition-all duration-200 ' +
+    (to
+      ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20'
+      : '')
+
+  const content = (
+    <>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-white/60">{label}</p>
+        <Icon className={to ? 'h-4 w-4 text-white/40 transition group-hover:text-white/70' : 'h-4 w-4 text-white/40'} />
+      </div>
+      <p className="mt-2 text-2xl font-bold">{value}</p>
+    </>
+  )
+
+  if (to) {
+    return (
+      <Link to={to} className={cardClasses}>
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className={cardClasses}>{content}</div>
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null)
   const [allPosts, setAllPosts] = useState([])
@@ -36,20 +64,26 @@ export default function AdminDashboard() {
     return <main className="px-8 py-10 text-gray-500">Loading dashboard…</main>
   }
 
-  const cards = [
-    { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument },
-    { label: 'Published', value: stats.publishedPosts, icon: IconCheckCircle },
-    { label: 'Drafts', value: stats.draftPosts, icon: IconEdit },
+  const postCards = [
+    { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument, to: '/admin/posts' },
+    { label: 'Published', value: stats.publishedPosts, icon: IconCheckCircle, to: '/admin/posts' },
+    { label: 'Drafts', value: stats.draftPosts, icon: IconEdit, to: '/admin/posts' },
+  ]
+
+  const engagementCards = [
     { label: 'Comments', value: stats.totalComments, icon: IconChat },
     { label: 'Likes', value: stats.totalLikes, icon: IconThumbsUp },
     { label: 'Dislikes', value: stats.totalDislikes, icon: IconThumbsDown },
-    { label: 'Users', value: stats.totalUsers, icon: IconUsers },
-    { label: 'Testimonials', value: stats.totalTestimonials, icon: IconQuote },
-    { label: 'Messages', value: stats.totalMessages, icon: IconMail },
-    { label: 'Publications', value: stats.totalPublications, icon: IconBook },
-    { label: 'Events', value: stats.totalEvents, icon: IconCalendar },
-    { label: 'Services', value: stats.totalServices, icon: IconWrench },
-    { label: 'Projects', value: stats.totalProjects, icon: IconFolder },
+  ]
+
+  const moduleCards = [
+    { label: 'Users', value: stats.totalUsers, icon: IconUsers, to: '/admin/users' },
+    { label: 'Testimonials', value: stats.totalTestimonials, icon: IconQuote, to: '/admin/testimonials' },
+    { label: 'Messages', value: stats.totalMessages, icon: IconMail, to: '/admin/messages' },
+    { label: 'Publications', value: stats.totalPublications, icon: IconBook, to: '/admin/publications' },
+    { label: 'Events', value: stats.totalEvents, icon: IconCalendar, to: '/admin/events' },
+    { label: 'Services', value: stats.totalServices, icon: IconWrench, to: '/admin/services' },
+    { label: 'Projects', value: stats.totalProjects, icon: IconFolder, to: '/admin/projects' },
   ]
 
   // Group posts by category name for the chart — computed here, not fetched separately,
@@ -68,20 +102,32 @@ export default function AdminDashboard() {
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
       <p className="mt-1 text-sm text-gray-500">A summary of your blog's activity.</p>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-2xl bg-gradient-to-br from-black to-gray-700 p-5 text-white shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-white/60">{card.label}</p>
-              <card.icon className="h-4 w-4 text-white/40" />
-            </div>
-            <p className="mt-2 text-2xl font-bold">{card.value}</p>
-          </div>
-        ))}
-      </div>
+      <section className="mt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Content</h2>
+        <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {postCards.map((card) => (
+            <StatCard key={card.label} {...card} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Engagement</h2>
+        <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {engagementCards.map((card) => (
+            <StatCard key={card.label} {...card} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Modules</h2>
+        <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {moduleCards.map((card) => (
+            <StatCard key={card.label} {...card} />
+          ))}
+        </div>
+      </section>
 
       <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 bg-white p-6">
