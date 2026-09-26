@@ -64,11 +64,11 @@ export default function AdminDashboard() {
     return <main className="px-8 py-10 text-gray-500">Loading dashboard…</main>
   }
 
-  const postCards = [
-    { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument, to: '/admin/posts' },
-    { label: 'Published', value: stats.publishedPosts, icon: IconCheckCircle, to: '/admin/posts' },
-    { label: 'Drafts', value: stats.draftPosts, icon: IconEdit, to: '/admin/posts' },
-  ]
+const postCards = [
+  { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument, to: '/admin/posts' },
+  { label: 'Published', value: stats.publishedPosts, icon: IconCheckCircle, to: '/admin/posts?status=published' },
+  { label: 'Drafts', value: stats.draftPosts, icon: IconEdit, to: '/admin/posts?status=draft' },
+]
 
   const engagementCards = [
     { label: 'Comments', value: stats.totalComments, icon: IconChat },

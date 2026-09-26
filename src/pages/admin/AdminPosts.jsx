@@ -1,15 +1,18 @@
 // src/pages/admin/AdminPosts.jsx
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getAllPostsForAdmin, deletePost } from '../../services/postsService'
-import Pagination from '../../components/Pagination' // ← added
+import Pagination from '../../components/Pagination'
 
-const PAGE_SIZE = 10 // ← added
+const PAGE_SIZE = 10
 
 export default function AdminPosts() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const statusFilter = searchParams.get('status')
+
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1) // ← added
+  const [currentPage, setCurrentPage] = useState(1)
 
   async function loadPosts() {
     setLoading(true)
@@ -27,19 +30,23 @@ export default function AdminPosts() {
     loadPosts()
   }, [])
 
-  // ── added: clamp current page if it becomes out of range (e.g. after deleting the last post on a page) ──
-  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE))
+  const filteredPosts = statusFilter
+    ? posts.filter((post) => post.status === statusFilter)
+    : posts
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE))
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages)
   }, [totalPages, currentPage])
-  // ─────────────────────────────────────────────────────────────────
 
-  // ── added: slice posts for the current page ──
-  const paginatedPosts = posts.slice(
+  const paginatedPosts = filteredPosts.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   )
-  // ─────────────────────────────────────────────
 
   async function handleDelete(id, title) {
     if (!window.confirm(`Delete "${title}"? This can't be undone.`)) return
@@ -51,15 +58,40 @@ export default function AdminPosts() {
     }
   }
 
-  function handlePageChange(page) { // ← added
+  function handlePageChange(page) {
     setCurrentPage(page)
     window.scrollTo(0, 0)
   }
 
+  function clearFilter() {
+    setSearchParams({})
+  }
+
+  const statusLabel =
+    statusFilter === 'published' ? 'Published' : statusFilter === 'draft' ? 'Drafts' : null
+
   return (
     <main className="px-8 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manage Posts</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Manage Posts</h1>
+
+          {statusLabel && (
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-gray-900 py-1 pl-3 pr-1 text-xs font-medium text-white">
+              <span>{statusLabel} ({filteredPosts.length})</span>
+              <button
+                onClick={clearFilter}
+                aria-label={`Clear ${statusLabel} filter`}
+                className="cursor-pointer rounded-full p-1 opacity-70 transition hover:bg-white/20 hover:opacity-100"
+              >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
         <Link to="/admin/posts/new" className="cursor-pointer rounded-md bg-black px-4 py-2 text-sm text-white">
           + New Post
         </Link>
@@ -68,7 +100,6 @@ export default function AdminPosts() {
       {loading ? (
         <p className="mt-8 text-gray-500">Loading…</p>
       ) : (
-        // ── changed: wrapped table in a padded, visually distinct card ──
         <div className="mt-8 rounded-xl bg-white shadow-sm ring-1 ring-gray-200 p-6">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 text-gray-500">
@@ -80,7 +111,7 @@ export default function AdminPosts() {
               </tr>
             </thead>
             <tbody>
-              {paginatedPosts.map((post) => ( // ← changed: was posts.map
+              {paginatedPosts.map((post) => (
                 <tr key={post.id} className="border-b border-gray-100">
                   <td className="py-3">{post.title}</td>
                   <td className="py-3 text-gray-500">{post.categories?.name ?? '—'}</td>
@@ -111,14 +142,14 @@ export default function AdminPosts() {
             </tbody>
           </table>
 
-          {posts.length === 0 && ( // ← added: empty state
-            <p className="py-6 text-center text-gray-500">No posts yet.</p>
+          {filteredPosts.length === 0 && (
+            <p className="py-6 text-center text-gray-500">
+              {statusLabel ? `No ${statusLabel.toLowerCase()} posts.` : 'No posts yet.'}
+            </p>
           )}
         </div>
-        // ──────────────────────────────────────────────────────────────
       )}
 
-      {/* ── added: pagination controls, only shown when there's more than one page ── */}
       {!loading && totalPages > 1 && (
         <div className="mt-6">
           <Pagination
@@ -128,7 +159,6 @@ export default function AdminPosts() {
           />
         </div>
       )}
-      {/* ──────────────────────────────────────────────────────────────────────── */}
     </main>
   )
 }
