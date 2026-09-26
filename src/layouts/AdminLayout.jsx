@@ -2,8 +2,12 @@
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getProfile } from '../services/profileService' // ← added
-import ProfileMenu from '../components/ProfileMenu' // ← added
+import { getProfile } from '../services/profileService'
+import ProfileMenu from '../components/ProfileMenu'
+import {
+  IconGrid, IconDocument, IconUsers, IconQuote, IconMail,
+  IconBook, IconCalendar, IconWrench, IconFolder,
+} from '../components/icons'
 
 const navSections = [
   {
@@ -30,7 +34,6 @@ const navSections = [
 export default function AdminLayout() {
   const { signOut, user } = useAuth()
 
-  // ── added: load profile (name, avatar) for the profile menu trigger ──
   const [profile, setProfile] = useState(null)
   useEffect(() => {
     if (!user?.id) return
@@ -38,7 +41,6 @@ export default function AdminLayout() {
       .then(setProfile)
       .catch((err) => console.error('Failed to load profile:', err))
   }, [user?.id])
-  // ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -82,11 +84,9 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        {/* ── changed: replaced static email + sign-out block with ProfileMenu popup ── */}
         <div className="border-t border-white/10 px-3 py-3">
           <ProfileMenu profile={profile} email={user?.email} onSignOut={signOut} />
         </div>
-        {/* ─────────────────────────────────────────────────────────────────────── */}
       </aside>
 
       {/* -------------------------------------------- */}
@@ -96,74 +96,5 @@ export default function AdminLayout() {
         <Outlet />
       </div>
     </div>
-  )
-}
-
-// ── minimal inline icons, no extra dependency ──────────────────────
-
-function IconGrid(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
-    </svg>
-  )
-}
-function IconDocument(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <path d="M14 2v6h6M9 13h6M9 17h6" />
-    </svg>
-  )
-}
-function IconUsers(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  )
-}
-function IconQuote(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M3 21c3-1 4-3 4-6V9a2 2 0 0 0-2-2H3v6h2c0 1.5-.5 2.5-2 3zM13 21c3-1 4-3 4-6V9a2 2 0 0 0-2-2h-2v6h2c0 1.5-.5 2.5-2 3z" />
-    </svg>
-  )
-}
-function IconMail(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 6-10 7L2 6" />
-    </svg>
-  )
-}
-function IconBook(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z" /><path d="M4 19.5V6.5" />
-    </svg>
-  )
-}
-function IconCalendar(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  )
-}
-function IconWrench(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L2 19l3 3 7.1-7.1a4 4 0 0 0 5.6-5.6l-3.5 3.5-2-2 3.5-3.5Z" />
-    </svg>
-  )
-}
-function IconFolder(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z" />
-    </svg>
   )
 }

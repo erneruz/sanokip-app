@@ -33,6 +33,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.4",
     "reading-time": "^1.5.0",
+    "recharts": "^3.10.1",
     "slugify": "^1.6.9",
     "tailwindcss": "^4.3.3"
   },
