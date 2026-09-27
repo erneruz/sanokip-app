@@ -183,16 +183,21 @@ export default function AuthorProfile() {
 
             {profile.website && (
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Website
-                </h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Website</h2>
                 
+                <a
                   href={profile.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 block truncate text-sm font-medium text-gray-900 hover:underline"
-                <a>
-                  {profile.website}
+                  className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-900 hover:underline"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  <span className="truncate">
+                    {profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  </span>
                 </a>
               </div>
             )}
