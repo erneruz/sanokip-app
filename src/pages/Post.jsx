@@ -1,3 +1,4 @@
+// src/pages/Post.jsx
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -159,8 +160,23 @@ function Post() {
 
       <p className="text-sm text-gray-500 mt-4">
 
-        {post.author_first_name}{" "}
-        {post.author_second_name}
+        {/* ── changed: author is now a link to their public profile when the
+            post has a real author_id + profiles row; falls back to the old
+            plain-text name for posts created before this feature existed ── */}
+        {post.profiles ? (
+          <Link
+            to={`/authors/${post.profiles.id}`}
+            className="hover:text-blue-600 hover:underline"
+          >
+            {post.profiles.first_name} {post.profiles.last_name}
+          </Link>
+        ) : (
+          <span>
+            {post.author_first_name}{" "}
+            {post.author_second_name}
+          </span>
+        )}
+        {/* ─────────────────────────────────────────────────────────────── */}
 
         {" · "}
 

@@ -29,6 +29,9 @@ export async function getPublishedPosts() {
   return data ?? [];
 }
 
+// ── changed: added author_id and a profiles join, so the post page can
+//    link to the author's public profile instead of showing plain text ──
+
 export async function getPostBySlug(slug) {
   const { data, error } = await supabase
     .from('posts')
@@ -41,6 +44,13 @@ export async function getPostBySlug(slug) {
       cover_image_url,
       author_first_name,
       author_second_name,
+      author_id,
+      profiles (
+        id,
+        first_name,
+        last_name,
+        avatar_url
+      ),
       published_at,
       categories (
         id,
@@ -58,6 +68,8 @@ export async function getPostBySlug(slug) {
 
   return data;
 }
+
+// ── end changed ──────────────────────────────────────────────────────
 
 // ── added: pagination ──────────────────────────────────────────────
 

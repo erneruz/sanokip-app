@@ -169,3 +169,30 @@ export async function uploadAvatar(file) {
   const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
   return data.publicUrl
 }
+
+
+// src/services/postsService.js — getPostBySlug needs an added join
+export async function getPostBySlug(slug) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      id,
+      title,
+      slug,
+      excerpt,
+      content,
+      cover_image_url,
+      author_first_name,
+      author_second_name,
+      author_id,
+      profiles ( id, first_name, last_name, avatar_url ),
+      published_at,
+      categories ( id, name, slug )
+    `)
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
+
+  if (error) throw error;
+  return data;
+}
