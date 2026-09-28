@@ -6,12 +6,11 @@ const navigate = [
   { label: 'About', to: '/about' },
   { label: 'Services', to: '/services' },
   { label: 'Blog & News', to: '/blog' },
-  { label: "Community", to: '/community' },
+  { label: "Reports & Publications", to: '/publication' },
 ]
 
 const company = [
-  { label: 'Reports & Publications', to: '/reports' },
-  { label: 'Community', to: '/community' },
+  { label: 'Reports & Publications', to: '/publication' },
   { label: 'Careers', to: '/careers' },
   { label: 'Partners', to: '/partners' },
   { label: 'Contact', to: '/contact' },
@@ -77,7 +76,7 @@ export default function Footer() {
           </div>
 
           <FooterColumn title="Navigate" links={navigate} />
-          <FooterColumn title="Reports & Publications" links={company} />
+          <FooterColumn title="Publications" links={company} />
           <FooterColumn title="Legal / Corporate" links={legal} />
         </div>
       </div>

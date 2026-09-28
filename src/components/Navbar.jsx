@@ -25,8 +25,8 @@ function Navbar() {
                         Blog & News
                     </Link>
 
-                    <Link to="/community" className="hover:text-blue-600 text-gray-500 transition-colors duration-300">
-                        Community
+                    <Link to="/publication" className="hover:text-blue-600 text-gray-500 transition-colors duration-300">
+                       Reports & Publications
                     </Link>
                 </div>
 
