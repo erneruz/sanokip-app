@@ -1,4 +1,5 @@
-import { supabase } from '../lib/supabaseClient' // adjust path to match your project
+// src/services/publicationsService.js
+import { supabase } from '../supabase'
 
 const TABLE = 'publications'
 const BUCKET = 'publications'
@@ -10,6 +11,7 @@ export async function getPublishedPublications() {
     .select('*')
     .eq('status', 'published')
     .order('publication_date', { ascending: false })
+
   if (error) throw error
   return data ?? []
 }
@@ -20,12 +22,18 @@ export async function getAllPublications() {
     .from(TABLE)
     .select('*')
     .order('created_at', { ascending: false })
+
   if (error) throw error
   return data ?? []
 }
 
 export async function getPublicationById(id) {
-  const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).single()
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select('*')
+    .eq('id', id)
+    .single()
+
   if (error) throw error
   return data
 }
@@ -38,6 +46,7 @@ export async function uploadPublicationFile(file) {
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(path, file, { contentType: file.type || undefined, upsert: false })
+
   if (error) throw error
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
@@ -58,13 +67,24 @@ export async function removePublicationFile(path) {
 }
 
 export async function createPublication(payload) {
-  const { data, error } = await supabase.from(TABLE).insert(payload).select().single()
+  const { data, error } = await supabase
+    .from(TABLE)
+    .insert(payload)
+    .select()
+    .single()
+
   if (error) throw error
   return data
 }
 
 export async function updatePublication(id, payload) {
-  const { data, error } = await supabase.from(TABLE).update(payload).eq('id', id).select().single()
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+
   if (error) throw error
   return data
 }

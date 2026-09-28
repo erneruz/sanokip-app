@@ -1,4 +1,4 @@
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function Navbar() {
     return (
@@ -25,8 +25,8 @@ function Navbar() {
                         Blog & News
                     </Link>
 
-                    <Link to="/publication" className="hover:text-blue-600 text-gray-500 transition-colors duration-300">
-                       Publications
+                    <Link to="/publications" className="hover:text-blue-600 text-gray-500 transition-colors duration-300">
+                        Publications
                     </Link>
                 </div>
 
@@ -35,9 +35,7 @@ function Navbar() {
                 </button>
             </nav>
         </header>
-
     );
 }
-
 
 export default Navbar;
