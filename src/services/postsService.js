@@ -301,3 +301,46 @@ export async function getPostsByAuthor(authorId) {
 }
 
 // ── end added ────────────────────────────────────────────────────────
+
+// ── added: paginated version of the above, 9 posts per page, plus the true
+//    total count so the author page's "Articles (N)" number stays accurate
+//    no matter which page you're currently viewing ──────────────────────────
+
+const AUTHOR_PAGE_SIZE = 9;
+
+export async function getPaginatedPostsByAuthor(authorId, page = 1) {
+  const from = (page - 1) * AUTHOR_PAGE_SIZE;
+  const to = from + AUTHOR_PAGE_SIZE - 1;
+
+  const { data, count, error } = await supabase
+    .from('posts')
+    .select(`
+      id,
+      title,
+      slug,
+      excerpt,
+      cover_image_url,
+      published_at,
+      categories (
+        id,
+        name,
+        slug
+      )
+    `, { count: 'exact' })
+    .eq('author_id', authorId)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    posts: data ?? [],
+    totalPages: Math.ceil((count ?? 0) / AUTHOR_PAGE_SIZE),
+    totalCount: count ?? 0,
+  };
+}
+
+// ── end added ────────────────────────────────────────────────────────

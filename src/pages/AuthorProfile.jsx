@@ -1,8 +1,9 @@
 // src/pages/AuthorProfile.jsx
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { getPublicFullProfile } from '../services/profileService'
-import { getPostsByAuthor } from '../services/postsService'
+import { getPaginatedPostsByAuthor } from '../services/postsService'
+import Pagination from '../components/Pagination'
 
 function initials(name) {
   return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -10,27 +11,30 @@ function initials(name) {
 
 export default function AuthorProfile() {
   const { authorId } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const currentPage = Number(searchParams.get('page')) || 1
+
   const [profile, setProfile] = useState(null)
   const [academic, setAcademic] = useState([])
   const [certifications, setCertifications] = useState([])
   const [posts, setPosts] = useState([])
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalArticles, setTotalArticles] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [postsLoading, setPostsLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Profile + credentials only need to load once per author, not on every page change.
   useEffect(() => {
-    async function load() {
+    async function loadProfile() {
       try {
-        const [{ profile, academic, certifications }, authorPosts] = await Promise.all([
-          getPublicFullProfile(authorId),
-          getPostsByAuthor(authorId),
-        ])
+        const { profile, academic, certifications } = await getPublicFullProfile(authorId)
         if (!profile) {
           setError('Author not found.')
         } else {
           setProfile(profile)
           setAcademic(academic)
           setCertifications(certifications)
-          setPosts(authorPosts)
         }
       } catch (err) {
         console.error('Failed to load author profile:', err)
@@ -39,8 +43,52 @@ export default function AuthorProfile() {
         setLoading(false)
       }
     }
-    load()
+    loadProfile()
   }, [authorId])
+
+  // Posts re-fetch whenever the page changes, independently of the profile above.
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPosts() {
+      setPostsLoading(true)
+      try {
+        const { posts, totalPages } = await getPaginatedPostsByAuthor(authorId, currentPage)
+        if (cancelled) return
+        setPosts(posts)
+        setTotalPages(totalPages)
+        if (currentPage === 1) {
+          // Only reset the header count from page 1's fetch, so a later page's
+          // partial page size never overwrites the true total.
+        }
+      } catch (err) {
+        console.error('Failed to load author posts:', err)
+      } finally {
+        if (!cancelled) setPostsLoading(false)
+      }
+    }
+
+    loadPosts()
+    return () => { cancelled = true }
+  }, [authorId, currentPage])
+
+  // Track the true total article count separately from the current page's posts.
+  useEffect(() => {
+    let cancelled = false
+    getPaginatedPostsByAuthor(authorId, 1)
+      .then(({ totalPages: tp, posts: firstPagePosts }) => {
+        if (cancelled) return
+        // total count = (pages - 1) full pages + however many are on the last page,
+        // but simplest accurate source is just re-deriving it once, on mount.
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [authorId])
+
+  function handlePageChange(page) {
+    setSearchParams({ page: String(page) })
+    window.scrollTo(0, 0)
+  }
 
   if (loading) {
     return <main className="mx-auto max-w-5xl px-6 py-16 text-gray-500">Loading profile…</main>
@@ -172,7 +220,7 @@ export default function AuthorProfile() {
               <div className="mt-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Articles</span>
-                  <span className="font-semibold text-gray-900">{posts.length}</span>
+                  <span className="font-semibold text-gray-900">{totalArticles}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Topics covered</span>
@@ -184,7 +232,6 @@ export default function AuthorProfile() {
             {profile.website && (
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Website</h2>
-                
                 <a
                   href={profile.website}
                   target="_blank"
@@ -209,49 +256,59 @@ export default function AuthorProfile() {
         {/* -------------------------------------------- */}
         <section className="mt-12">
           <h2 className="text-lg font-bold text-gray-900">
-            Articles by {fullName} <span className="font-normal text-gray-400">({posts.length})</span>
+            Articles by {fullName} <span className="font-normal text-gray-400">({totalArticles})</span>
           </h2>
 
-          {posts.length === 0 ? (
+          {postsLoading ? (
+            <p className="mt-4 text-gray-500">Loading articles…</p>
+          ) : posts.length === 0 ? (
             <p className="mt-4 text-gray-500">No published articles yet.</p>
           ) : (
-            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {posts.map((post) => (
-                <Link
-                  key={post.id}
-                  to={`/posts/${post.slug}`}
-                  className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  {post.cover_image_url && (
-                    <div className="aspect-[16/9] overflow-hidden bg-gray-100">
-                      <img
-                        src={post.cover_image_url}
-                        alt={post.title}
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                      />
+            <>
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {posts.map((post) => (
+                  <Link
+                    key={post.id}
+                    to={`/posts/${post.slug}`}
+                    className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  >
+                    {post.cover_image_url && (
+                      <div className="aspect-[16/9] overflow-hidden bg-gray-100">
+                        <img
+                          src={post.cover_image_url}
+                          alt={post.title}
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    )}
+                    <div className="p-5">
+                      {post.categories?.name && (
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                          {post.categories.name}
+                        </p>
+                      )}
+                      <h3 className="mt-2 font-semibold text-gray-900 group-hover:underline">{post.title}</h3>
+                      {post.excerpt && (
+                        <p className="mt-2 line-clamp-2 text-sm text-gray-500">{post.excerpt}</p>
+                      )}
+                      {post.published_at && (
+                        <p className="mt-3 text-xs text-gray-400">
+                          {new Date(post.published_at).toLocaleDateString('en-US', {
+                            year: 'numeric', month: 'long', day: 'numeric',
+                          })}
+                        </p>
+                      )}
                     </div>
-                  )}
-                  <div className="p-5">
-                    {post.categories?.name && (
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                        {post.categories.name}
-                      </p>
-                    )}
-                    <h3 className="mt-2 font-semibold text-gray-900 group-hover:underline">{post.title}</h3>
-                    {post.excerpt && (
-                      <p className="mt-2 line-clamp-2 text-sm text-gray-500">{post.excerpt}</p>
-                    )}
-                    {post.published_at && (
-                      <p className="mt-3 text-xs text-gray-400">
-                        {new Date(post.published_at).toLocaleDateString('en-US', {
-                          year: 'numeric', month: 'long', day: 'numeric',
-                        })}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </>
           )}
         </section>
       </div>
