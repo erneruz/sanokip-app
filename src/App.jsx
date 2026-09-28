@@ -8,6 +8,7 @@ import AdminLayout from './layouts/AdminLayout'
 import Blog from './pages/Blog'
 import Post from './pages/Post'
 import About from './pages/About'
+import Publications from './pages/Publications'
 import AuthorProfile from './pages/AuthorProfile'
 import NotFound from './pages/NotFound'
 import Login from './pages/admin/Login'
@@ -15,6 +16,8 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProfile from './pages/admin/AdminProfile'
 import AdminPosts from './pages/admin/AdminPosts'
 import PostEditor from './pages/admin/PostEditor'
+import AdminPublications from './pages/admin/AdminPublications'
+import PublicationEditor from './pages/admin/PublicationEditor'
 import ComingSoon from './pages/admin/ComingSoon'
 
 function App() {
@@ -27,9 +30,10 @@ function App() {
             <Route path="/" element={<Navigate to="/blog" replace />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/posts/:slug" element={<Post />} />
+            <Route path="/publications" element={<Publications />} />
             <Route path="/about" element={<About />} />
-            <Route path="*" element={<NotFound />} />
             <Route path="/authors/:authorId" element={<AuthorProfile />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
 
           <Route path="/admin/login" element={<Login />} />
@@ -40,10 +44,12 @@ function App() {
             <Route path="posts" element={<AdminPosts />} />
             <Route path="posts/new" element={<PostEditor />} />
             <Route path="posts/:id/edit" element={<PostEditor />} />
+            <Route path="publications" element={<AdminPublications />} />
+            <Route path="publications/new" element={<PublicationEditor />} />
+            <Route path="publications/:id/edit" element={<PublicationEditor />} />
             <Route path="users" element={<ComingSoon title="Users" />} />
             <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
             <Route path="messages" element={<ComingSoon title="Messages" />} />
-            <Route path="publications" element={<ComingSoon title="Publications" />} />
             <Route path="events" element={<ComingSoon title="Events" />} />
             <Route path="services" element={<ComingSoon title="Services" />} />
             <Route path="projects" element={<ComingSoon title="Projects" />} />

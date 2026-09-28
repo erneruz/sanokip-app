@@ -26,7 +26,7 @@ function Navbar() {
                     </Link>
 
                     <Link to="/publication" className="hover:text-blue-600 text-gray-500 transition-colors duration-300">
-                       Reports & Publications
+                       Publications
                     </Link>
                 </div>
 
