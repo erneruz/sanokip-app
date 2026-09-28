@@ -343,4 +343,24 @@ export async function getPaginatedPostsByAuthor(authorId, page = 1) {
   };
 }
 
+// ── end added ────────────────────────────────────────────────────────\
+
+
+// ── added: count of distinct topics (categories) across ALL of an author's
+//    published posts, independent of which page is currently showing ────────
+
+export async function getAuthorTopicCount(authorId) {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('categories (id)')
+    .eq('author_id', authorId)
+    .eq('status', 'published');
+
+  if (error) {
+    throw error;
+  }
+
+  return new Set((data ?? []).map((p) => p.categories?.id).filter(Boolean)).size;
+}
+
 // ── end added ────────────────────────────────────────────────────────

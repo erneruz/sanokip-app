@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { getPublicFullProfile } from '../services/profileService'
-import { getPaginatedPostsByAuthor } from '../services/postsService'
+import { getPaginatedPostsByAuthor, getAuthorTopicCount } from '../services/postsService'
 import Pagination from '../components/Pagination'
 
 function initials(name) {
@@ -20,6 +20,7 @@ export default function AuthorProfile() {
   const [posts, setPosts] = useState([])
   const [totalPages, setTotalPages] = useState(1)
   const [totalArticles, setTotalArticles] = useState(0)
+  const [topicCount, setTopicCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [postsLoading, setPostsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -46,21 +47,29 @@ export default function AuthorProfile() {
     loadProfile()
   }, [authorId])
 
-  // Posts re-fetch whenever the page changes, independently of the profile above.
+  // Topic count also only depends on the author, not the current page.
+  useEffect(() => {
+    let cancelled = false
+    getAuthorTopicCount(authorId)
+      .then((count) => {
+        if (!cancelled) setTopicCount(count)
+      })
+      .catch((err) => console.error('Failed to load topic count:', err))
+    return () => { cancelled = true }
+  }, [authorId])
+
+  // Posts re-fetch whenever the page changes; the same call returns the true total.
   useEffect(() => {
     let cancelled = false
 
     async function loadPosts() {
       setPostsLoading(true)
       try {
-        const { posts, totalPages } = await getPaginatedPostsByAuthor(authorId, currentPage)
+        const { posts, totalPages, totalCount } = await getPaginatedPostsByAuthor(authorId, currentPage)
         if (cancelled) return
         setPosts(posts)
         setTotalPages(totalPages)
-        if (currentPage === 1) {
-          // Only reset the header count from page 1's fetch, so a later page's
-          // partial page size never overwrites the true total.
-        }
+        setTotalArticles(totalCount)
       } catch (err) {
         console.error('Failed to load author posts:', err)
       } finally {
@@ -71,19 +80,6 @@ export default function AuthorProfile() {
     loadPosts()
     return () => { cancelled = true }
   }, [authorId, currentPage])
-
-  // Track the true total article count separately from the current page's posts.
-  useEffect(() => {
-    let cancelled = false
-    getPaginatedPostsByAuthor(authorId, 1)
-      .then(({ totalPages: tp, posts: firstPagePosts }) => {
-        if (cancelled) return
-        // total count = (pages - 1) full pages + however many are on the last page,
-        // but simplest accurate source is just re-deriving it once, on mount.
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [authorId])
 
   function handlePageChange(page) {
     setSearchParams({ page: String(page) })
@@ -107,7 +103,6 @@ export default function AuthorProfile() {
   }
 
   const fullName = `${profile.first_name} ${profile.last_name}`.trim()
-  const categoriesCovered = new Set(posts.map((p) => p.categories?.name).filter(Boolean)).size
 
   return (
     <main className="bg-gray-50">
@@ -224,7 +219,7 @@ export default function AuthorProfile() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Topics covered</span>
-                  <span className="font-semibold text-gray-900">{categoriesCovered}</span>
+                  <span className="font-semibold text-gray-900">{topicCount}</span>
                 </div>
               </div>
             </div>
