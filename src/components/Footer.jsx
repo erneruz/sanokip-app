@@ -6,11 +6,11 @@ const navigate = [
   { label: 'About', to: '/about' },
   { label: 'Services', to: '/services' },
   { label: 'Blog & News', to: '/blog' },
-  { label: "Reports & Publications", to: '/publication' },
+  { label: "Publications", to: '/publication' },
 ]
 
 const company = [
-  { label: 'Reports & Publications', to: '/publication' },
+  { label: 'Publications', to: '/publication' },
   { label: 'Careers', to: '/careers' },
   { label: 'Partners', to: '/partners' },
   { label: 'Contact', to: '/contact' },
