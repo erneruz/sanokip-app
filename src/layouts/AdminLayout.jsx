@@ -15,6 +15,7 @@ const navSections = [
     items: [
       { label: 'Dashboard', to: '/admin', end: true, icon: IconGrid },
       { label: 'Posts', to: '/admin/posts', icon: IconDocument },
+      { label: 'Publications', to: '/admin/publications', icon: IconBook },
     ],
   },
   {
@@ -23,7 +24,6 @@ const navSections = [
       { label: 'Users', to: '/admin/users', icon: IconUsers },
       { label: 'Testimonials', to: '/admin/testimonials', icon: IconQuote },
       { label: 'Messages', to: '/admin/messages', icon: IconMail },
-      { label: 'Publications', to: '/admin/publications', icon: IconBook },
       { label: 'Events', to: '/admin/events', icon: IconCalendar },
       { label: 'Services', to: '/admin/services', icon: IconWrench },
       { label: 'Projects', to: '/admin/projects', icon: IconFolder },
