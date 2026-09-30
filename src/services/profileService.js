@@ -26,13 +26,14 @@ export async function getProfile(userId) {
   }
 }
 
-// ── added: public-safe profile fetch — never selects email or phone ──────────
+// ── changed: now includes email and phone — see Step 1's grant SQL,
+//    which must list these two columns for anon or this will 403 ──────────
 
 export async function getPublicProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, first_name, last_name, bio, current_position, organization, location, website, areas_of_expertise, avatar_url'
+      'id, first_name, last_name, bio, current_position, organization, location, website, areas_of_expertise, avatar_url, email, phone'
     )
     .eq('id', userId)
     .maybeSingle()
@@ -41,7 +42,7 @@ export async function getPublicProfile(userId) {
   return data
 }
 
-// ── end added ──────────────────────────────────────────────────────────────
+// ── end changed ──────────────────────────────────────────────────────────
 
 export async function getAcademicQualifications(profileId) {
   const { data, error } = await supabase
@@ -65,7 +66,6 @@ export async function getCertifications(profileId) {
   return data ?? []
 }
 
-// Fetches the profile plus its academic and certification records in one go.
 export async function getFullProfile(userId) {
   const [profile, academic, certifications] = await Promise.all([
     getProfile(userId),
@@ -75,8 +75,6 @@ export async function getFullProfile(userId) {
   return { profile, academic, certifications }
 }
 
-// ── added: same as getFullProfile, but uses the public-safe profile fetch ────
-
 export async function getPublicFullProfile(userId) {
   const [profile, academic, certifications] = await Promise.all([
     getPublicProfile(userId),
@@ -85,8 +83,6 @@ export async function getPublicFullProfile(userId) {
   ])
   return { profile, academic, certifications }
 }
-
-// ── end added ──────────────────────────────────────────────────────────────
 
 export async function updateProfile(userId, updates) {
   const {
@@ -114,8 +110,6 @@ export async function updateProfile(userId, updates) {
   return data
 }
 
-// Replaces the full set of academic records for a profile.
-// Simplest correct approach for a "save whole form" editor: wipe and re-insert.
 export async function replaceAcademicQualifications(profileId, records) {
   const clean = (records ?? [])
     .filter((r) => r.degree && r.institution)
@@ -137,7 +131,6 @@ export async function replaceAcademicQualifications(profileId, records) {
   return data
 }
 
-// Same wipe-and-reinsert approach for certifications.
 export async function replaceCertifications(profileId, records) {
   const clean = (records ?? [])
     .filter((r) => r.certification_name)
@@ -168,31 +161,4 @@ export async function uploadAvatar(file) {
 
   const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
   return data.publicUrl
-}
-
-
-// src/services/postsService.js — getPostBySlug needs an added join
-export async function getPostBySlug(slug) {
-  const { data, error } = await supabase
-    .from("posts")
-    .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      content,
-      cover_image_url,
-      author_first_name,
-      author_second_name,
-      author_id,
-      profiles ( id, first_name, last_name, avatar_url ),
-      published_at,
-      categories ( id, name, slug )
-    `)
-    .eq("slug", slug)
-    .eq("status", "published")
-    .single();
-
-  if (error) throw error;
-  return data;
 }

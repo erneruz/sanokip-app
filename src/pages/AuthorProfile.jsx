@@ -25,7 +25,6 @@ export default function AuthorProfile() {
   const [postsLoading, setPostsLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Profile + credentials only need to load once per author, not on every page change.
   useEffect(() => {
     async function loadProfile() {
       try {
@@ -47,7 +46,6 @@ export default function AuthorProfile() {
     loadProfile()
   }, [authorId])
 
-  // Topic count also only depends on the author, not the current page.
   useEffect(() => {
     let cancelled = false
     getAuthorTopicCount(authorId)
@@ -58,7 +56,6 @@ export default function AuthorProfile() {
     return () => { cancelled = true }
   }, [authorId])
 
-  // Posts re-fetch whenever the page changes; the same call returns the true total.
   useEffect(() => {
     let cancelled = false
 
@@ -176,6 +173,8 @@ export default function AuthorProfile() {
               </section>
             )}
 
+            {/* ── changed: added item.field ("<degree> in <field>"), matching
+                the shape AdminProfile.jsx already uses for the same data ── */}
             {academic.length > 0 && (
               <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <h2 className="font-semibold text-gray-900">Academic Qualifications</h2>
@@ -183,7 +182,9 @@ export default function AuthorProfile() {
                   {academic.map((item, i) => (
                     <div key={item.id ?? i} className="relative">
                       <span className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full bg-gray-900" />
-                      <p className="font-medium text-gray-900">{item.degree}</p>
+                      <p className="font-medium text-gray-900">
+                        {item.degree}{item.field && ` in ${item.field}`}
+                      </p>
                       {item.institution && <p className="text-sm text-gray-500">{item.institution}</p>}
                       {item.completion_year && <p className="text-xs text-gray-400">{item.completion_year}</p>}
                     </div>
@@ -191,6 +192,7 @@ export default function AuthorProfile() {
                 </div>
               </section>
             )}
+            {/* ── end changed ── */}
 
             {certifications.length > 0 && (
               <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -224,23 +226,51 @@ export default function AuthorProfile() {
               </div>
             </div>
 
-            {profile.website && (
+            {(profile.email || profile.phone || profile.website) && (
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Website</h2>
-                <a
-                  href={profile.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-900 hover:underline"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                  <span className="truncate">
-                    {profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                  </span>
-                </a>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Contact</h2>
+                <div className="mt-3 space-y-3">
+                  {profile.email && (
+                    <a
+                      href={`mailto:${profile.email}`}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:underline"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
+                        <rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 6-10 7L2 6" />
+                      </svg>
+                      <span className="truncate">{profile.email}</span>
+                    </a>
+                  )}
+
+                  {profile.phone && (
+                    <a
+                      href={`tel:${profile.phone}`}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:underline"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.36 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z" />
+                      </svg>
+                      <span>{profile.phone}</span>
+                    </a>
+                  )}
+
+                  {profile.website && (
+                    <a
+                      href={profile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:underline"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                      <span className="truncate">
+                        {profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                      </span>
+                    </a>
+                  )}
+                </div>
               </div>
             )}
           </div>
