@@ -7,6 +7,7 @@ const navigate = [
   { label: 'Services', to: '/services' },
   { label: 'Blog & News', to: '/blog' },
   { label: 'Publications', to: '/publications' },
+  { label: 'Create Account', to: '/register' },
 ]
 
 const company = [

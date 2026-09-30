@@ -6,25 +6,48 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let cancelled = false
+
+    async function applySession(session) {
       setUser(session?.user ?? null)
-      setLoading(false)
-    })
+
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .maybeSingle()
+        if (!cancelled) setRole(data?.role ?? 'user')
+      } else {
+        setRole(null)
+      }
+
+      if (!cancelled) setLoading(false)
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => applySession(session))
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      applySession(session)
     })
 
-    return () => listener.subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      listener.subscription.unsubscribe()
+    }
   }, [])
 
   const value = {
     user,
+    role,
+    isAdmin: role === 'admin',
     loading,
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
+    signUp: (email, password) => supabase.auth.signUp({ email, password }),
     signOut: () => supabase.auth.signOut(),
   }
 

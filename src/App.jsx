@@ -20,6 +20,10 @@ import AdminPublications from './pages/admin/AdminPublications'
 import PublicationEditor from './pages/admin/PublicationEditor'
 import ComingSoon from './pages/admin/ComingSoon'
 
+
+import Register from './pages/Register'
+import AdminUsers from './pages/admin/AdminUsers'
+
 function App() {
   return (
     <AuthProvider>
@@ -34,6 +38,9 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/authors/:authorId" element={<AuthorProfile />} />
             <Route path="*" element={<NotFound />} />
+
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
           </Route>
 
           <Route path="/admin/login" element={<Login />} />
@@ -47,7 +54,8 @@ function App() {
             <Route path="publications" element={<AdminPublications />} />
             <Route path="publications/new" element={<PublicationEditor />} />
             <Route path="publications/:id/edit" element={<PublicationEditor />} />
-            <Route path="users" element={<ComingSoon title="Users" />} />
+            <Route path="users" element={<AdminUsers />} />
+
             <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
             <Route path="messages" element={<ComingSoon title="Messages" />} />
             <Route path="events" element={<ComingSoon title="Events" />} />
