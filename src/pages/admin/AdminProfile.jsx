@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getFullProfile } from '../../services/profileService'
-import ProfileEditor from './ProfileEditor'
+import ProfileEditor from '../ProfileEditor' // ← changed: was './ProfileEditor'
 
 export default function AdminProfile() {
   const { user } = useAuth()

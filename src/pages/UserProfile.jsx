@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getFullProfile } from '../services/profileService'
-import ProfileEditor from './admin/ProfileEditor'
+import ProfileEditor from './ProfileEditor' // ← changed: was './admin/ProfileEditor'
 
 export default function UserProfile() {
   const { user, signOut } = useAuth()

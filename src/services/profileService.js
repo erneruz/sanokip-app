@@ -1,6 +1,7 @@
 // src/services/profileService.js
 import { supabase } from '../supabase'
 
+
 export async function getProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
@@ -26,9 +27,6 @@ export async function getProfile(userId) {
   }
 }
 
-// ── changed: now includes email and phone — see Step 1's grant SQL,
-//    which must list these two columns for anon or this will 403 ──────────
-
 export async function getPublicProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
@@ -41,8 +39,6 @@ export async function getPublicProfile(userId) {
   if (error) throw error
   return data
 }
-
-// ── end changed ──────────────────────────────────────────────────────────
 
 export async function getAcademicQualifications(profileId) {
   const { data, error } = await supabase
@@ -110,10 +106,11 @@ export async function updateProfile(userId, updates) {
   return data
 }
 
+// ── changed: strip _key (used by ProfileEditor's row-tracking) as well as uid/id ──
 export async function replaceAcademicQualifications(profileId, records) {
   const clean = (records ?? [])
     .filter((r) => r.degree && r.institution)
-    .map(({ uid, id, ...rest }) => ({ ...rest, profile_id: profileId }))
+    .map(({ uid, id, _key, ...rest }) => ({ ...rest, profile_id: profileId }))
 
   const { error: deleteError } = await supabase
     .from('academic_qualifications')
@@ -131,10 +128,11 @@ export async function replaceAcademicQualifications(profileId, records) {
   return data
 }
 
+// ── changed: strip _key here too, and use the correct table name ──────────────────
 export async function replaceCertifications(profileId, records) {
   const clean = (records ?? [])
     .filter((r) => r.certification_name)
-    .map(({ uid, id, ...rest }) => ({ ...rest, profile_id: profileId }))
+    .map(({ uid, id, _key, ...rest }) => ({ ...rest, profile_id: profileId }))
 
   const { error: deleteError } = await supabase
     .from('professional_certifications')
@@ -152,13 +150,19 @@ export async function replaceCertifications(profileId, records) {
   return data
 }
 
-export async function uploadAvatar(file) {
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${crypto.randomUUID()}.${fileExt}`
+// ── changed: upload to a stable, per-profile path with upsert, so re-uploading
+//    replaces the old photo instead of accumulating random files in storage ──────
+export async function uploadAvatar(profileId, file) {
+  const ext = file.name.split('.').pop()
+  const path = `${profileId}/avatar.${ext}`
 
-  const { error } = await supabase.storage.from('avatars').upload(fileName, file)
-  if (error) throw error
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true })
 
-  const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
-  return data.publicUrl
+  if (error) throw new Error('Avatar upload failed. ' + error.message)
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  // cache-bust so the new photo shows immediately, since the path is stable
+  return `${data.publicUrl}?t=${Date.now()}`
 }
