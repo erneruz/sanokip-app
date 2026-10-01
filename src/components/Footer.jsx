@@ -1,5 +1,6 @@
 // src/components/Footer.jsx
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const navigate = [
   { label: 'Home', to: '/blog' },
@@ -7,14 +8,6 @@ const navigate = [
   { label: 'Services', to: '/services' },
   { label: 'Blog & News', to: '/blog' },
   { label: 'Publications', to: '/publications' },
-]
-
-const company = [
-  { label: 'Publications', to: '/publications' },
-  { label: 'Careers', to: '/careers' },
-  { label: 'Partners', to: '/partners' },
-  { label: 'Contact', to: '/contact' },
-  { label: 'Register Profile', to: '/register' },
 ]
 
 const legal = [
@@ -47,6 +40,23 @@ function FooterColumn({ title, links }) {
 
 export default function Footer() {
   const year = new Date().getFullYear()
+  const { user } = useAuth()
+
+  // ── added: swap Register/Sign In for a single "Visit Your Profile" link
+  //    once someone is already logged in ──────────────────────────────────
+  const company = [
+    { label: 'Publications', to: '/publications' },
+    { label: 'Careers', to: '/careers' },
+    { label: 'Partners', to: '/partners' },
+    { label: 'Contact', to: '/contact' },
+    ...(user
+      ? [{ label: 'Visit Your Profile', to: '/profile' }]
+      : [
+          { label: 'Register Profile', to: '/register' },
+          { label: 'Sign In', to: '/login' },
+        ]),
+  ]
+  // ────────────────────────────────────────────────────────────────────────
 
   return (
     <footer className="bg-black text-white">

@@ -32,7 +32,8 @@ export default function Login() {
       .eq('id', data.user.id)
       .maybeSingle()
 
-    navigate(profile?.role === 'admin' ? '/admin' : '/')
+    // only this line changes, inside handleSubmit:
+    navigate(profile?.role === 'admin' ? '/admin' : '/profile')
   }
 
   return (

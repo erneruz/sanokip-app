@@ -24,6 +24,9 @@ import ComingSoon from './pages/admin/ComingSoon'
 import Register from './pages/Register'
 import AdminUsers from './pages/admin/AdminUsers'
 
+import RequireAuth from './components/RequireAuth'
+import UserProfile from './pages/UserProfile'
+
 function App() {
   return (
     <AuthProvider>
@@ -41,6 +44,7 @@ function App() {
 
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<RequireAuth><UserProfile /></RequireAuth>} />
           </Route>
 
           <Route path="/admin/login" element={<Login />} />
