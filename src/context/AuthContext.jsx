@@ -51,7 +51,10 @@ export function AuthProvider({ children }) {
       supabase.auth.signUp({
         email,
         password,
-        options: { data: { first_name: firstName, last_name: lastName } },
+        options: {
+          data: { first_name: firstName, last_name: lastName },
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       }),
     signOut: () => supabase.auth.signOut(),
   }
