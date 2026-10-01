@@ -1,8 +1,8 @@
-// src/components/ProtectedRoute.jsx
+// src/components/RequireAdmin.jsx
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-export default function ProtectedRoute({ children }) {
+export default function RequireAdmin({ children }) {
   const { user, isAdmin, loading } = useAuth()
 
   if (loading) return null

@@ -2,7 +2,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
-import ProtectedRoute from './components/ProtectedRoute'
+import RequireAdmin from './components/RequireAdmin'
+import RequireAuth from './components/RequireAuth'
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
 import Blog from './pages/Blog'
@@ -11,7 +12,7 @@ import About from './pages/About'
 import Publications from './pages/Publications'
 import AuthorProfile from './pages/AuthorProfile'
 import NotFound from './pages/NotFound'
-import Login from './pages/admin/Login'
+import Login from './pages/Login'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProfile from './pages/admin/AdminProfile'
 import AdminPosts from './pages/admin/AdminPosts'
@@ -20,11 +21,8 @@ import AdminPublications from './pages/admin/AdminPublications'
 import PublicationEditor from './pages/admin/PublicationEditor'
 import ComingSoon from './pages/admin/ComingSoon'
 
-
 import Register from './pages/Register'
 import AdminUsers from './pages/admin/AdminUsers'
-
-import RequireAuth from './components/RequireAuth'
 import UserProfile from './pages/UserProfile'
 
 function App() {
@@ -40,16 +38,15 @@ function App() {
             <Route path="/publications" element={<Publications />} />
             <Route path="/about" element={<About />} />
             <Route path="/authors/:authorId" element={<AuthorProfile />} />
-            <Route path="*" element={<NotFound />} />
-
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/profile" element={<RequireAuth><UserProfile /></RequireAuth>} />
+            <Route path="*" element={<NotFound />} />
           </Route>
 
           <Route path="/admin/login" element={<Login />} />
 
-          <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+          <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
             <Route index element={<AdminDashboard />} />
             <Route path="adminprofile" element={<AdminProfile />} />
             <Route path="posts" element={<AdminPosts />} />
@@ -59,7 +56,6 @@ function App() {
             <Route path="publications/new" element={<PublicationEditor />} />
             <Route path="publications/:id/edit" element={<PublicationEditor />} />
             <Route path="users" element={<AdminUsers />} />
-
             <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
             <Route path="messages" element={<ComingSoon title="Messages" />} />
             <Route path="events" element={<ComingSoon title="Events" />} />
