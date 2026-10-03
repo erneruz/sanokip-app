@@ -95,144 +95,132 @@ function Post() {
 
 
   // --------------------------------------------------
+  // AUTHOR DISPLAY HELPERS
+  // --------------------------------------------------
+
+  const authorName = post.profiles
+    ? `${post.profiles.first_name ?? ""} ${post.profiles.last_name ?? ""}`.trim()
+    : `${post.author_first_name ?? ""} ${post.author_second_name ?? ""}`.trim();
+
+  const authorAvatar = post.profiles?.avatar_url;
+
+
+  // --------------------------------------------------
   // MAIN POST PAGE
   // --------------------------------------------------
 
   return (
-    <main className="max-w-4xl mx-auto px-6 py-10">
+    <main>
 
       {/* -------------------------------------------- */}
-      {/* BREADCRUMB */}
+      {/* HERO: breadcrumb, category, title, author, date, read time */}
       {/* -------------------------------------------- */}
 
-      <div className="text-xs text-gray-500 mb-6">
+      <section className="bg-black text-white py-10">
+        <div className="max-w-4xl mx-auto px-6">
 
-        <Link
-          to="/"
-          className="hover:text-blue-600"
-        >
-          Home
-        </Link>
+          {/* BREADCRUMB */}
+          <div className="text-xs text-gray-400 mb-6">
+            <Link to="/" className="transition-colors hover:text-white">
+              Home
+            </Link>
+            {" / "}
+            <Link to="/blog" className="transition-colors hover:text-white">
+              Blog & Reports
+            </Link>
+            {" / "}
+            <span className="text-gray-300">{post.title}</span>
+          </div>
 
-        {" / "}
-
-        <Link
-          to="/blog"
-          className="hover:text-blue-600"
-        >
-          Blog & Reports
-        </Link>
-
-        {" / "}
-
-        <span>
-          {post.title}
-        </span>
-
-      </div>
-
-
-      {/* -------------------------------------------- */}
-      {/* CATEGORY */}
-      {/* -------------------------------------------- */}
-
-      <span className="inline-block bg-gray-100 px-3 py-2 rounded-md text-xs text-gray-700">
-
-        {post.categories?.name || "Article"}
-
-      </span>
-
-
-      {/* -------------------------------------------- */}
-      {/* TITLE */}
-      {/* -------------------------------------------- */}
-
-      <h1 className="text-4xl font-bold leading-tight mt-5">
-
-        {post.title}
-
-      </h1>
-
-
-      {/* -------------------------------------------- */}
-      {/* AUTHOR + DATE */}
-      {/* -------------------------------------------- */}
-
-      <p className="text-sm text-gray-500 mt-4">
-
-        {/* ── changed: author is now a link to their public profile when the
-            post has a real author_id + profiles row; falls back to the old
-            plain-text name for posts created before this feature existed ── */}
-        {post.profiles ? (
-          <Link
-            to={`/authors/${post.profiles.id}`}
-            className="hover:text-blue-600 hover:underline"
-          >
-            {post.profiles.first_name} {post.profiles.last_name}
-          </Link>
-        ) : (
-          <span>
-            {post.author_first_name}{" "}
-            {post.author_second_name}
+          {/* CATEGORY */}
+          <span className="inline-block rounded-md bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-200 ring-1 ring-white/15">
+            {post.categories?.name || "Article"}
           </span>
-        )}
-        {/* ─────────────────────────────────────────────────────────────── */}
 
-        {" · "}
+          {/* TITLE */}
+          <h1 className="mt-5 text-3xl font-bold leading-tight md:text-4xl">
+            {post.title}
+          </h1>
 
-        {post.published_at
-          ? new Date(
-              post.published_at
-            ).toLocaleDateString(
-              "en-US",
-              {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }
-            )
-          : "Unpublished"}
+          {/* AUTHOR + DATE, with avatar */}
+          <div className="mt-6 flex items-center gap-3">
+            <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/20">
+              {authorAvatar ? (
+                <img src={authorAvatar} alt={authorName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-300">
+                  {authorName?.[0]?.toUpperCase() ?? "?"}
+                </span>
+              )}
+            </span>
 
-          · {readingTime} min read
+            <div className="text-sm text-gray-400">
+              {post.profiles ? (
+                <Link
+                  to={`/authors/${post.profiles.id}`}
+                  className="font-medium text-gray-100 transition-colors hover:text-white hover:underline"
+                >
+                  {authorName}
+                </Link>
+              ) : (
+                <span className="font-medium text-gray-100">{authorName}</span>
+              )}
 
-      </p>
+              <div className="mt-0.5">
+                {post.published_at
+                  ? new Date(post.published_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  : "Unpublished"}
+                {" · "}
+                {readingTime} min read
+              </div>
+            </div>
+          </div>
 
-
-      {/* -------------------------------------------- */}
-      {/* COVER IMAGE */}
-      {/* -------------------------------------------- */}
-
-      {post.cover_image_url && (
-        <img
-          src={post.cover_image_url}
-          alt={post.title}
-          className="w-full aspect-[16/9] object-cover rounded-xl mt-8"
-        />
-      )}
-
-
-      {/* -------------------------------------------- */}
-      {/* ARTICLE CONTENT */}
-      {/* -------------------------------------------- */}
-
-      <article
-        className="prose max-w-none mt-8 break-words [&_img]:max-w-full [&_img]:h-auto"
-        dangerouslySetInnerHTML={{ __html: post.content }}
-      />
-
-
-      {/* -------------------------------------------- */}
-      {/* REACTIONS */}
-      {/* -------------------------------------------- */}
-
-      <PostReactions postId={post.id} />
+        </div>
+      </section>
 
 
       {/* -------------------------------------------- */}
-      {/* COMMENTS */}
+      {/* BODY: cover image, article, reactions, comments — all in one shadowed card */}
       {/* -------------------------------------------- */}
 
-      <CommentsSection postId={post.id} />
+      <div className="max-w-4xl mx-auto px-6 py-10">
+        <div className="overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-100">
+
+          {/* COVER IMAGE */}
+          {post.cover_image_url && (
+            <img
+              src={post.cover_image_url}
+              alt={post.title}
+              className="w-full aspect-[16/9] object-cover"
+            />
+          )}
+
+          <div className="px-6 py-8 md:px-10">
+
+            {/* ARTICLE CONTENT */}
+            <article
+              className="prose max-w-none break-words [&_img]:max-w-full [&_img]:h-auto"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+
+            {/* REACTIONS */}
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <PostReactions postId={post.id} />
+            </div>
+
+            {/* COMMENTS */}
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <CommentsSection postId={post.id} />
+            </div>
+
+          </div>
+        </div>
+      </div>
 
     </main>
   );
