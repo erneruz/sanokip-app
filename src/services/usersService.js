@@ -18,3 +18,16 @@ export async function setUserRole(userId, newRole) {
   })
   if (error) throw error
 }
+
+// ── added: admin-side profile deletion ─────────────────────────────────
+// Deletes the profile row and its related academic/certification records.
+// Note: this does NOT delete their Supabase Auth account/login — that
+// requires a service-role Edge Function and is out of scope here.
+export async function deleteUserProfile(userId) {
+  await supabase.from('academic_qualifications').delete().eq('profile_id', userId)
+  await supabase.from('professional_certifications').delete().eq('profile_id', userId)
+
+  const { error } = await supabase.from('profiles').delete().eq('id', userId)
+  if (error) throw error
+}
+// ─────────────────────────────────────────────────────────────────────

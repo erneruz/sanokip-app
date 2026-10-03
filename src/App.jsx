@@ -23,6 +23,7 @@ import ComingSoon from './pages/admin/ComingSoon'
 
 import Register from './pages/Register'
 import AdminUsers from './pages/admin/AdminUsers'
+import AdminUserProfile from './pages/admin/AdminUserProfile' // ← added
 import UserProfile from './pages/UserProfile'
 
 function App() {
@@ -61,6 +62,9 @@ function App() {
             <Route path="events" element={<ComingSoon title="Events" />} />
             <Route path="services" element={<ComingSoon title="Services" />} />
             <Route path="projects" element={<ComingSoon title="Projects" />} />
+
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="users/:userId" element={<AdminUserProfile />} /> {/* ← added */}
           </Route>
         </Routes>
       </BrowserRouter>
