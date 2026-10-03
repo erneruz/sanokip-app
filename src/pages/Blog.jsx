@@ -1,3 +1,4 @@
+// src/pages/Blog.jsx
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PostCard from '../components/PostCard';
@@ -16,7 +17,6 @@ function Blog() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // ── added: category list with counts, fetched once ─────────────────
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
@@ -24,7 +24,6 @@ function Blog() {
             .then(setCategories)
             .catch(() => {}); // fail silently — filter bar just won't show if this errors
     }, []);
-    // ─────────────────────────────────────────────────────────────────
 
     useEffect(() => {
         let cancelled = false;
@@ -76,49 +75,67 @@ function Blog() {
         )
     }
 
+    const selectedCategoryName = categories.find((c) => c.slug === selectedCategory)?.name;
+
     return (
         <main>
-            <section className="bg-black text-white py-8">
+            {/* ── Hero: title, description, and category filters all in one dark block ── */}
+            <section className="bg-black text-white py-10">
                 <div className="max-w-6xl mx-auto px-6">
-                    <p className="text-xs uppercase text-gray-400">
+                    <p className="text-xs uppercase tracking-widest text-gray-400">
                         Blog
                     </p>
 
-                    <div className="flex flex-col md:flex-row md:justify-between gap-6 mt-2">
-                        <h1 className="text-2xl font-semibold">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mt-2">
+                        <h1 className="text-3xl font-semibold">
                             Blog & News
                         </h1>
                         <p className="max-w-md text-sm text-gray-400">
                             Technical Articles, Geographic Write-ups, Science & Discovery, Research & Insights, Perspectives & Stories.
                         </p>
                     </div>
-                </div>
-            </section>
 
-            <section className="max-w-6xl mx-auto py-10 px-6">
-
-                {/* ── added: category filter bar, visually separated from the posts grid ── */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-10">
-                    <div className="flex flex-wrap gap-2.5">
+                    {/* ── Category filters, styled for the dark background ── */}
+                    <div className="mt-8 flex flex-wrap gap-2.5 border-t border-white/10 pt-6">
                         {categories.map((cat) => (
                             <button
                                 key={cat.slug}
                                 onClick={() => handleCategoryChange(cat.slug)}
-                                className={`cursor-pointer px-4 py-1.5 rounded-md text-sm border transition-shadow shadow-sm hover:shadow-md ${
+                                className={`cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
                                     selectedCategory === cat.slug
-                                        ? 'bg-black text-white border-black'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                                        ? 'bg-white text-black shadow-sm'
+                                        : 'bg-white/5 text-gray-300 ring-1 ring-white/15 hover:bg-white/10 hover:text-white hover:ring-white/30'
                                 }`}
                             >
-                                {cat.name} <span className="font-bold">({cat.count})</span>
+                                {cat.name}{' '}
+                                <span className={selectedCategory === cat.slug ? 'font-bold' : 'font-bold text-gray-400'}>
+                                    ({cat.count})
+                                </span>
                             </button>
                         ))}
                     </div>
                 </div>
-                {/* ──────────────────────────────────────────────────────────────────────── */}
+            </section>
+
+            <section className="max-w-6xl mx-auto py-12 px-6">
+
+                {/* ── Result context line: shows what's currently being viewed ── */}
+                {!loading && (
+                    <div className="mb-6 flex items-center justify-between">
+                        <p className="text-sm text-gray-500">
+                            {selectedCategory === 'all' ? (
+                                <>Showing all posts</>
+                            ) : (
+                                <>Showing posts in <span className="font-semibold text-gray-900">{selectedCategoryName}</span></>
+                            )}
+                        </p>
+                    </div>
+                )}
 
                 {posts.length === 0 ? (
-                    <p> No published posts are available</p>
+                    <div className="rounded-xl border border-dashed border-gray-300 py-16 text-center">
+                        <p className="text-gray-500">No published posts are available in this category yet.</p>
+                    </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {posts.map((post) => (
@@ -127,13 +144,13 @@ function Blog() {
                     </div>
                 )}
 
-                {/* ── added: pagination controls ── */}
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                />
-                {/* ──────────────────────────────── */}
+                <div className="mt-12">
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
             </section>
         </main>
     )
