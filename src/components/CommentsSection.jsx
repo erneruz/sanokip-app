@@ -62,9 +62,21 @@ export default function CommentsSection({ postId }) {
   const tree = buildCommentTree(comments)
 
   return (
-    <section id="comments" className="mt-12 border-t border-gray-200 pt-8">
-      <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-        <span>💬</span> Comments ({comments.length}) 
+    <section id="comments">
+      <style>{`
+        @keyframes comment-icon-shake {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-10deg) scale(1.1); }
+          75% { transform: rotate(10deg) scale(1.1); }
+        }
+        .comments-heading:hover .comments-icon {
+          animation: comment-icon-shake 0.4s ease-in-out;
+        }
+      `}</style>
+
+      <h2 className="comments-heading inline-flex items-center gap-2 text-lg font-bold text-gray-900">
+        <ChatIcon className="comments-icon h-5 w-5 text-gray-700" />
+        Comments <span className="text-gray-400">({comments.length})</span>
       </h2>
 
       <div className="mt-6">
@@ -89,5 +101,13 @@ export default function CommentsSection({ postId }) {
         </div>
       )}
     </section>
+  )
+}
+
+function ChatIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+    </svg>
   )
 }
