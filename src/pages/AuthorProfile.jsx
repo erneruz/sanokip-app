@@ -168,25 +168,43 @@ export default function AuthorProfile() {
           <div className="space-y-8 lg:col-span-2">
             {profile.bio && (
               <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="font-semibold text-gray-900">About</h2>
-                <p className="mt-3 whitespace-pre-line text-gray-600">{profile.bio}</p>
+                <SectionTitle icon={<DocIcon />}>About</SectionTitle>
+                <p className="mt-4 whitespace-pre-line text-gray-600">{profile.bio}</p>
               </section>
             )}
 
-            {/* ── changed: added item.field ("<degree> in <field>"), matching
-                the shape AdminProfile.jsx already uses for the same data ── */}
+            {/* ── changed: full field set — start/end year range, institution, country, specialization ── */}
             {academic.length > 0 && (
               <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="font-semibold text-gray-900">Academic Qualifications</h2>
-                <div className="mt-4 space-y-5 border-l-2 border-gray-100 pl-5">
+                <SectionTitle icon={<CapIcon />}>Academic Qualifications</SectionTitle>
+                <div className="mt-5 space-y-6 border-l-2 border-gray-100 pl-5">
                   {academic.map((item, i) => (
                     <div key={item.id ?? i} className="relative">
                       <span className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full bg-gray-900" />
-                      <p className="font-medium text-gray-900">
+
+                      <p className="font-semibold text-gray-900">
                         {item.degree}{item.field && ` in ${item.field}`}
                       </p>
-                      {item.institution && <p className="text-sm text-gray-500">{item.institution}</p>}
-                      {item.completion_year && <p className="text-xs text-gray-400">{item.completion_year}</p>}
+
+                      {(item.institution || item.country) && (
+                        <p className="mt-0.5 text-sm text-gray-600">
+                          {item.institution}
+                          {item.institution && item.country ? ', ' : ''}
+                          {item.country}
+                        </p>
+                      )}
+
+                      {(item.start_year || item.completion_year) && (
+                        <p className="mt-1 text-xs font-medium text-gray-400">
+                          {item.start_year || '—'} – {item.completion_year || 'Present'}
+                        </p>
+                      )}
+
+                      {item.specialization && (
+                        <p className="mt-2 inline-block rounded-md bg-gray-50 px-2.5 py-1 text-xs text-gray-600 ring-1 ring-gray-100">
+                          Specialization: {item.specialization}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -194,20 +212,44 @@ export default function AuthorProfile() {
             )}
             {/* ── end changed ── */}
 
+            {/* ── changed: full field set — issuing body, certificate number, year obtained, expiry, specialization ── */}
             {certifications.length > 0 && (
               <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="font-semibold text-gray-900">Professional Certifications</h2>
-                <div className="mt-4 space-y-5 border-l-2 border-gray-100 pl-5">
+                <SectionTitle icon={<BadgeIcon />}>Professional Certifications</SectionTitle>
+                <div className="mt-5 space-y-6 border-l-2 border-gray-100 pl-5">
                   {certifications.map((item, i) => (
                     <div key={item.id ?? i} className="relative">
                       <span className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full bg-gray-900" />
-                      <p className="font-medium text-gray-900">{item.certification_name}</p>
-                      {item.year_obtained && <p className="text-xs text-gray-400">{item.year_obtained}</p>}
+
+                      <p className="font-semibold text-gray-900">{item.certification_name}</p>
+
+                      {(item.certification_body || item.certification_number) && (
+                        <p className="mt-0.5 text-sm text-gray-600">
+                          {item.certification_body}
+                          {item.certification_body && item.certification_number ? ' · ' : ''}
+                          {item.certification_number && `No. ${item.certification_number}`}
+                        </p>
+                      )}
+
+                      {(item.year_obtained || item.expiry_date) && (
+                        <p className="mt-1 text-xs font-medium text-gray-400">
+                          {item.year_obtained && `Obtained ${item.year_obtained}`}
+                          {item.year_obtained && item.expiry_date ? ' · ' : ''}
+                          {item.expiry_date && `Expires ${item.expiry_date}`}
+                        </p>
+                      )}
+
+                      {item.specialization && (
+                        <p className="mt-2 inline-block rounded-md bg-gray-50 px-2.5 py-1 text-xs text-gray-600 ring-1 ring-gray-100">
+                          Specialization: {item.specialization}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
               </section>
             )}
+            {/* ── end changed ── */}
           </div>
 
           {/* SIDEBAR */}
@@ -338,5 +380,46 @@ export default function AuthorProfile() {
         </section>
       </div>
     </main>
+  )
+}
+
+// ── added: shared section title, visually distinct (icon + uppercase tracking) from the list content below it ──
+function SectionTitle({ icon, children }) {
+  return (
+    <div className="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white">
+        {icon}
+      </span>
+      <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">{children}</h2>
+    </div>
+  )
+}
+
+function DocIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="16" y2="17" />
+    </svg>
+  )
+}
+
+function CapIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+      <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />
+    </svg>
+  )
+}
+
+function BadgeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="6" />
+      <path d="M9 14 7 22l5-3 5 3-2-8" />
+    </svg>
   )
 }
