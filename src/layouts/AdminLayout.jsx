@@ -45,19 +45,20 @@ export default function AdminLayout() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* -------------------------------------------- */}
-      {/* SIDEBAR */}
+      {/* SIDEBAR — fixed to viewport height, never scrolls with page content */}
       {/* -------------------------------------------- */}
-      <aside className="flex w-64 shrink-0 flex-col bg-gradient-to-b from-black to-gray-700 text-white">
-        <div className="flex items-center gap-2 px-6 py-6">
+      <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-gradient-to-b from-black to-gray-700 text-white">
+        <div className="flex shrink-0 items-center gap-2 px-6 py-6">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z" />
             </svg>
           </div>
-          <span className="font-semibold">Sanokip Admin</span>
+          <span className="font-semibold">Peakstar Admin</span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {/* ── changed: only this nav list scrolls internally if it ever grows tall; sidebar itself never moves ── */}
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
           {navSections.map((section) => (
             <div key={section.label} className="mb-6">
               <p className="px-3 text-xs font-semibold uppercase tracking-wider text-white/40">
@@ -84,15 +85,16 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="border-t border-white/10 px-3 py-3">
+        {/* ── changed: shrink-0 ensures this never gets squeezed out of view ── */}
+        <div className="shrink-0 border-t border-white/10 px-3 py-3">
           <ProfileMenu profile={profile} email={user?.email} onSignOut={signOut} />
         </div>
       </aside>
 
       {/* -------------------------------------------- */}
-      {/* PAGE CONTENT */}
+      {/* PAGE CONTENT — this is what scrolls, independently of the sidebar */}
       {/* -------------------------------------------- */}
-      <div className="flex-1 overflow-x-hidden">
+      <div className="min-w-0 flex-1 overflow-x-hidden">
         <Outlet />
       </div>
     </div>

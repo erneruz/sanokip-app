@@ -34,7 +34,7 @@ export async function getDashboardStats() {
     safeCount(supabase.from('comments').select('id', { count: 'exact', head: true })),
     safeCount(supabase.from('reactions').select('id', { count: 'exact', head: true }).eq('reaction', 'like')),
     safeCount(supabase.from('reactions').select('id', { count: 'exact', head: true }).eq('reaction', 'dislike')),
-    safeCount(supabase.from('users').select('id', { count: 'exact', head: true })),
+    safeCount(supabase.from('profiles').select('id', { count: 'exact', head: true })), // ← changed: was 'users'
     safeCount(supabase.from('testimonials').select('id', { count: 'exact', head: true })),
     safeCount(supabase.from('messages').select('id', { count: 'exact', head: true })),
     safeCount(supabase.from('publications').select('id', { count: 'exact', head: true })),
