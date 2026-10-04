@@ -7,16 +7,29 @@ import {
   updateProject,
   uploadProjectImage,
 } from '../../services/projectsService'
+import { computeProjectStatus } from '../../utils/projectStatus'
 import { slugify } from '../../utils/slugify'
 
 const emptyProject = {
   title: '',
   summary: '',
-  status: 'ongoing',
+  start_date: '',
+  end_date: '',
   location: '',
-  year: '',
   featured: false,
   image_url: null,
+}
+
+const STATUS_LABELS = {
+  completed: 'Completed',
+  ongoing: 'Ongoing',
+  upcoming: 'Upcoming',
+}
+
+const STATUS_STYLES = {
+  completed: 'bg-gray-900 text-white',
+  ongoing: 'bg-blue-600 text-white',
+  upcoming: 'bg-gray-100 text-gray-700',
 }
 
 export default function ProjectEditor() {
@@ -35,9 +48,9 @@ export default function ProjectEditor() {
       setForm({
         title: project.title ?? '',
         summary: project.summary ?? '',
-        status: project.status ?? 'ongoing',
+        start_date: project.start_date ?? '',
+        end_date: project.end_date ?? '',
         location: project.location ?? '',
-        year: project.year ?? '',
         featured: project.featured ?? false,
         image_url: project.image_url ?? null,
       })
@@ -63,14 +76,31 @@ export default function ProjectEditor() {
     }
   }
 
+  // ── live preview: recalculated on every render as the admin edits the dates ──
+  const previewStatus = form.start_date
+    ? computeProjectStatus(form.start_date, form.end_date || null)
+    : null
+
   async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
     setError(null)
 
+    // ── status and year are derived automatically from the dates, not typed manually ──
+    const status = computeProjectStatus(form.start_date, form.end_date || null)
+    const year = form.start_date ? new Date(form.start_date).getFullYear().toString() : ''
+
     const payload = {
-      ...form,
+      title: form.title,
+      summary: form.summary,
+      start_date: form.start_date || null,
+      end_date: form.end_date || null,
+      location: form.location,
+      featured: form.featured,
+      image_url: form.image_url,
       slug: slugify(form.title),
+      status,
+      year,
     }
 
     try {
@@ -114,30 +144,42 @@ export default function ProjectEditor() {
           />
         </div>
 
+        {/* ── changed: Year + Status dropdown replaced with Start/End Date ── */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              value={form.status}
-              onChange={(e) => updateField('status', e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-            >
-              <option value="completed">Completed</option>
-              <option value="ongoing">Ongoing</option>
-              <option value="upcoming">Upcoming</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Year</label>
+            <label className="block text-sm font-medium text-gray-700">Start Date</label>
             <input
-              type="text"
-              value={form.year}
-              onChange={(e) => updateField('year', e.target.value)}
-              placeholder="e.g. 2026"
+              type="date"
+              required
+              value={form.start_date}
+              onChange={(e) => updateField('start_date', e.target.value)}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">End Date</label>
+            <input
+              type="date"
+              value={form.end_date}
+              min={form.start_date || undefined}
+              onChange={(e) => updateField('end_date', e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+            <p className="mt-1 text-xs text-gray-400">Leave blank if the project is ongoing with no set end date.</p>
+          </div>
         </div>
+
+        {/* ── added: live, read-only status preview based on the dates above ── */}
+        {previewStatus && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            Status will be:
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[previewStatus]}`}>
+              {STATUS_LABELS[previewStatus]}
+            </span>
+            <span className="text-xs text-gray-400">(calculated automatically from the dates)</span>
+          </div>
+        )}
+        {/* ───────────────────────────────────────────────────────────────── */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Location</label>

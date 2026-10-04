@@ -1,5 +1,16 @@
 // src/services/projectsService.js
 import { supabase } from '../supabase'
+import { computeProjectStatus } from '../utils/projectStatus'
+
+// ── changed: recompute status live from dates on every fetch, so the
+//    badge is always correct even if nobody has re-saved the project ──
+function withLiveStatus(project) {
+  if (!project) return project
+  return {
+    ...project,
+    status: computeProjectStatus(project.start_date, project.end_date),
+  }
+}
 
 export async function getProjects() {
   const { data, error } = await supabase
@@ -8,7 +19,7 @@ export async function getProjects() {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return data ?? []
+  return (data ?? []).map(withLiveStatus)
 }
 
 export async function getProjectBySlug(slug) {
@@ -19,7 +30,7 @@ export async function getProjectBySlug(slug) {
     .single()
 
   if (error) throw error
-  return data
+  return withLiveStatus(data)
 }
 
 export async function getAllProjectsForAdmin() {
@@ -29,7 +40,7 @@ export async function getAllProjectsForAdmin() {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return data ?? []
+  return (data ?? []).map(withLiveStatus)
 }
 
 export async function getProjectById(id) {
@@ -40,7 +51,7 @@ export async function getProjectById(id) {
     .single()
 
   if (error) throw error
-  return data
+  return withLiveStatus(data)
 }
 
 export async function createProject(project) {
