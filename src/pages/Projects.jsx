@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getProjects } from '../services/projectsService'
 import ProjectCard from '../components/ProjectCard'
+import Pagination from '../components/Pagination'
 
 const FILTERS = [
   { key: 'all', label: 'All Projects' },
@@ -17,11 +18,14 @@ const STATUS_CONFIG = {
   upcoming: { label: 'Upcoming', className: 'bg-white text-gray-700 ring-1 ring-gray-300' },
 }
 
+const PAGE_SIZE = 6
+
 export default function Projects() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     let cancelled = false
@@ -43,6 +47,10 @@ export default function Projects() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeFilter])
+
   const counts = {
     all: projects.length,
     completed: projects.filter((p) => p.status === 'completed').length,
@@ -52,11 +60,20 @@ export default function Projects() {
 
   const featured = projects.find((p) => p.featured)
   const filtered = projects.filter((p) => activeFilter === 'all' || p.status === activeFilter)
-  // On the "All" view, the featured project already gets its own large spot above —
-  // skip it in the grid so it isn't shown twice.
   const gridProjects = activeFilter === 'all' && featured
     ? filtered.filter((p) => p.id !== featured.id)
     : filtered
+
+  const totalPages = Math.max(1, Math.ceil(gridProjects.length / PAGE_SIZE))
+  const paginatedProjects = gridProjects.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  )
+
+  function handlePageChange(page) {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   if (loading) {
     return (
@@ -78,7 +95,6 @@ export default function Projects() {
     <main>
       {/* ── HERO ── */}
       <section className="relative overflow-hidden bg-black text-white">
-        {/* single, deliberate entrance — not repeated per-section */}
         <style>{`
           @keyframes hero-rise {
             from { opacity: 0; transform: translateY(14px); }
@@ -107,7 +123,6 @@ export default function Projects() {
             Explore the work we've completed, what we're building now, and what's next.
           </p>
 
-          {/* ── Category filters ── */}
           <div className="hero-rise-delay mt-8 flex flex-wrap gap-2.5 border-t border-white/10 pt-6">
             {FILTERS.map((filter) => (
               <button
@@ -131,8 +146,8 @@ export default function Projects() {
 
       <div className="max-w-6xl mx-auto px-6 py-12">
 
-        {/* ── FEATURED PROJECT (shown only on the "All" view) ── */}
-        {activeFilter === 'all' && featured && (
+        {/* ── FEATURED PROJECT (shown only on the "All" view, and only on page 1) ── */}
+        {activeFilter === 'all' && currentPage === 1 && featured && (
           <section className="mb-14">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Featured</p>
             <Link
@@ -174,15 +189,26 @@ export default function Projects() {
         )}
 
         {/* ── PROJECT GRID ── */}
-        {gridProjects.length === 0 ? (
+        {paginatedProjects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 py-16 text-center">
             <p className="text-gray-500">No projects in this category yet.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {gridProjects.map((project) => (
+            {paginatedProjects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
+          </div>
+        )}
+
+        {/* ── pagination controls ── */}
+        {totalPages > 1 && (
+          <div className="mt-12">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>

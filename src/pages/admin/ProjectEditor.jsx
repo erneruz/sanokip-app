@@ -61,20 +61,22 @@ export default function ProjectEditor() {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  async function handleImageUpload(e) {
-    const file = e.target.files[0]
-    if (!file) return
+    async function handleImageUpload(e) {
+        const file = e.target.files[0]
+        if (!file) return
 
-    setUploadingImage(true)
-    try {
-      const url = await uploadProjectImage(file)
-      updateField('image_url', url)
-    } catch (err) {
-      console.error('Image upload failed:', err)
-    } finally {
-      setUploadingImage(false)
+        setUploadingImage(true)
+        setError(null) // ← added
+        try {
+        const url = await uploadProjectImage(file)
+        updateField('image_url', url)
+        } catch (err) {
+        console.error('Image upload failed:', err)
+        setError('Image upload failed. Please check your connection and try again.') // ← added
+        } finally {
+        setUploadingImage(false)
+        }
     }
-  }
 
   // ── live preview: recalculated on every render as the admin edits the dates ──
   const previewStatus = form.start_date
