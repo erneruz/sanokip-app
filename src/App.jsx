@@ -9,6 +9,7 @@ import AdminLayout from './layouts/AdminLayout'
 import Blog from './pages/Blog'
 import Post from './pages/Post'
 import About from './pages/About'
+import Projects from './pages/Projects'
 import Publications from './pages/Publications'
 import AuthorProfile from './pages/AuthorProfile'
 import NotFound from './pages/NotFound'
@@ -19,6 +20,8 @@ import AdminPosts from './pages/admin/AdminPosts'
 import PostEditor from './pages/admin/PostEditor'
 import AdminPublications from './pages/admin/AdminPublications'
 import PublicationEditor from './pages/admin/PublicationEditor'
+import AdminProjects from './pages/admin/AdminProjects'
+import ProjectEditor from './pages/admin/ProjectEditor'
 import ComingSoon from './pages/admin/ComingSoon'
 
 import Register from './pages/Register'
@@ -38,6 +41,7 @@ function App() {
             <Route path="/posts/:slug" element={<Post />} />
             <Route path="/publications" element={<Publications />} />
             <Route path="/about" element={<About />} />
+            <Route path="/projects" element={<Projects />} />
             <Route path="/authors/:authorId" element={<AuthorProfile />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
@@ -61,7 +65,9 @@ function App() {
             <Route path="messages" element={<ComingSoon title="Messages" />} />
             <Route path="events" element={<ComingSoon title="Events" />} />
             <Route path="services" element={<ComingSoon title="Services" />} />
-            <Route path="projects" element={<ComingSoon title="Projects" />} />
+            <Route path="projects" element={<AdminProjects />} />
+            <Route path="projects/new" element={<ProjectEditor />} />
+            <Route path="projects/:id/edit" element={<ProjectEditor />} />
 
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/:userId" element={<AdminUserProfile />} /> {/* ← added */}
