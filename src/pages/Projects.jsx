@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getProjects } from '../services/projectsService'
 import ProjectCard from '../components/ProjectCard'
+import ProjectModal from '../components/ProjectModal'
 import Pagination from '../components/Pagination'
 
 const FILTERS = [
@@ -26,6 +27,7 @@ export default function Projects() {
   const [error, setError] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedProject, setSelectedProject] = useState(null) // ← added
 
   useEffect(() => {
     let cancelled = false
@@ -150,9 +152,10 @@ export default function Projects() {
         {activeFilter === 'all' && currentPage === 1 && featured && (
           <section className="mb-14">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Featured</p>
-            <Link
-              to={`/projects/${featured.slug}`}
-              className="group mt-3 grid grid-cols-1 overflow-hidden rounded-2xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-2xl md:grid-cols-2"
+            {/* ── changed: was a <Link>; now opens the modal ── */}
+            <button
+              onClick={() => setSelectedProject(featured)}
+              className="group mt-3 grid w-full grid-cols-1 overflow-hidden rounded-2xl bg-white text-left shadow-lg transition-shadow duration-300 hover:shadow-2xl md:grid-cols-2"
             >
               <div className="relative overflow-hidden">
                 {featured.image_url ? (
@@ -176,7 +179,8 @@ export default function Projects() {
                   <p className="text-xs text-gray-500">{featured.location} · {featured.year}</p>
                 )}
                 <h2 className="mt-2 text-2xl font-bold text-gray-900">{featured.title}</h2>
-                <p className="mt-3 text-sm leading-relaxed text-gray-600">{featured.summary}</p>
+                {/* ── changed: featured.summary → featured.description, still clamped here ── */}
+                <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-600">{featured.description}</p>
                 <span className="mt-6 inline-flex w-fit items-center gap-1.5 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition group-hover:bg-gray-700">
                   View Project
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -184,7 +188,7 @@ export default function Projects() {
                   </svg>
                 </span>
               </div>
-            </Link>
+            </button>
           </section>
         )}
 
@@ -196,12 +200,11 @@ export default function Projects() {
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {paginatedProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project.id} project={project} onOpen={setSelectedProject} />
             ))}
           </div>
         )}
 
-        {/* ── pagination controls ── */}
         {totalPages > 1 && (
           <div className="mt-12">
             <Pagination
@@ -233,6 +236,11 @@ export default function Projects() {
           </Link>
         </div>
       </section>
+
+      {/* ── added: detail modal ── */}
+      {selectedProject && (
+        <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />
+      )}
     </main>
   )
 }

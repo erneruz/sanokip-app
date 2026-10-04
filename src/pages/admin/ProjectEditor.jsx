@@ -12,7 +12,7 @@ import { slugify } from '../../utils/slugify'
 
 const emptyProject = {
   title: '',
-  summary: '',
+  description: '', // ← changed: was summary
   start_date: '',
   end_date: '',
   location: '',
@@ -47,7 +47,7 @@ export default function ProjectEditor() {
     getProjectById(id).then((project) => {
       setForm({
         title: project.title ?? '',
-        summary: project.summary ?? '',
+        description: project.description ?? '', // ← changed: was project.summary
         start_date: project.start_date ?? '',
         end_date: project.end_date ?? '',
         location: project.location ?? '',
@@ -61,24 +61,23 @@ export default function ProjectEditor() {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-    async function handleImageUpload(e) {
-        const file = e.target.files[0]
-        if (!file) return
+  async function handleImageUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
 
-        setUploadingImage(true)
-        setError(null) // ← added
-        try {
-        const url = await uploadProjectImage(file)
-        updateField('image_url', url)
-        } catch (err) {
-        console.error('Image upload failed:', err)
-        setError('Image upload failed. Please check your connection and try again.') // ← added
-        } finally {
-        setUploadingImage(false)
-        }
+    setUploadingImage(true)
+    setError(null)
+    try {
+      const url = await uploadProjectImage(file)
+      updateField('image_url', url)
+    } catch (err) {
+      console.error('Image upload failed:', err)
+      setError('Image upload failed. Please check your connection and try again.')
+    } finally {
+      setUploadingImage(false)
     }
+  }
 
-  // ── live preview: recalculated on every render as the admin edits the dates ──
   const previewStatus = form.start_date
     ? computeProjectStatus(form.start_date, form.end_date || null)
     : null
@@ -88,13 +87,12 @@ export default function ProjectEditor() {
     setSaving(true)
     setError(null)
 
-    // ── status and year are derived automatically from the dates, not typed manually ──
     const status = computeProjectStatus(form.start_date, form.end_date || null)
     const year = form.start_date ? new Date(form.start_date).getFullYear().toString() : ''
 
     const payload = {
       title: form.title,
-      summary: form.summary,
+      description: form.description, // ← changed: was summary: form.summary
       start_date: form.start_date || null,
       end_date: form.end_date || null,
       location: form.location,
@@ -135,18 +133,23 @@ export default function ProjectEditor() {
           />
         </div>
 
+        {/* ── changed: Summary → Description, with guidance on paragraph breaks ── */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Summary</label>
+          <label className="block text-sm font-medium text-gray-700">Description</label>
           <textarea
-            rows={4}
+            rows={8}
             required
-            value={form.summary}
-            onChange={(e) => updateField('summary', e.target.value)}
+            value={form.description}
+            onChange={(e) => updateField('description', e.target.value)}
+            placeholder="Write the full project description here. Leave a blank line between paragraphs — this is how they'll be separated on the project's detail view."
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
           />
+          <p className="mt-1 text-xs text-gray-400">
+            Shown trimmed on the project card; shown in full, with paragraph spacing, when someone opens the project.
+          </p>
         </div>
+        {/* ──────────────────────────────────────────────────────────────────── */}
 
-        {/* ── changed: Year + Status dropdown replaced with Start/End Date ── */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Start Date</label>
@@ -171,7 +174,6 @@ export default function ProjectEditor() {
           </div>
         </div>
 
-        {/* ── added: live, read-only status preview based on the dates above ── */}
         {previewStatus && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             Status will be:
@@ -181,7 +183,6 @@ export default function ProjectEditor() {
             <span className="text-xs text-gray-400">(calculated automatically from the dates)</span>
           </div>
         )}
-        {/* ───────────────────────────────────────────────────────────────── */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Location</label>

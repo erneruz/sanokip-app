@@ -1,5 +1,4 @@
 // src/components/ProjectCard.jsx
-import { Link } from 'react-router-dom'
 
 const STATUS_CONFIG = {
   completed: { label: 'Completed', className: 'bg-gray-900 text-white' },
@@ -7,11 +6,23 @@ const STATUS_CONFIG = {
   upcoming: { label: 'Upcoming', className: 'bg-white text-gray-700 ring-1 ring-gray-300' },
 }
 
-export default function ProjectCard({ project }) {
+export default function ProjectCard({ project, onOpen }) {
   const status = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.completed
 
   return (
-    <Link to={`/projects/${project.slug}`} className="project-card-link group block">
+    // ── changed: was a <Link> to /projects/:slug; now a clickable card that opens the detail modal ──
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(project)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen(project)
+        }
+      }}
+      className="project-card-link group block cursor-pointer"
+    >
       <style>{`
         @keyframes project-card-settle {
           0% { transform: translateY(0) rotate(0deg); }
@@ -48,8 +59,9 @@ export default function ProjectCard({ project }) {
             {project.title}
           </h3>
 
+          {/* ── changed: project.summary → project.description, still clamped to 3 lines here ── */}
           <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-600">
-            {project.summary}
+            {project.description}
           </p>
 
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
@@ -65,6 +77,6 @@ export default function ProjectCard({ project }) {
           </div>
         </div>
       </article>
-    </Link>
+    </div>
   )
 }
