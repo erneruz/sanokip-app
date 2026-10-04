@@ -19,8 +19,10 @@ function Navbar() {
     const location = useLocation()
     const [profile, setProfile] = useState(null)
     const [menuOpen, setMenuOpen] = useState(false) // desktop avatar dropdown
+    const [authMenuOpen, setAuthMenuOpen] = useState(false) // desktop login/signup dropdown
     const [mobileOpen, setMobileOpen] = useState(false) // mobile/tablet panel
     const menuRef = useRef(null)
+    const authMenuRef = useRef(null)
 
     const isAdmin = profile?.role === 'admin' // ⚠️ adjust if your admin flag differs
 
@@ -39,16 +41,18 @@ function Navbar() {
             if (menuRef.current && !menuRef.current.contains(e.target)) {
                 setMenuOpen(false)
             }
+            if (authMenuRef.current && !authMenuRef.current.contains(e.target)) {
+                setAuthMenuOpen(false)
+            }
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    // ── added: close the mobile panel whenever the route changes ──
     useEffect(() => {
         setMobileOpen(false)
+        setAuthMenuOpen(false)
     }, [location.pathname])
-    // ─────────────────────────────────────────────────────────────
 
     async function handleSignOut() {
         setMenuOpen(false)
@@ -68,7 +72,6 @@ function Navbar() {
                     Peakstar
                 </Link>
 
-                {/* ── Nav links with animated underline + active state (desktop only) ── */}
                 <div className="hidden items-center gap-8 text-sm md:flex">
                     {navLinks.map((link) => (
                         <NavLink
@@ -95,9 +98,7 @@ function Navbar() {
                     ))}
                 </div>
 
-                {/* ── Right side: desktop auth area + mobile toggle ── */}
                 <div className="flex items-center gap-3">
-                    {/* Desktop-only auth area */}
                     <div className="hidden md:flex md:items-center md:gap-3">
                         {user ? (
                             <div className="relative" ref={menuRef}>
@@ -138,6 +139,8 @@ function Navbar() {
                                         {isAdmin && (
                                             <Link
                                                 to="/admin"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 onClick={() => setMenuOpen(false)}
                                                 className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                                             >
@@ -157,26 +160,45 @@ function Navbar() {
                                 )}
                             </div>
                         ) : (
-                            <>
-                                <Link
-                                    to="/login"
-                                    className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition hover:text-gray-900"
+                            <div className="relative" ref={authMenuRef}>
+                                <button
+                                    onClick={() => setAuthMenuOpen((v) => !v)}
+                                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
                                 >
-                                    <IconLogin />
-                                    Log in
-                                </Link>
-                                <Link
-                                    to="/register"
-                                    className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-                                >
-                                    <IconUserPlus />
-                                    Sign up
-                                </Link>
-                            </>
+                                    <IconUserCircle />
+                                    Account
+                                    <svg
+                                        width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                        className={`shrink-0 text-gray-400 transition-transform duration-200 ${authMenuOpen ? 'rotate-180' : ''}`}
+                                    >
+                                        <path d="m6 9 6 6 6-6" />
+                                    </svg>
+                                </button>
+
+                                {authMenuOpen && (
+                                    <div className="absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl bg-white py-1.5 shadow-lg ring-1 ring-black/5">
+                                        <Link
+                                            to="/login"
+                                            onClick={() => setAuthMenuOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                                        >
+                                            <IconLogin />
+                                            Log in
+                                        </Link>
+                                        <Link
+                                            to="/register"
+                                            onClick={() => setAuthMenuOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                                        >
+                                            <IconUserPlus />
+                                            Sign up
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
 
-                    {/* ── Mobile/tablet hamburger toggle ── */}
                     <button
                         onClick={() => setMobileOpen((v) => !v)}
                         aria-label="Toggle menu"
@@ -188,7 +210,6 @@ function Navbar() {
                 </div>
             </nav>
 
-            {/* ── Mobile/tablet dropdown panel ── */}
             {mobileOpen && (
                 <div className="border-t border-gray-100 bg-white md:hidden">
                     <div className="mx-auto max-w-6xl px-6 py-4">
@@ -237,6 +258,8 @@ function Navbar() {
                                 {isAdmin && (
                                     <Link
                                         to="/admin"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                                     >
                                         <IconShield />
@@ -252,21 +275,24 @@ function Navbar() {
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex flex-col gap-2">
-                                <Link
-                                    to="/login"
-                                    className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-                                >
-                                    <IconLogin />
-                                    Log in
-                                </Link>
-                                <Link
-                                    to="/register"
-                                    className="flex items-center justify-center gap-1.5 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
-                                >
-                                    <IconUserPlus />
-                                    Sign up
-                                </Link>
+                            <div>
+                                <p className="px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Account</p>
+                                <div className="mt-2 flex flex-col gap-2">
+                                    <Link
+                                        to="/login"
+                                        className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+                                    >
+                                        <IconLogin />
+                                        Log in
+                                    </Link>
+                                    <Link
+                                        to="/register"
+                                        className="flex items-center justify-center gap-1.5 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+                                    >
+                                        <IconUserPlus />
+                                        Sign up
+                                    </Link>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -315,6 +341,15 @@ function IconUserPlus() {
             <path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1" />
             <line x1="19" y1="8" x2="19" y2="14" />
             <line x1="16" y1="11" x2="22" y2="11" />
+        </svg>
+    )
+}
+function IconUserCircle() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="10" r="3" />
+            <path d="M6.2 19.3a6.5 6.5 0 0 1 11.6 0" />
         </svg>
     )
 }
