@@ -2,7 +2,7 @@
 import { partners } from './partners.data'
 
 export default function PartnersMarquee() {
-  const track = [...partners, ...partners]
+  const track = [...partners, ...partners, ...partners, ...partners]
 
   return (
     <section className="bg-gray-100 py-5 border-t border-gray-200">
