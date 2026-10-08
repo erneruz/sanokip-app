@@ -109,7 +109,7 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="relative border-t border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-gray-300 md:flex-row">
-          <p>© {year} Peakstar CBC · A Registered Community Benefit Company in Rwanda</p>
+          <p>© {year} Peakstar Ltd· A Registered Private Company in Rwanda</p>
           <div className="flex gap-6">
             <Link to="/faqs" className="transition-colors hover:text-white">FAQs</Link>
             <Link to="/sitemap" className="transition-colors hover:text-white">Sitemap</Link>
