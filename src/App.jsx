@@ -23,6 +23,9 @@ import PublicationEditor from './pages/admin/PublicationEditor'
 import AdminProjects from './pages/admin/AdminProjects'
 import ProjectEditor from './pages/admin/ProjectEditor'
 import ComingSoon from './pages/admin/ComingSoon'
+import Services from './pages/Services'
+import AdminServices from './pages/admin/AdminServices'
+
 
 import Register from './pages/Register'
 import AdminUsers from './pages/admin/AdminUsers'
@@ -41,6 +44,7 @@ function App() {
             <Route path="/posts/:slug" element={<Post />} />
             <Route path="/publications" element={<Publications />} />
             <Route path="/about" element={<About />} />
+            <Route path="/services" element={<Services />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/authors/:authorId" element={<AuthorProfile />} />
             <Route path="/register" element={<Register />} />
@@ -64,7 +68,7 @@ function App() {
             <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
             <Route path="messages" element={<ComingSoon title="Messages" />} />
             <Route path="events" element={<ComingSoon title="Events" />} />
-            <Route path="services" element={<ComingSoon title="Services" />} />
+            <Route path="services" element={<AdminServices />} />
             <Route path="projects" element={<AdminProjects />} />
             <Route path="projects/new" element={<ProjectEditor />} />
             <Route path="projects/:id/edit" element={<ProjectEditor />} />
