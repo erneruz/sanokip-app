@@ -22,9 +22,11 @@ function PlaceholderImage({ className }) {
 
 export default function ServiceCard({ service, onExplore }) {
   return (
-    <div className="relative pb-12 group">
-      {/* Background image panel — anchored top-left */}
-      <div className="relative w-11/12 overflow-hidden shadow-sm rounded-xl aspect-[4/3]">
+    <div className="relative w-full group aspect-[6/5]">
+      {/* Image panel — enlarged, spans the full height of the card, tilts slightly on hover */}
+      <div
+        className="absolute inset-y-0 left-0 w-[58%] overflow-hidden rounded-xl shadow-sm transition-transform duration-500 ease-out origin-bottom-left group-hover:-rotate-2 group-hover:scale-[1.03]"
+      >
         {service.image_url ? (
           <img
             src={service.image_url}
@@ -34,12 +36,12 @@ export default function ServiceCard({ service, onExplore }) {
         ) : (
           <PlaceholderImage className="w-full h-full" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
       </div>
 
-      {/* Content panel — anchored bottom-right, overlapping the image */}
+      {/* Content panel — overlapping, light gray, tilts the opposite way on hover */}
       <div
-        className="absolute right-0 w-11/12 p-5 transition-all duration-300 ease-out bg-white border border-gray-100 shadow-md -bottom-4 rounded-xl group-hover:shadow-xl group-hover:-translate-y-1"
+        className="absolute right-0 top-[14%] bottom-[14%] flex w-[72%] flex-col justify-center rounded-xl border border-gray-200 bg-gray-50 p-6 shadow-md transition-all duration-500 ease-out origin-top-right group-hover:rotate-1 group-hover:shadow-xl group-hover:-translate-y-1"
       >
         <p className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
           {service.categoryName}
@@ -54,9 +56,9 @@ export default function ServiceCard({ service, onExplore }) {
 
         <button
           onClick={() => onExplore(service)}
-          className="inline-flex items-center gap-1 mt-4 text-sm font-semibold text-black"
+          className="inline-flex items-center self-start gap-1 mt-4 text-sm font-semibold text-black cursor-pointer"
         >
-          Explore More
+          Explore Service
           <svg
             className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
             fill="none"

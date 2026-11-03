@@ -1,11 +1,11 @@
 // src/components/ServiceModal.jsx
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function PlaceholderImage({ className }) {
   return (
     <div className={`flex items-center justify-center bg-gray-100 ${className}`}>
       <svg
-        className="w-12 h-12 text-gray-300"
+        className="w-14 h-14 text-gray-300"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -21,20 +21,39 @@ function PlaceholderImage({ className }) {
   )
 }
 
-export default function ServiceModal({ service, allServices, onClose }) {
-  // Close on Escape, lock background scroll while open
+export default function ServiceModal({ service, allServices, onClose, onSelectService }) {
+  const [visible, setVisible] = useState(false)
+  const panelRef = useRef(null)
+
+  // Mount animation + Escape to close + lock background scroll
   useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true))
+
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleClose()
     }
     document.addEventListener('keydown', onKeyDown)
+
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
     return () => {
+      cancelAnimationFrame(raf)
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = prevOverflow
     }
-  }, [onClose])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Scroll back to the top whenever the displayed service changes
+  useEffect(() => {
+    panelRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [service?.id])
+
+  function handleClose() {
+    setVisible(false)
+    setTimeout(onClose, 200)
+  }
 
   if (!service) return null
 
@@ -48,83 +67,106 @@ export default function ServiceModal({ service, allServices, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        if (e.target === e.currentTarget) handleClose()
       }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" />
+      <div
+        className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
+          visible ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
 
       {/* Panel */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl">
+      <div
+        ref={panelRef}
+        className={`relative w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-2xl bg-white shadow-2xl transition-all duration-300 ease-out ${
+          visible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-3'
+        }`}
+      >
         <button
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Close"
-          className="absolute top-3 right-3 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white/90 text-gray-600 hover:bg-white hover:text-gray-900 shadow"
+          className="absolute z-10 flex items-center justify-center text-gray-700 transition bg-white rounded-full shadow-lg cursor-pointer top-4 right-4 w-10 h-10 hover:bg-gray-100 hover:text-black"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        {/* Image */}
-        {service.image_url ? (
-          <img
-            src={service.image_url}
-            alt={service.name}
-            className="w-full h-56 object-cover rounded-t-lg"
-          />
-        ) : (
-          <PlaceholderImage className="w-full h-56 rounded-t-lg" />
-        )}
+        {/* Hero image with category + title overlaid */}
+        <div className="relative h-64 overflow-hidden sm:h-80 rounded-t-2xl">
+          {service.image_url ? (
+            <img
+              src={service.image_url}
+              alt={service.name}
+              className="object-cover w-full h-full"
+            />
+          ) : (
+            <PlaceholderImage className="w-full h-full" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-        {/* Body */}
-        <div className="p-6">
-          <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-            {service.categoryName}
-          </p>
-          <h2 className="mt-1 text-2xl font-bold text-gray-900">{service.name}</h2>
+          <div className="absolute left-0 right-0 bottom-0 p-6 sm:p-8">
+            <span className="inline-block px-3 py-1 text-[11px] font-semibold tracking-wide text-white uppercase border rounded-full bg-white/10 border-white/30 backdrop-blur-sm">
+              {service.categoryName}
+            </span>
+            <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-3xl drop-shadow-sm">
+              {service.name}
+            </h2>
+          </div>
+        </div>
 
-          <p className="mt-4 text-gray-700 leading-relaxed whitespace-pre-line">
+        {/* Body — generous padding */}
+        <div className="px-6 py-8 sm:px-10 sm:py-10">
+          <p className="text-base leading-loose text-gray-700 whitespace-pre-line">
             {service.description}
           </p>
 
-          <div className="flex flex-wrap gap-3 mt-6">
+          <div className="flex flex-wrap gap-3 pt-8 mt-8 border-t border-gray-100">
             <a
               href={requestHref}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white transition bg-black rounded-full cursor-pointer hover:bg-gray-800"
             >
               Request this service
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
             </a>
             <button
-              onClick={onClose}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              onClick={handleClose}
+              className="px-5 py-2.5 text-sm font-semibold text-gray-700 transition bg-gray-100 rounded-full cursor-pointer hover:bg-gray-200"
             >
               Close
             </button>
           </div>
 
           {related.length > 0 && (
-            <div className="pt-6 mt-6 border-t border-gray-100">
-              <h3 className="mb-3 text-sm font-semibold text-gray-900">
-                Related in {service.categoryName}
+            <div className="pt-8 mt-8 border-t border-gray-100">
+              <h3 className="mb-4 text-sm font-semibold tracking-wide text-gray-900 uppercase">
+                Other services in {service.categoryName}
               </h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {related.map((r) => (
-                  <div
+                  <button
                     key={r.id}
-                    className="overflow-hidden border border-gray-100 rounded-md"
+                    type="button"
+                    onClick={() => onSelectService?.(r)}
+                    className="flex flex-col h-full overflow-hidden text-left transition border border-gray-100 shadow-sm cursor-pointer rounded-xl hover:shadow-md hover:-translate-y-0.5"
                   >
-                    {r.image_url ? (
-                      <img src={r.image_url} alt={r.name} className="object-cover w-full h-20" />
-                    ) : (
-                      <PlaceholderImage className="w-full h-20" />
-                    )}
-                    <p className="p-2 text-xs font-medium text-gray-800 line-clamp-2">
+                    <div className="w-full overflow-hidden h-24 shrink-0">
+                      {r.image_url ? (
+                        <img src={r.image_url} alt={r.name} className="object-cover w-full h-full" />
+                      ) : (
+                        <PlaceholderImage className="w-full h-full" />
+                      )}
+                    </div>
+                    <p className="flex-1 p-3 text-xs font-medium text-gray-800 line-clamp-2">
                       {r.name}
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>

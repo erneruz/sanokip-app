@@ -91,7 +91,7 @@ export default function Services() {
           <p className="text-gray-500">No services in this category yet.</p>
         )}
 
-        <div className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-2">
           {visibleServices.map((service) => (
             <ServiceCard
               key={service.id}
@@ -107,6 +107,7 @@ export default function Services() {
           service={selectedService}
           allServices={allServices}
           onClose={() => setSelectedService(null)}
+          onSelectService={setSelectedService}
         />
       )}
     </div>
