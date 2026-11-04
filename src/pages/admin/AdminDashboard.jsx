@@ -7,6 +7,8 @@ import {
 } from 'recharts'
 import { getDashboardStats } from '../../services/dashboardService'
 import { getAllPostsForAdmin } from '../../services/postsService'
+import { useAuth } from '../../context/AuthContext' // ← added
+import { getFullProfile } from '../../services/profileService' // ← added
 import {
   IconDocument, IconCheckCircle, IconEdit, IconChat, IconThumbsUp, IconThumbsDown,
   IconUsers, IconQuote, IconMail, IconCalendar, IconWrench, IconFolder,
@@ -23,7 +25,6 @@ function withPaletteColor(items) {
   return items.map((item, i) => ({ ...item, color: CATEGORY_PALETTE[i % CATEGORY_PALETTE.length] }))
 }
 
-// ← added: time-of-day greeting for the header
 function getGreeting() {
   const hour = new Date().getHours()
   if (hour < 12) return 'Good morning'
@@ -195,19 +196,25 @@ function RecentPostsCard({ posts }) {
 }
 
 export default function AdminDashboard() {
+  const { user } = useAuth() // ← added
   const [stats, setStats] = useState(null)
   const [allPosts, setAllPosts] = useState([])
+  const [adminProfile, setAdminProfile] = useState(null) // ← added
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [statsData, posts] = await Promise.all([
+        // ← changed: also fetch the logged-in admin's profile, same way
+        // AdminProfile.jsx does, so the header can greet them by name
+        const [statsData, posts, profileData] = await Promise.all([
           getDashboardStats(),
           getAllPostsForAdmin(),
+          user?.id ? getFullProfile(user.id).catch(() => null) : Promise.resolve(null),
         ])
         setStats(statsData)
         setAllPosts(posts)
+        setAdminProfile(profileData?.profile ?? null)
       } catch (err) {
         console.error('Failed to load dashboard:', err)
       } finally {
@@ -215,7 +222,7 @@ export default function AdminDashboard() {
       }
     }
     load()
-  }, [])
+  }, [user?.id])
 
   if (loading) {
     return <main className="px-8 py-10 text-gray-500">Loading dashboard…</main>
@@ -223,13 +230,17 @@ export default function AdminDashboard() {
 
   const recentPosts = allPosts.slice(0, 5)
 
-  // ← added: today's date for the header
   const formattedDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+
+  // ← added: the admin's display name for the greeting — falls back to their
+  // email if the profile has no name on file yet
+  const adminDisplayName =
+    `${adminProfile?.first_name ?? ''} ${adminProfile?.last_name ?? ''}`.trim() || user?.email || 'Admin'
 
   const postsItems = [
     { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument, to: '/admin/posts', color: LIGHT_GREY },
@@ -322,15 +333,17 @@ export default function AdminDashboard() {
 
   return (
     <main className="px-8 py-10">
-      {/* ← changed: redesigned header — greeting, icon badge, sharper headline,
-          a professional one-line summary of what the dashboard covers, and today's date */}
       <div className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3.5">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white shadow-sm">
             <IconDashboardGrid className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#1B5E4F]">{getGreeting()}</p>
+            {/* ← changed: now shows the logged-in admin's name, bold and
+                uppercase (uppercase comes from the className on this <p>) */}
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#1B5E4F]">
+              {getGreeting()}, <span className="font-extrabold">{adminDisplayName}</span>
+            </p>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Peakstar Admin Overview</h1>
             <p className="mt-1 max-w-xl text-sm text-gray-500">
               A real-time snapshot of Peakstar's content, projects, services, and client engagement — everything in one place.
@@ -419,7 +432,6 @@ function IconActivity(props) {
     </svg>
   )
 }
-// ← added: small grid icon for the header badge
 function IconDashboardGrid(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

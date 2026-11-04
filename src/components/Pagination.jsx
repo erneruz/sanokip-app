@@ -21,7 +21,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           aria-current={page === currentPage ? 'page' : undefined}
           className={
             page === currentPage
-              ? 'rounded-md bg-black px-3.5 py-2 text-sm font-medium text-white'
+              ? 'rounded-md bg-[#1B5E4F] px-3.5 py-2 text-sm font-medium text-white'
               : 'rounded-md px-3.5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100'
           }
         >
