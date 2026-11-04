@@ -1,10 +1,13 @@
 // src/pages/admin/AdminPublications.jsx
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getAllPublications, deletePublication } from '../../services/publicationsService'
 import { getCategory } from '../../constants/publications'
 
 export default function AdminPublications() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const statusFilter = searchParams.get('status')
+
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -24,6 +27,15 @@ export default function AdminPublications() {
     load()
   }, [])
 
+  // ← added: filter by the ?status= query param, same pattern as AdminPosts.jsx
+  const filteredItems = statusFilter
+    ? items.filter((p) => p.status === statusFilter)
+    : items
+
+  function clearFilter() {
+    setSearchParams({})
+  }
+
   async function handleDelete(item) {
     if (!window.confirm(`Delete "${item.title}"? This also removes the file.`)) return
     try {
@@ -35,10 +47,31 @@ export default function AdminPublications() {
     }
   }
 
+  const statusLabel = statusFilter === 'published' ? 'Published' : statusFilter === 'draft' ? 'Drafts' : null
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Publications</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Publications</h1>
+
+          {/* ← added: active-filter chip, same pattern as AdminPosts.jsx */}
+          {statusLabel && (
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#1B5E4F] py-1 pl-3 pr-1 text-xs font-medium text-white">
+              <span>{statusLabel} ({filteredItems.length})</span>
+              <button
+                onClick={clearFilter}
+                aria-label={`Clear ${statusLabel} filter`}
+                className="cursor-pointer rounded-full p-1 opacity-70 transition hover:bg-white/20 hover:opacity-100"
+              >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-3">
           <Link to="/admin" className="rounded-md border border-gray-300 px-4 py-2 text-sm">
             Back to Posts
@@ -56,7 +89,7 @@ export default function AdminPublications() {
       {loading && <p className="mt-6 text-gray-500">Loading…</p>}
 
       <ul className="mt-8 divide-y divide-gray-200 rounded-md border border-gray-200">
-        {items.map((p) => (
+        {filteredItems.map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-4 p-4">
             <div className="min-w-0">
               <p className="truncate font-medium">{p.title}</p>
@@ -82,8 +115,10 @@ export default function AdminPublications() {
             </div>
           </li>
         ))}
-        {!loading && items.length === 0 && (
-          <li className="p-6 text-center text-gray-500">No publications yet.</li>
+        {!loading && filteredItems.length === 0 && (
+          <li className="p-6 text-center text-gray-500">
+            {statusLabel ? `No ${statusLabel.toLowerCase()} publications.` : 'No publications yet.'}
+          </li>
         )}
       </ul>
     </main>

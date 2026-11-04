@@ -1,6 +1,6 @@
 // src/pages/admin/AdminProjects.jsx
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getAllProjectsForAdmin, deleteProject } from '../../services/projectsService'
 import Pagination from '../../components/Pagination'
 
@@ -12,7 +12,16 @@ const STATUS_CONFIG = {
   upcoming: 'bg-gray-100 text-gray-700',
 }
 
+const STATUS_LABELS = {
+  completed: 'Completed',
+  ongoing: 'Ongoing',
+  upcoming: 'Upcoming',
+}
+
 export default function AdminProjects() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const statusFilter = searchParams.get('status')
+
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
@@ -31,12 +40,21 @@ export default function AdminProjects() {
 
   useEffect(() => { loadProjects() }, [])
 
-  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE))
+  // ← added: filter by the ?status= query param, same pattern as AdminPosts.jsx
+  const filteredProjects = statusFilter
+    ? projects.filter((p) => p.status === statusFilter)
+    : projects
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages)
   }, [totalPages, currentPage])
 
-  const paginatedProjects = projects.slice(
+  const paginatedProjects = filteredProjects.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   )
@@ -56,10 +74,35 @@ export default function AdminProjects() {
     window.scrollTo(0, 0)
   }
 
+  function clearFilter() {
+    setSearchParams({})
+  }
+
+  const statusLabel = STATUS_LABELS[statusFilter] ?? null
+
   return (
     <main className="px-8 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manage Projects</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Manage Projects</h1>
+
+          {/* ← added: active-filter chip, same pattern as AdminPosts.jsx */}
+          {statusLabel && (
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#1B5E4F] py-1 pl-3 pr-1 text-xs font-medium text-white">
+              <span>{statusLabel} ({filteredProjects.length})</span>
+              <button
+                onClick={clearFilter}
+                aria-label={`Clear ${statusLabel} filter`}
+                className="cursor-pointer rounded-full p-1 opacity-70 transition hover:bg-white/20 hover:opacity-100"
+              >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
         <Link to="/admin/projects/new" className="cursor-pointer rounded-md bg-[#1B5E4F] px-4 py-2 text-sm text-white hover:bg-[#154A3F]">
           + New Project
         </Link>
@@ -104,8 +147,10 @@ export default function AdminProjects() {
             </tbody>
           </table>
 
-          {projects.length === 0 && (
-            <p className="py-6 text-center text-gray-500">No projects yet.</p>
+          {filteredProjects.length === 0 && (
+            <p className="py-6 text-center text-gray-500">
+              {statusLabel ? `No ${statusLabel.toLowerCase()} projects.` : 'No projects yet.'}
+            </p>
           )}
         </div>
       )}
