@@ -7,7 +7,7 @@ import Pagination from '../../components/Pagination'
 const PAGE_SIZE = 10
 
 const STATUS_CONFIG = {
-  completed: 'bg-gray-900 text-white',
+  completed: 'bg-[#1B5E4F] text-white',
   ongoing: 'bg-blue-600 text-white',
   upcoming: 'bg-gray-100 text-gray-700',
 }
@@ -60,7 +60,7 @@ export default function AdminProjects() {
     <main className="px-8 py-10">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Manage Projects</h1>
-        <Link to="/admin/projects/new" className="cursor-pointer rounded-md bg-black px-4 py-2 text-sm text-white">
+        <Link to="/admin/projects/new" className="cursor-pointer rounded-md bg-[#1B5E4F] px-4 py-2 text-sm text-white hover:bg-[#154A3F]">
           + New Project
         </Link>
       </div>
@@ -89,7 +89,7 @@ export default function AdminProjects() {
                   </td>
                   <td className="py-3 text-gray-500">{project.featured ? 'Yes' : '—'}</td>
                   <td className="py-3 text-right">
-                    <Link to={`/admin/projects/${project.id}/edit`} className="mr-4 cursor-pointer text-blue-600 hover:underline">
+                    <Link to={`/admin/projects/${project.id}/edit`} className="mr-4 cursor-pointer text-[#1B5E4F] hover:underline">
                       Edit
                     </Link>
                     <button

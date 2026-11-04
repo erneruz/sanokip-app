@@ -36,12 +36,12 @@ export default function Login() {
       <div className="flex items-center justify-center bg-gray-50 px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1B5E4F] text-white">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z" />
               </svg>
             </div>
-            <span className="font-semibold text-gray-900">Sanokip Admin</span>
+            <span className="font-semibold text-gray-900">Peakstar Admin</span>
           </div>
 
           <h1 className="mt-10 text-3xl font-bold text-gray-900">Admin Login</h1>
@@ -55,7 +55,7 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#1B5E4F] focus:ring-2 focus:ring-[#1B5E4F]/20"
               />
             </div>
 
@@ -66,7 +66,7 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#1B5E4F] focus:ring-2 focus:ring-[#1B5E4F]/20"
               />
             </div>
 
@@ -77,7 +77,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full cursor-pointer rounded-xl bg-black py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full cursor-pointer rounded-xl bg-[#1B5E4F] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Signing in…' : 'Sign in'}
             </button>
@@ -92,7 +92,7 @@ export default function Login() {
       {/* -------------------------------------------- */}
       {/* RIGHT: ILLUSTRATION PANEL (hidden on small screens) */}
       {/* -------------------------------------------- */}
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-black via-gray-700 to-white lg:block">
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#0F3D32] via-[#1B5E4F] to-white lg:block">
         <div className="absolute -left-10 top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute bottom-24 right-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
 

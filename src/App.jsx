@@ -25,6 +25,7 @@ import ProjectEditor from './pages/admin/ProjectEditor'
 import ComingSoon from './pages/admin/ComingSoon'
 import Services from './pages/Services'
 import AdminServices from './pages/admin/AdminServices'
+import AdminServiceRequests from './pages/admin/AdminServiceRequests'
 
 
 import Register from './pages/Register'
@@ -66,9 +67,9 @@ function App() {
             <Route path="publications/:id/edit" element={<PublicationEditor />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
-            <Route path="messages" element={<ComingSoon title="Messages" />} />
             <Route path="events" element={<ComingSoon title="Events" />} />
             <Route path="services" element={<AdminServices />} />
+            <Route path="service-requests" element={<AdminServiceRequests />} />
             <Route path="projects" element={<AdminProjects />} />
             <Route path="projects/new" element={<ProjectEditor />} />
             <Route path="projects/:id/edit" element={<ProjectEditor />} />

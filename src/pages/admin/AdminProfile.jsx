@@ -61,7 +61,7 @@ export default function AdminProfile() {
 
       {/* ── Header card ── */}
       <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-        <div className="h-36 bg-gradient-to-r from-black to-gray-300" />
+        <div className="h-36 bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F]" />
         <div className="px-8 pb-6">
           <div className="-mt-14 flex items-end justify-between">
             <div className="flex items-end gap-4">
@@ -88,7 +88,7 @@ export default function AdminProfile() {
             </div>
 
             <button onClick={() => setModalOpen(true)}
-              className="cursor-pointer rounded-md bg-black px-5 py-2 text-sm text-white hover:bg-gray-800">
+              className="cursor-pointer rounded-md bg-[#1B5E4F] px-5 py-2 text-sm text-white hover:bg-[#154A3F]">
               Edit Profile
             </button>
           </div>
@@ -200,7 +200,7 @@ function ReadField({ label, value, isLink }) {
     <div>
       <p className="text-xs text-gray-500">{label}</p>
       {isLink && value ? (
-        <a href={value} target="_blank" rel="noopener noreferrer" className="mt-1 block truncate text-sm font-medium text-blue-600 hover:underline">
+        <a href={value} target="_blank" rel="noopener noreferrer" className="mt-1 block truncate text-sm font-medium text-[#1B5E4F] hover:underline">
           {value}
         </a>
       ) : (

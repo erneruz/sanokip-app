@@ -181,7 +181,7 @@ export default function ServiceEditor({ service, serviceLines, onClose, onSaved 
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B5E4F]"
               placeholder="e.g. Base Maps"
               required
             />
@@ -195,7 +195,7 @@ export default function ServiceEditor({ service, serviceLines, onClose, onSaved 
             <select
               value={form.service_line_id}
               onChange={(e) => setForm({ ...form, service_line_id: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B5E4F]"
               required
             >
               {serviceLines.length === 0 && <option value="">No categories yet</option>}
@@ -216,7 +216,7 @@ export default function ServiceEditor({ service, serviceLines, onClose, onSaved 
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={8}
-              className="w-full px-3 py-2 leading-relaxed border border-gray-300 rounded-md resize-y focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-3 py-2 leading-relaxed border border-gray-300 rounded-md resize-y focus:outline-none focus:ring-2 focus:ring-[#1B5E4F]"
               placeholder="Describe the service — what it covers, how it's delivered, and who it's for. Leave a blank line between paragraphs."
             />
             <p className="mt-1 text-xs text-gray-400">
@@ -235,8 +235,8 @@ export default function ServiceEditor({ service, serviceLines, onClose, onSaved 
             </button>
             <button
               type="submit"
-              disabled={saving || !!imageError}
-              className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 disabled:opacity-50"
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-white rounded-md disabled:opacity-50 bg-[#1B5E4F] hover:bg-[#154A3F]"
             >
               {saving ? 'Saving…' : isEditing ? 'Save changes' : 'Create service'}
             </button>

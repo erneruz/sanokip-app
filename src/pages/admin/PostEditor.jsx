@@ -194,7 +194,7 @@ export default function PostEditor() {
         <button
           type="submit"
           disabled={saving || uploadingCover}
-          className="cursor-pointer rounded-md bg-black px-5 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-md bg-[#1B5E4F] px-5 py-2 text-white hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Post'}
         </button>

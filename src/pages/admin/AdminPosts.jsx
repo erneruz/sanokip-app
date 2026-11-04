@@ -77,7 +77,7 @@ export default function AdminPosts() {
           <h1 className="text-2xl font-bold text-gray-900">Manage Posts</h1>
 
           {statusLabel && (
-            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-gray-900 py-1 pl-3 pr-1 text-xs font-medium text-white">
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#1B5E4F] py-1 pl-3 pr-1 text-xs font-medium text-white">
               <span>{statusLabel} ({filteredPosts.length})</span>
               <button
                 onClick={clearFilter}
@@ -92,7 +92,7 @@ export default function AdminPosts() {
           )}
         </div>
 
-        <Link to="/admin/posts/new" className="cursor-pointer rounded-md bg-black px-4 py-2 text-sm text-white">
+        <Link to="/admin/posts/new" className="cursor-pointer rounded-md bg-[#1B5E4F] px-4 py-2 text-sm text-white hover:bg-[#154A3F]">
           + New Post
         </Link>
       </div>
@@ -127,7 +127,7 @@ export default function AdminPosts() {
                     </span>
                   </td>
                   <td className="py-3 text-right">
-                    <Link to={`/admin/posts/${post.id}/edit`} className="mr-4 cursor-pointer text-blue-600 hover:underline">
+                    <Link to={`/admin/posts/${post.id}/edit`} className="mr-4 cursor-pointer text-[#1B5E4F] hover:underline">
                       Edit
                     </Link>
                     <button

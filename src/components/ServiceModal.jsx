@@ -1,5 +1,6 @@
 // src/components/ServiceModal.jsx
 import { useEffect, useRef, useState } from 'react'
+import ServiceRequestForm from './ServiceRequestForm'
 
 function PlaceholderImage({ className }) {
   return (
@@ -23,6 +24,7 @@ function PlaceholderImage({ className }) {
 
 export default function ServiceModal({ service, allServices, onClose, onSelectService }) {
   const [visible, setVisible] = useState(false)
+  const [view, setView] = useState('details') // 'details' | 'request'
   const panelRef = useRef(null)
 
   // Mount animation + Escape to close + lock background scroll
@@ -45,8 +47,9 @@ export default function ServiceModal({ service, allServices, onClose, onSelectSe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Scroll back to the top whenever the displayed service changes
+  // Reset to the details view and scroll to top whenever the displayed service changes
   useEffect(() => {
+    setView('details')
     panelRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [service?.id])
 
@@ -60,10 +63,6 @@ export default function ServiceModal({ service, allServices, onClose, onSelectSe
   const related = allServices
     .filter((s) => s.categoryId === service.categoryId && s.id !== service.id)
     .slice(0, 3)
-
-  const requestHref = `mailto:info@peakstar.rw?subject=${encodeURIComponent(
-    `Service request: ${service.name}`
-  )}`
 
   return (
     <div
@@ -96,7 +95,7 @@ export default function ServiceModal({ service, allServices, onClose, onSelectSe
           </svg>
         </button>
 
-        {/* Hero image with category + title overlaid */}
+        {/* Hero image with category + title overlaid — stays visible in both views */}
         <div className="relative h-64 overflow-hidden sm:h-80 rounded-t-2xl">
           {service.image_url ? (
             <img
@@ -119,59 +118,66 @@ export default function ServiceModal({ service, allServices, onClose, onSelectSe
           </div>
         </div>
 
-        {/* Body — generous padding */}
-        <div className="px-6 py-8 sm:px-10 sm:py-10">
-          <p className="text-base leading-loose text-gray-700 whitespace-pre-line">
-            {service.description}
-          </p>
+        {view === 'request' ? (
+          <ServiceRequestForm
+            service={service}
+            onBack={() => setView('details')}
+            onClose={handleClose}
+          />
+        ) : (
+          <div className="px-6 py-8 sm:px-10 sm:py-10">
+            <p className="text-base leading-loose text-gray-700 whitespace-pre-line">
+              {service.description}
+            </p>
 
-          <div className="flex flex-wrap gap-3 pt-8 mt-8 border-t border-gray-100">
-            <a
-              href={requestHref}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white transition bg-black rounded-full cursor-pointer hover:bg-gray-800"
-            >
-              Request this service
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </a>
-            <button
-              onClick={handleClose}
-              className="px-5 py-2.5 text-sm font-semibold text-gray-700 transition bg-gray-100 rounded-full cursor-pointer hover:bg-gray-200"
-            >
-              Close
-            </button>
-          </div>
-
-          {related.length > 0 && (
-            <div className="pt-8 mt-8 border-t border-gray-100">
-              <h3 className="mb-4 text-sm font-semibold tracking-wide text-gray-900 uppercase">
-                Other services in {service.categoryName}
-              </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {related.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => onSelectService?.(r)}
-                    className="flex flex-col h-full overflow-hidden text-left transition border border-gray-100 shadow-sm cursor-pointer rounded-xl hover:shadow-md hover:-translate-y-0.5"
-                  >
-                    <div className="w-full overflow-hidden h-24 shrink-0">
-                      {r.image_url ? (
-                        <img src={r.image_url} alt={r.name} className="object-cover w-full h-full" />
-                      ) : (
-                        <PlaceholderImage className="w-full h-full" />
-                      )}
-                    </div>
-                    <p className="flex-1 p-3 text-xs font-medium text-gray-800 line-clamp-2">
-                      {r.name}
-                    </p>
-                  </button>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-3 pt-8 mt-8 border-t border-gray-100">
+              <button
+                onClick={() => setView('request')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white transition bg-black rounded-full cursor-pointer hover:bg-gray-800"
+              >
+                Request this service
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </button>
+              <button
+                onClick={handleClose}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-700 transition bg-gray-100 rounded-full cursor-pointer hover:bg-gray-200"
+              >
+                Close
+              </button>
             </div>
-          )}
-        </div>
+
+            {related.length > 0 && (
+              <div className="pt-8 mt-8 border-t border-gray-100">
+                <h3 className="mb-4 text-sm font-semibold tracking-wide text-gray-900 uppercase">
+                  Other services in {service.categoryName}
+                </h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  {related.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => onSelectService?.(r)}
+                      className="flex flex-col h-full overflow-hidden text-left transition border border-gray-100 shadow-sm cursor-pointer rounded-xl hover:shadow-md hover:-translate-y-0.5"
+                    >
+                      <div className="w-full overflow-hidden h-24 shrink-0">
+                        {r.image_url ? (
+                          <img src={r.image_url} alt={r.name} className="object-cover w-full h-full" />
+                        ) : (
+                          <PlaceholderImage className="w-full h-full" />
+                        )}
+                      </div>
+                      <p className="flex-1 p-3 text-xs font-medium text-gray-800 line-clamp-2">
+                        {r.name}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

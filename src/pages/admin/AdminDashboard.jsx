@@ -11,9 +11,9 @@ import {
 
 function StatCard({ label, value, icon: Icon, to }) {
   const cardClasses =
-    'group relative rounded-2xl bg-gradient-to-br from-black to-gray-700 p-5 text-white shadow-sm transition-all duration-200 ' +
+    'group relative rounded-2xl bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] p-5 text-white shadow-sm transition-all duration-200 ' +
     (to
-      ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20'
+      ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:shadow-[#1B5E4F]/30'
       : '')
 
   const content = (
@@ -142,7 +142,7 @@ const postCards = [
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} angle={-20} textAnchor="end" height={60} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#111827" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="count" fill="#1B5E4F" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -152,7 +152,7 @@ const postCards = [
         <div className="rounded-2xl border border-gray-200 bg-white">
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <h2 className="font-semibold text-gray-900">Recent Posts</h2>
-            <Link to="/admin/posts" className="text-sm text-gray-500 hover:text-gray-900">
+            <Link to="/admin/posts" className="text-sm text-gray-500 hover:text-[#1B5E4F]">
               View all →
             </Link>
           </div>
@@ -178,7 +178,7 @@ const postCards = [
                       </span>
                     </td>
                     <td className="px-6 py-3 text-right">
-                      <Link to={`/admin/posts/${post.id}/edit`} className="text-blue-600 hover:underline">
+                      <Link to={`/admin/posts/${post.id}/edit`} className="text-[#1B5E4F] hover:underline">
                         Edit
                       </Link>
                     </td>

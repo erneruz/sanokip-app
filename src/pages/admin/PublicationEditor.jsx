@@ -1,3 +1,4 @@
+// src/pages/admin/PublicationEditor.jsx
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
@@ -222,7 +223,7 @@ export default function PublicationEditor() {
         <button
           type="submit"
           disabled={saving}
-          className="cursor-pointer rounded-md bg-black px-5 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-md bg-[#1B5E4F] px-5 py-2 text-white hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Publish'}
         </button>

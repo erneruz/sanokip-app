@@ -1,3 +1,4 @@
+// src/pages/admin/AdminPublications.jsx
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAllPublications, deletePublication } from '../../services/publicationsService'
@@ -44,7 +45,7 @@ export default function AdminPublications() {
           </Link>
           <Link
             to="/admin/publications/new"
-            className="rounded-md bg-black px-4 py-2 text-sm text-white"
+            className="rounded-md bg-[#1B5E4F] px-4 py-2 text-sm text-white hover:bg-[#154A3F]"
           >
             New Publication
           </Link>
@@ -68,7 +69,7 @@ export default function AdminPublications() {
               </p>
             </div>
             <div className="flex shrink-0 gap-3 text-sm">
-              <Link to={`/admin/publications/${p.id}/edit`} className="text-blue-600 hover:underline">
+              <Link to={`/admin/publications/${p.id}/edit`} className="text-[#1B5E4F] hover:underline">
                 Edit
               </Link>
               <button

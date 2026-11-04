@@ -4,6 +4,7 @@ import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
 import ProfileMenu from '../components/ProfileMenu'
+import logo from '../assets/images/logo.png'
 import {
   IconGrid, IconDocument, IconUsers, IconQuote, IconMail,
   IconBook, IconCalendar, IconWrench, IconFolder,
@@ -17,6 +18,8 @@ const navSections = [
       { label: 'Posts', to: '/admin/posts', icon: IconDocument },
       { label: 'Publications', to: '/admin/publications', icon: IconBook },
       { label: 'Projects', to: '/admin/projects', icon: IconFolder },
+      { label: 'Services', to: '/admin/services', icon: IconWrench },
+      { label: 'Service Requests', to: '/admin/service-requests', icon: IconMail },
       { label: 'Users', to: '/admin/users', icon: IconUsers },
     ],
   },
@@ -24,9 +27,7 @@ const navSections = [
     label: 'Coming soon',
     items: [
       { label: 'Testimonials', to: '/admin/testimonials', icon: IconQuote },
-      { label: 'Messages', to: '/admin/messages', icon: IconMail },
       { label: 'Events', to: '/admin/events', icon: IconCalendar },
-      { label: 'Services', to: '/admin/services', icon: IconWrench },
     ],
   },
 ]
@@ -47,13 +48,9 @@ export default function AdminLayout() {
       {/* -------------------------------------------- */}
       {/* SIDEBAR — fixed to viewport height, never scrolls with page content */}
       {/* -------------------------------------------- */}
-      <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-gradient-to-b from-black to-gray-700 text-white">
-        <div className="flex shrink-0 items-center gap-2 px-6 py-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z" />
-            </svg>
-          </div>
+      <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-gradient-to-b from-[#0F3D32] to-[#1B5E4F] text-white">
+        <div className="flex items-center gap-3 px-6 py-6 shrink-0">
+          <img src={logo} alt="Peakstar" className="object-contain w-9 h-9" />
           <span className="font-semibold">Peakstar Admin</span>
         </div>
 
