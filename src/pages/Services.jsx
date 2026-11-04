@@ -57,7 +57,7 @@ export default function Services() {
           <div className="flex flex-wrap gap-2 mt-8">
             <button
               onClick={() => setActiveCategory('all')}
-              className={`px-4 py-1.5 text-sm rounded-md border transition ${
+              className={`cursor-pointer px-4 py-1.5 text-sm rounded-md border transition ${
                 activeCategory === 'all'
                   ? 'bg-white text-black border-white'
                   : 'border-gray-500 text-gray-200 hover:border-white hover:text-white'
@@ -69,7 +69,7 @@ export default function Services() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 py-1.5 text-sm rounded-md border transition ${
+                className={`cursor-pointer px-4 py-1.5 text-sm rounded-md border transition ${
                   activeCategory === cat.id
                     ? 'bg-white text-black border-white'
                     : 'border-gray-500 text-gray-200 hover:border-white hover:text-white'
