@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { getPublishedPublications } from '../services/publicationsService'
 import {
   PUBLICATION_CATEGORIES,
@@ -58,12 +59,31 @@ function FileIcon({ className = '' }) {
   )
 }
 
+function normalizeHtml(html) {
+  if (!html) return ''
+  return html.replace(/&nbsp;/gi, ' ').replace(/\u00A0/g, ' ')
+}
+
+function htmlToPlainText(html) {
+  if (!html) return ''
+  const normalized = normalizeHtml(html)
+  const withBreaks = normalized.replace(/<\/p>|<br\s*\/?>/gi, ' ')
+  const stripped = withBreaks.replace(/<[^>]+>/g, '')
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = stripped
+  return textarea.value.replace(/\s+/g, ' ').trim()
+}
+
 /* ---------- a single publication card ---------- */
 function PublicationCard({ p }) {
   const [expanded, setExpanded] = useState(false)
 
-  const description = p.description || ''
-  const isLong = description.length > 220
+  const plainText = useMemo(() => htmlToPlainText(p.description), [p.description])
+  const sanitizedHtml = useMemo(
+    () => (p.description ? DOMPurify.sanitize(normalizeHtml(p.description)) : ''),
+    [p.description]
+  )
+  const isLong = plainText.length > 220
   const categoryLabel = getCategory(p.category)?.label || p.category
 
   const date = p.publication_date
@@ -78,7 +98,8 @@ function PublicationCard({ p }) {
     <article
       className={`overflow-hidden rounded-2xl border border-gray-200/80 bg-white transition duration-300 hover:-translate-y-0.5 ${CARD_SHADOW}`}
     >
-      <div className="flex gap-5 p-6">
+      {/* ← changed: p-8 → p-10 for noticeably more breathing room on every side */}
+      <div className="flex gap-5 p-10">
         <span
           className={`inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-xs font-bold uppercase ${fileBadgeClass(
             p.file_ext
@@ -89,27 +110,34 @@ function PublicationCard({ p }) {
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-black px-2.5 py-0.5 text-[11px] font-medium text-white">
+            <span className="rounded-full bg-black px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
               {categoryLabel}
             </span>
             {p.subtype && (
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
                 {p.subtype}
               </span>
             )}
           </div>
 
-          <h2 className="mt-3 text-lg font-semibold leading-snug text-gray-900">{p.title}</h2>
+          <h2 className="mt-2.5 break-words text-xl font-bold leading-snug tracking-tight text-gray-900">
+            {p.title}
+          </h2>
 
-          {description && (
+          <div className="mt-3 h-[3px] w-10 rounded-full bg-[#1B5E4F]" />
+
+          {plainText && (
             <>
-              <p
-                className={`mt-2 text-sm leading-relaxed text-gray-600 ${
-                  expanded ? '' : 'line-clamp-3'
-                }`}
-              >
-                {description}
-              </p>
+              {expanded ? (
+                <div
+                  className="mt-3 break-words text-sm leading-relaxed text-gray-600 [overflow-wrap:anywhere] [&_a]:text-gray-900 [&_a]:underline [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5"
+                  dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+                />
+              ) : (
+                <p className="mt-3 line-clamp-3 break-words text-sm leading-relaxed text-gray-600 [overflow-wrap:anywhere]">
+                  {plainText}
+                </p>
+              )}
               {isLong && (
                 <button
                   type="button"
@@ -125,7 +153,8 @@ function PublicationCard({ p }) {
       </div>
 
       {/* Footer: meta on the left, download on the right */}
-      <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/70 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* ← changed: px-8 py-5 → px-10 py-6 to match the wider card padding */}
+      <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/70 px-10 py-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-gray-500">
           {p.authors && (
             <span className="inline-flex items-center gap-1.5">
@@ -163,7 +192,7 @@ function PublicationCard({ p }) {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-10 shadow-sm">
       <div className="flex gap-5">
         <div className="h-14 w-14 rounded-xl bg-gray-200" />
         <div className="flex-1 space-y-3">
@@ -206,7 +235,7 @@ export default function Publications() {
         (!subtype || p.subtype === subtype) &&
         (!q ||
           p.title.toLowerCase().includes(q) ||
-          (p.description || '').toLowerCase().includes(q))
+          htmlToPlainText(p.description).toLowerCase().includes(q))
     )
   }, [items, category, subtype, search])
 

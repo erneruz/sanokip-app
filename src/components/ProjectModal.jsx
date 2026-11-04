@@ -1,5 +1,6 @@
 // src/components/ProjectModal.jsx
 import { useEffect } from 'react'
+import { sanitizeHtml, htmlToPlainText } from '../utils/richText'
 
 const STATUS_CONFIG = {
   completed: { label: 'Completed', className: 'bg-gray-900 text-white' },
@@ -38,12 +39,11 @@ export default function ProjectModal({ project, onClose }) {
   const status = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.completed
   const dateRange = formatDateRange(project.start_date, project.end_date)
 
-  // ── split the description into paragraphs on blank lines, so admin-entered
-  //    spacing (one blank line between paragraphs) renders as real paragraph gaps ──
-  const paragraphs = (project.description ?? '')
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean)
+  // ← changed: description is now rich HTML (from the editor's Quill field),
+  // not plain text with blank-line paragraph breaks — sanitize and render
+  // it as real HTML instead of splitting on blank lines
+  const hasDescription = htmlToPlainText(project.description).length > 0
+  const descriptionHtml = sanitizeHtml(project.description)
 
   return (
     <div
@@ -99,14 +99,11 @@ export default function ProjectModal({ project, onClose }) {
             </h2>
 
             <div className="mt-6 border-t border-gray-100 pt-6">
-              {paragraphs.length > 0 ? (
-                <div className="space-y-5">
-                  {paragraphs.map((paragraph, i) => (
-                    <p key={i} className="text-[15px] leading-relaxed text-gray-700">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
+              {hasDescription ? (
+                <div
+                  className="break-words text-[15px] leading-relaxed text-gray-700 [overflow-wrap:anywhere] [&_a]:text-gray-900 [&_a]:underline [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5"
+                  dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                />
               ) : (
                 <p className="text-sm text-gray-400">No description available for this project yet.</p>
               )}

@@ -344,9 +344,9 @@ export default function AdminDashboard() {
             <p className="text-xs font-semibold uppercase tracking-wider text-[#1B5E4F]">
               {getGreeting()}, <span className="font-extrabold">{adminDisplayName}</span>
             </p>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Peakstar Admin Overview</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Peakstar Dashboard Overview</h1>
             <p className="mt-1 max-w-xl text-sm text-gray-500">
-              A real-time snapshot of Peakstar's content, projects, services, and client engagement — everything in one place.
+              A real-time snapshot of Peakstar's content, projects, services, and client engagement | everything in one place.
             </p>
           </div>
         </div>

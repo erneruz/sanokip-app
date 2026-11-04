@@ -1,4 +1,5 @@
 // src/components/ProjectCard.jsx
+import { htmlToPlainText } from '../utils/richText'
 
 const STATUS_CONFIG = {
   completed: { label: 'Completed', className: 'bg-gray-900 text-white' },
@@ -10,7 +11,6 @@ export default function ProjectCard({ project, onOpen }) {
   const status = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.completed
 
   return (
-    // ── changed: was a <Link> to /projects/:slug; now a clickable card that opens the detail modal ──
     <div
       role="button"
       tabIndex={0}
@@ -59,9 +59,9 @@ export default function ProjectCard({ project, onOpen }) {
             {project.title}
           </h3>
 
-          {/* ── changed: project.summary → project.description, still clamped to 3 lines here ── */}
+          {/* ← changed: render plain text stripped from the rich HTML, not the raw HTML string */}
           <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-600">
-            {project.description}
+            {htmlToPlainText(project.description)}
           </p>
 
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
