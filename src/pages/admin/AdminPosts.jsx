@@ -17,6 +17,9 @@ export default function AdminPosts() {
   const [searchParams, setSearchParams] = useSearchParams()
   const statusFilter = searchParams.get('status')
   const activeTab = statusFilter === 'published' || statusFilter === 'draft' ? statusFilter : 'all'
+  // ← added: category comes from the same ?category= param the Dashboard's
+  // "Posts by Category" card now links to
+  const categoryFilter = searchParams.get('category')
 
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,13 +41,19 @@ export default function AdminPosts() {
     loadPosts()
   }, [])
 
-  const filteredPosts = statusFilter
-    ? posts.filter((post) => post.status === statusFilter)
+  // ← added: posts scoped by category only — used so the status-tab counts stay
+  // accurate when a category is already selected
+  const categoryScopedPosts = categoryFilter
+    ? posts.filter((post) => (post.categories?.name ?? 'Uncategorized') === categoryFilter)
     : posts
+
+  const filteredPosts = statusFilter
+    ? categoryScopedPosts.filter((post) => post.status === statusFilter)
+    : categoryScopedPosts
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [statusFilter])
+  }, [statusFilter, categoryFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE))
   useEffect(() => {
@@ -71,18 +80,40 @@ export default function AdminPosts() {
     window.scrollTo(0, 0)
   }
 
+  // ← changed: tab/category selectors now merge, instead of overwrite, the
+  // other active filter — picking a status keeps the current category and
+  // vice versa
   function selectTab(key) {
-    if (key === 'all') {
-      setSearchParams({})
-    } else {
-      setSearchParams({ status: key })
-    }
+    const next = {}
+    if (key !== 'all') next.status = key
+    if (categoryFilter) next.category = categoryFilter
+    setSearchParams(next)
   }
 
-  const totalCount = posts.length
-  const publishedCount = posts.filter((p) => p.status === 'published').length
-  const draftCount = posts.filter((p) => p.status === 'draft').length
+  function selectCategory(value) {
+    const next = {}
+    if (statusFilter) next.status = statusFilter
+    if (value !== 'all') next.category = value
+    setSearchParams(next)
+  }
+
+  const totalCount = categoryScopedPosts.length
+  const publishedCount = categoryScopedPosts.filter((p) => p.status === 'published').length
+  const draftCount = categoryScopedPosts.filter((p) => p.status === 'draft').length
   const tabCounts = { all: totalCount, published: publishedCount, draft: draftCount }
+
+  // ← added: distinct category names across all posts, for the filter dropdown
+  const categoryNames = Array.from(
+    new Set(posts.map((p) => p.categories?.name ?? 'Uncategorized'))
+  ).sort((a, b) => a.localeCompare(b))
+
+  const emptyMessage = (() => {
+    const statusLabel = activeTab === 'published' ? 'published' : activeTab === 'draft' ? 'draft' : null
+    if (statusLabel && categoryFilter) return `No ${statusLabel} posts in "${categoryFilter}".`
+    if (statusLabel) return `No ${statusLabel} posts.`
+    if (categoryFilter) return `No posts in "${categoryFilter}".`
+    return 'No posts yet.'
+  })()
 
   return (
     <main className="px-4 py-6 sm:px-8 sm:py-8 lg:px-16 lg:py-12">
@@ -109,31 +140,51 @@ export default function AdminPosts() {
           </Link>
         </div>
 
-        <div className="mt-5 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <div className="inline-flex rounded-lg bg-gray-100 p-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => selectTab(tab.key)}
-                className={
-                  activeTab === tab.key
-                    ? 'cursor-pointer whitespace-nowrap rounded-md bg-[#1B5E4F] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition'
-                    : 'cursor-pointer whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:text-gray-900'
-                }
-              >
-                {tab.label} <span className={activeTab === tab.key ? 'text-white/70' : 'text-gray-400'}>({tabCounts[tab.key]})</span>
-              </button>
-            ))}
+        {/* ← changed: status tabs and the new category filter sit side by side,
+            wrapping to their own rows on narrow screens */}
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <div className="inline-flex rounded-lg bg-gray-100 p-1">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => selectTab(tab.key)}
+                  className={
+                    activeTab === tab.key
+                      ? 'cursor-pointer whitespace-nowrap rounded-md bg-[#1B5E4F] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition'
+                      : 'cursor-pointer whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:text-gray-900'
+                  }
+                >
+                  {tab.label} <span className={activeTab === tab.key ? 'text-white/70' : 'text-gray-400'}>({tabCounts[tab.key]})</span>
+                </button>
+              ))}
+            </div>
           </div>
+
+          <label className="flex shrink-0 items-center gap-2 text-sm">
+            <span className="flex items-center gap-1.5 text-gray-500">
+              <IconFilter className="h-4 w-4 text-[#1B5E4F]" />
+              Category
+            </span>
+            <select
+              value={categoryFilter ?? 'all'}
+              onChange={(e) => selectCategory(e.target.value)}
+              className="cursor-pointer rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 outline-none transition focus:border-[#1B5E4F] focus:ring-1 focus:ring-[#1B5E4F]"
+            >
+              <option value="all">All Categories</option>
+              {categoryNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {loading ? (
           <p className="mt-8 text-gray-500">Loading…</p>
         ) : (
           <div className="mt-5 rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-            {/* ← changed: removed the overflow-x-auto + min-w table wrapper. Below sm,
-                rows render as a card list (handled below); at sm and up, a real table. */}
-
             {/* mobile card list — sm:hidden */}
             <ul className="divide-y divide-gray-100 px-4 py-2 sm:hidden">
               {paginatedPosts.map((post) => {
@@ -194,9 +245,7 @@ export default function AdminPosts() {
               })}
 
               {filteredPosts.length === 0 && (
-                <p className="py-6 text-center text-gray-500">
-                  {activeTab !== 'all' ? `No ${activeTab === 'published' ? 'published' : 'draft'} posts.` : 'No posts yet.'}
-                </p>
+                <p className="py-6 text-center text-gray-500">{emptyMessage}</p>
               )}
             </ul>
 
@@ -275,9 +324,7 @@ export default function AdminPosts() {
               </table>
 
               {filteredPosts.length === 0 && (
-                <p className="py-6 text-center text-gray-500">
-                  {activeTab !== 'all' ? `No ${activeTab === 'published' ? 'published' : 'draft'} posts.` : 'No posts yet.'}
-                </p>
+                <p className="py-6 text-center text-gray-500">{emptyMessage}</p>
               )}
             </div>
           </div>
@@ -309,6 +356,13 @@ function IconTag(props) {
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.17L4 3a1 1 0 0 0-1 1l.17 5.59a2 2 0 0 0 .66 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z" />
       <circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+function IconFilter(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
   )
 }

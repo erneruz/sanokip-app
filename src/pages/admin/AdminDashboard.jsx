@@ -6,11 +6,13 @@ import {
 } from 'recharts'
 import { getDashboardStats } from '../../services/dashboardService'
 import { getAllPostsForAdmin } from '../../services/postsService'
+import { getAllPublications } from '../../services/publicationsService'
+import { getCategory } from '../../constants/publications'
 import { useAuth } from '../../context/AuthContext'
 import { getFullProfile } from '../../services/profileService'
 import {
   IconDocument, IconCheckCircle, IconEdit, IconChat, IconThumbsUp, IconThumbsDown,
-  IconUsers, IconQuote, IconMail, IconCalendar, IconWrench, IconFolder,
+  IconUsers, IconQuote, IconMail, IconCalendar, IconWrench, IconFolder, IconBook,
 } from '../../components/icons'
 
 const LIGHT_GREY = '#94A3B8'
@@ -58,7 +60,6 @@ function BreakdownLink({ label, value, icon: Icon, to, color }) {
   )
 }
 
-// ← this now covers every breakdown on the page (previously some used a bar chart)
 function PieBreakdownCard({ title, total, slices, items }) {
   const hasData = slices.some((s) => s.value > 0)
 
@@ -106,8 +107,6 @@ function PieBreakdownCard({ title, total, slices, items }) {
   )
 }
 
-// ← changed: Recent Posts is now a full-width table, shown at the bottom of
-// the page instead of inside the breakdowns grid
 function RecentPostsTable({ posts }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5">
@@ -188,19 +187,22 @@ export default function AdminDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState(null)
   const [allPosts, setAllPosts] = useState([])
+  const [allPublications, setAllPublications] = useState([]) // ← added
   const [adminProfile, setAdminProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [statsData, posts, profileData] = await Promise.all([
+        const [statsData, posts, publications, profileData] = await Promise.all([
           getDashboardStats(),
           getAllPostsForAdmin(),
+          getAllPublications(), // ← added
           user?.id ? getFullProfile(user.id).catch(() => null) : Promise.resolve(null),
         ])
         setStats(statsData)
         setAllPosts(posts)
+        setAllPublications(publications) // ← added
         setAdminProfile(profileData?.profile ?? null)
       } catch (err) {
         console.error('Failed to load dashboard:', err)
@@ -248,7 +250,35 @@ export default function AdminDashboard() {
   const postsByCategoryData = postCategoryEntries.map((c) => ({ label: c.name, value: c.count, color: c.color }))
   const postsByCategoryItems = [
     { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument, to: '/admin/posts', color: LIGHT_GREY },
-    ...postCategoryEntries.map((c) => ({ label: c.name, value: c.count, icon: IconTag, to: '/admin/posts', color: c.color })),
+    ...postCategoryEntries.map((c) => ({
+      label: c.name,
+      value: c.count,
+      icon: IconTag,
+      to: `/admin/posts?category=${encodeURIComponent(c.name)}`,
+      color: c.color,
+    })),
+  ]
+
+  // ← added: same pattern as Posts by Category, built from the publications
+  // list using the same getCategory() label lookup AdminPublications uses
+  const pubCategoryCounts = {}
+  allPublications.forEach((pub) => {
+    const label = getCategory(pub.category)?.label || pub.category || 'Uncategorized'
+    pubCategoryCounts[label] = (pubCategoryCounts[label] ?? 0) + 1
+  })
+  const pubCategoryEntries = withPaletteColor(
+    Object.entries(pubCategoryCounts).map(([name, count]) => ({ name, count }))
+  )
+  const publicationsByCategoryData = pubCategoryEntries.map((c) => ({ label: c.name, value: c.count, color: c.color }))
+  const publicationsByCategoryItems = [
+    { label: 'Total Publications', value: stats.totalPublications, icon: IconBook, to: '/admin/publications', color: LIGHT_GREY },
+    ...pubCategoryEntries.map((c) => ({
+      label: c.name,
+      value: c.count,
+      icon: IconTag,
+      to: `/admin/publications?category=${encodeURIComponent(c.name)}`,
+      color: c.color,
+    })),
   ]
 
   const engagementTotal = stats.totalComments + stats.totalLikes + stats.totalDislikes
@@ -309,8 +339,6 @@ export default function AdminDashboard() {
     { label: 'Archived', value: stats.archivedRequests, color: DARK_SLATE },
   ]
 
-  // ← added: Other Modules is now a pie card too — total is the sum of the
-  // four independent module counts, shown as proportional slices
   const otherModulesTotal = stats.totalUsers + stats.totalTestimonials + stats.totalMessages + stats.totalEvents
   const otherModulesSlices = [
     { label: 'Users', value: stats.totalUsers, color: '#4F46E5' },
@@ -337,6 +365,7 @@ export default function AdminDashboard() {
             <p className="text-xs font-semibold uppercase tracking-wider text-[#1B5E4F]">
               {getGreeting()}, <span className="font-extrabold">{adminDisplayName}</span>
             </p>
+            <p className="mt-1.5 text-sm font-medium text-gray-400">Welcome to the</p>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Peakstar Engineering Dashboard</h1>
             <p className="mt-1 max-w-xl text-sm text-gray-500">
               A real-time snapshot of Peakstar Engineering contents, projects, services, and client engagement | everything in one place.
@@ -350,9 +379,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ← changed: one continuous grid, grouped topic by topic — Posts,
-          then Publications, Projects, Services, Requested Services,
-          Other Modules — every card is now a pie chart */}
+      {/* ← changed: added "Publications by Category" right after
+          "Publications Breakdown", same pattern as Posts by Category */}
       <section className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Breakdowns</h2>
         <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -361,16 +389,15 @@ export default function AdminDashboard() {
           <PieBreakdownCard title="Reactions Breakdown" total={engagementTotal} slices={engagementSlices} items={engagementItems} />
 
           <PieBreakdownCard title="Publications Breakdown" total={stats.totalPublications} slices={publicationsSlices} items={publicationsItems} />
+          <PieBreakdownCard title="Publications by Category" total={stats.totalPublications} slices={publicationsByCategoryData} items={publicationsByCategoryItems} />
           <PieBreakdownCard title="Projects Breakdown" total={stats.totalProjects} slices={projectsSlices} items={projectsItems} />
-          <PieBreakdownCard title="Services Breakdown" total={stats.totalServices} slices={servicesByCategoryData} items={servicesItems} />
 
+          <PieBreakdownCard title="Services Breakdown" total={stats.totalServices} slices={servicesByCategoryData} items={servicesItems} />
           <PieBreakdownCard title="Requested Services Breakdown" total={stats.totalServiceRequests} slices={serviceRequestsData} items={serviceRequestsItems} />
           <PieBreakdownCard title="Other Modules Breakdown" total={otherModulesTotal} slices={otherModulesSlices} items={otherModuleItems} />
         </div>
       </section>
 
-      {/* ← changed: Recent Posts moved out of the breakdowns grid entirely,
-          now its own full-width table section at the bottom of the page */}
       <section className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Activity</h2>
         <div className="mt-3">
