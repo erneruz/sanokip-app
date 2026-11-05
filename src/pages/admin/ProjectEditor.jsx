@@ -148,7 +148,8 @@ export default function ProjectEditor() {
     'mt-1.5 w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-[#1B5E4F] focus:outline-none focus:ring-2 focus:ring-[#1B5E4F]/20'
 
   return (
-    <main className="px-16 py-12">
+    // ← changed: padding scales down on small screens instead of fixed px-16 py-12
+    <main className="px-4 py-8 sm:px-8 sm:py-10 lg:px-16 lg:py-12">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-start gap-3.5 border-b border-gray-200 pb-6">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white shadow-sm">
@@ -167,7 +168,8 @@ export default function ProjectEditor() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-7">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* ← changed: card padding tightens on small screens */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <FieldLabel icon={IconDocument}>Title</FieldLabel>
             <input
               type="text"
@@ -180,14 +182,16 @@ export default function ProjectEditor() {
 
             <div className="mt-5">
               <FieldLabel icon={IconAlignLeft}>Description</FieldLabel>
-              <div className="mt-1.5 overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-[#1B5E4F] focus-within:ring-2 focus-within:ring-[#1B5E4F]/20">
+              {/* ← added: overflow-x-auto safety net so the Quill toolbar scrolls instead
+                  of breaking layout on a very narrow phone */}
+              <div className="mt-1.5 overflow-x-auto rounded-lg border border-gray-300 shadow-sm focus-within:border-[#1B5E4F] focus-within:ring-2 focus-within:ring-[#1B5E4F]/20">
                 <ReactQuill
                   theme="snow"
                   value={form.description}
                   onChange={(value) => updateField('description', value)}
                   modules={QUILL_MODULES}
                   placeholder="Write the full project description here — this shows in full, with real formatting, when someone opens the project."
-                  className="[&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[160px]"
+                  className="min-w-[280px] [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[160px]"
                 />
               </div>
               <p className="mt-1.5 text-xs text-gray-400">
@@ -220,7 +224,9 @@ export default function ProjectEditor() {
             </div>
 
             {previewStatus && (
-              <div className="mt-5 flex items-center gap-2 rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm text-gray-600">
+              // ← changed: flex-wrap so the status line wraps cleanly instead of overflowing
+              // on narrow phones
+              <div className="mt-5 flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm text-gray-600">
                 <IconSparkle className="h-4 w-4 shrink-0 text-gray-400" />
                 Status will be:
                 <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[previewStatus]}`}>
@@ -242,7 +248,8 @@ export default function ProjectEditor() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* ← changed: card padding tightens on small screens */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <FieldLabel icon={IconImage}>Project Image</FieldLabel>
 
             <div
@@ -266,8 +273,10 @@ export default function ProjectEditor() {
               />
 
               {form.image_url ? (
+                // ← changed: shorter fixed height on mobile (h-44) up to the previous h-56,
+                // so the preview doesn't dominate a small screen
                 <div className="relative w-full">
-                  <img src={form.image_url} alt="Project preview" className="h-56 w-full object-cover" />
+                  <img src={form.image_url} alt="Project preview" className="h-44 w-full object-cover sm:h-56" />
                   <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/50 via-transparent to-transparent p-3">
                     <span className="rounded-md bg-black/60 px-2 py-1 text-xs text-white">
                       {uploadingImage ? 'Uploading…' : 'Drop or click to replace'}
@@ -288,7 +297,8 @@ export default function ProjectEditor() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 px-6 py-10">
+                // ← changed: dropzone padding tightens on small screens
+                <div className="flex flex-col items-center gap-2 px-4 py-8 sm:px-6 sm:py-10">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAF5F1] text-[#1B5E4F]">
                     {uploadingImage ? (
                       <IconSpinner className="h-5 w-5 animate-spin" />
@@ -309,12 +319,13 @@ export default function ProjectEditor() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* ← changed: card padding tightens on small screens */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <FieldLabel icon={IconStar}>Visibility</FieldLabel>
             <button
               type="button"
               onClick={() => updateField('featured', !form.featured)}
-              className="mt-2 flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:bg-gray-50"
+              className="mt-2 flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:bg-gray-50"
             >
               <span>
                 <span className="block text-sm font-medium text-gray-900">Feature this project</span>
@@ -344,10 +355,11 @@ export default function ProjectEditor() {
           )}
 
           <div className="flex items-center gap-3">
+            {/* ← changed: full-width on mobile, auto-width from sm: up */}
             <button
               type="submit"
               disabled={saving || uploadingImage}
-              className="flex cursor-pointer items-center gap-2 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {saving ? (
                 <>

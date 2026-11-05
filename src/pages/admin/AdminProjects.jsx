@@ -117,7 +117,7 @@ export default function AdminProjects() {
   }
 
   return (
-    <main className="px-16 py-12">
+    <main className="px-4 py-6 sm:px-8 sm:py-8 lg:px-16 lg:py-12">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3.5">
@@ -134,104 +134,173 @@ export default function AdminProjects() {
 
           <Link
             to="/admin/projects/new"
-            className="flex shrink-0 items-center gap-1.5 self-start rounded-md bg-[#1B5E4F] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#154A3F] sm:self-auto"
+            className="flex shrink-0 items-center justify-center gap-1.5 self-start rounded-md bg-[#1B5E4F] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#154A3F] sm:self-auto"
           >
             <IconPlus className="h-4 w-4" />
             New Project
           </Link>
         </div>
 
-        <div className="mt-5 inline-flex rounded-lg bg-gray-100 p-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => selectTab(tab.key)}
-              className={
-                activeTab === tab.key
-                  ? 'cursor-pointer rounded-md bg-[#1B5E4F] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition'
-                  : 'cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:text-gray-900'
-              }
-            >
-              {tab.label} <span className={activeTab === tab.key ? 'text-white/70' : 'text-gray-400'}>({tabCounts[tab.key]})</span>
-            </button>
-          ))}
+        {/* ← changed: wrapped in a relative container with a right-edge fade overlay
+            (mobile only) so it's visually clear the tab row scrolls when a tab is cut off */}
+        <div className="relative mt-5 -mx-4 sm:mx-0">
+          <div className="overflow-x-auto px-4 sm:px-0">
+            <div className="inline-flex rounded-lg bg-gray-100 p-1">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => selectTab(tab.key)}
+                  className={
+                    activeTab === tab.key
+                      ? 'cursor-pointer whitespace-nowrap rounded-md bg-[#1B5E4F] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition'
+                      : 'cursor-pointer whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:text-gray-900'
+                  }
+                >
+                  {tab.label} <span className={activeTab === tab.key ? 'text-white/70' : 'text-gray-400'}>({tabCounts[tab.key]})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* ← added: fade hint on the right edge, mobile only — hints there's more to scroll */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-50 to-transparent sm:hidden" />
         </div>
 
         {loading ? (
           <p className="mt-8 text-gray-500">Loading…</p>
         ) : (
-          <div className="mt-5 rounded-xl bg-white shadow-sm ring-1 ring-gray-200 p-5">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-200 text-gray-500">
-                <tr>
-                  <th className="pb-2">Project</th>
-                  <th className="pb-2">Status</th>
-                  <th className="pb-2">Featured</th>
-                  <th className="pb-2 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedProjects.map((project) => {
-                  const meta = STATUS_CONFIG[project.status]
-                  return (
-                    <tr key={project.id} className="border-b border-gray-100">
-                      <td className="py-2.5">
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <span
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                            style={{ backgroundColor: meta?.badge ?? '#94A3B8' }}
-                          >
-                            <StatusIcon status={project.status} className="h-3 w-3 text-white" />
-                          </span>
-                          <span className="truncate font-medium text-gray-900">{project.title}</span>
-                        </div>
-                      </td>
-                      <td className="py-2.5">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${meta?.pill ?? 'bg-gray-100 text-gray-600'}`}>
+          <div className="mt-5 rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
+            {/* mobile card list — sm:hidden */}
+            <ul className="divide-y divide-gray-100 px-4 py-2 sm:hidden">
+              {paginatedProjects.map((project) => {
+                const meta = STATUS_CONFIG[project.status]
+                return (
+                  <li key={project.id} className="py-3">
+                    <div className="flex items-start gap-2.5">
+                      <span
+                        className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: meta?.badge ?? '#94A3B8' }}
+                      >
+                        <StatusIcon status={project.status} className="h-3 w-3 text-white" />
+                      </span>
+                      <p className="min-w-0 flex-1 break-words font-medium text-gray-900">{project.title}</p>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between gap-2 pl-8">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize ${meta?.pill ?? 'bg-gray-100 text-gray-600'}`}>
                           {project.status}
                         </span>
-                      </td>
-                      <td className="py-2.5">
-                        {project.featured ? (
-                          <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
+                        {project.featured && (
+                          <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-600">
                             <IconStar className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
                             Featured
                           </span>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Link
-                            to={`/admin/projects/${project.id}/edit`}
-                            aria-label="Edit project"
-                            title="Edit"
-                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[#1B5E4F] transition hover:bg-[#EAF5F1]"
-                          >
-                            <IconEdit className="h-4 w-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(project.id, project.title)}
-                            aria-label="Delete project"
-                            title="Delete"
-                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
-                          >
-                            <IconTrash className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Link
+                          to={`/admin/projects/${project.id}/edit`}
+                          aria-label="Edit project"
+                          title="Edit"
+                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[#1B5E4F] transition hover:bg-[#EAF5F1]"
+                        >
+                          <IconEdit className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(project.id, project.title)}
+                          aria-label="Delete project"
+                          title="Delete"
+                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                        >
+                          <IconTrash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
 
-            {filteredProjects.length === 0 && (
-              <p className="py-6 text-center text-gray-500">
-                {activeTab !== 'all' ? `No ${activeTab} projects.` : 'No projects yet.'}
-              </p>
-            )}
+              {filteredProjects.length === 0 && (
+                <p className="py-6 text-center text-gray-500">
+                  {activeTab !== 'all' ? `No ${activeTab} projects.` : 'No projects yet.'}
+                </p>
+              )}
+            </ul>
+
+            {/* desktop/tablet table — hidden below sm */}
+            <div className="hidden p-5 sm:block">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-gray-200 text-gray-500">
+                  <tr>
+                    <th className="pb-2">Project</th>
+                    <th className="pb-2">Status</th>
+                    <th className="pb-2">Featured</th>
+                    <th className="pb-2 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedProjects.map((project) => {
+                    const meta = STATUS_CONFIG[project.status]
+                    return (
+                      <tr key={project.id} className="border-b border-gray-100">
+                        <td className="py-2.5">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span
+                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                              style={{ backgroundColor: meta?.badge ?? '#94A3B8' }}
+                            >
+                              <StatusIcon status={project.status} className="h-3 w-3 text-white" />
+                            </span>
+                            <span className="truncate font-medium text-gray-900">{project.title}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${meta?.pill ?? 'bg-gray-100 text-gray-600'}`}>
+                            {project.status}
+                          </span>
+                        </td>
+                        <td className="py-2.5">
+                          {project.featured ? (
+                            <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
+                              <IconStar className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                              Featured
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Link
+                              to={`/admin/projects/${project.id}/edit`}
+                              aria-label="Edit project"
+                              title="Edit"
+                              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[#1B5E4F] transition hover:bg-[#EAF5F1]"
+                            >
+                              <IconEdit className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(project.id, project.title)}
+                              aria-label="Delete project"
+                              title="Delete"
+                              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                            >
+                              <IconTrash className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+
+              {filteredProjects.length === 0 && (
+                <p className="py-6 text-center text-gray-500">
+                  {activeTab !== 'all' ? `No ${activeTab} projects.` : 'No projects yet.'}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
