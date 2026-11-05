@@ -168,7 +168,8 @@ export default function PublicationEditor() {
   const activeFileMeta = activeFileName ? getFileMeta(activeFileName) : null
 
   return (
-    <main className="px-16 py-12">
+    // ← changed: padding scales down on small screens instead of fixed px-16 py-12
+    <main className="px-4 py-8 sm:px-8 sm:py-10 lg:px-16 lg:py-12">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-start gap-3.5 border-b border-gray-200 pb-6">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white shadow-sm">
@@ -187,7 +188,8 @@ export default function PublicationEditor() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-7">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* ← changed: card padding scales down on small screens (p-4) up to the previous p-6 */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <FieldLabel icon={IconDocument}>Title</FieldLabel>
             <input
               type="text"
@@ -231,14 +233,16 @@ export default function PublicationEditor() {
 
             <div className="mt-5">
               <FieldLabel icon={IconAlignLeft}>Description</FieldLabel>
-              <div className="mt-1.5 overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-[#1B5E4F] focus-within:ring-2 focus-within:ring-[#1B5E4F]/20">
+              {/* ← added: overflow-x-auto safety net so the Quill toolbar scrolls
+                  horizontally instead of breaking layout on very narrow phones */}
+              <div className="mt-1.5 overflow-x-auto rounded-lg border border-gray-300 shadow-sm focus-within:border-[#1B5E4F] focus-within:ring-2 focus-within:ring-[#1B5E4F]/20">
                 <ReactQuill
                   theme="snow"
                   value={form.description}
                   onChange={(value) => updateField('description', value)}
                   modules={QUILL_MODULES}
                   placeholder="Give readers a short, clear summary of what this document covers…"
-                  className="[&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px]"
+                  className="min-w-[280px] [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:border-0 [&_.ql-editor]:min-h-[140px]"
                 />
               </div>
             </div>
@@ -266,16 +270,19 @@ export default function PublicationEditor() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* ← changed: card padding scales down on small screens */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <FieldLabel icon={IconUpload}>Document File</FieldLabel>
 
+            {/* ← changed: dropzone padding tightens on small screens (px-4 py-6) up to the
+                previous px-6 py-8, so it doesn't eat the whole screen on a phone */}
             <div
               onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
               onDragLeave={() => setDragActive(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               className={
-                'mt-2 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition ' +
+                'mt-2 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center transition sm:px-6 sm:py-8 ' +
                 (dragActive
                   ? 'border-[#1B5E4F] bg-[#EAF5F1]'
                   : 'border-gray-300 bg-gray-50 hover:border-[#1B5E4F]/60 hover:bg-[#EAF5F1]/50')
@@ -331,16 +338,17 @@ export default function PublicationEditor() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* ← changed: card padding scales down on small screens */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <FieldLabel icon={IconFlag}>Status</FieldLabel>
-            <div className="mt-2 inline-flex rounded-lg bg-gray-100 p-1">
+            <div className="mt-2 inline-flex w-full rounded-lg bg-gray-100 p-1 sm:w-auto">
               <button
                 type="button"
                 onClick={() => updateField('status', 'draft')}
                 className={
                   form.status === 'draft'
-                    ? 'flex cursor-pointer items-center gap-1.5 rounded-md bg-white px-4 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition'
-                    : 'flex cursor-pointer items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium text-gray-500 transition hover:text-gray-700'
+                    ? 'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-white px-4 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition sm:flex-none'
+                    : 'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium text-gray-500 transition hover:text-gray-700 sm:flex-none'
                 }
               >
                 <IconEdit className="h-3.5 w-3.5" />
@@ -351,8 +359,8 @@ export default function PublicationEditor() {
                 onClick={() => updateField('status', 'published')}
                 className={
                   form.status === 'published'
-                    ? 'flex cursor-pointer items-center gap-1.5 rounded-md bg-[#1B5E4F] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition'
-                    : 'flex cursor-pointer items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium text-gray-500 transition hover:text-gray-700'
+                    ? 'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#1B5E4F] px-4 py-1.5 text-sm font-medium text-white shadow-sm transition sm:flex-none'
+                    : 'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium text-gray-500 transition hover:text-gray-700 sm:flex-none'
                 }
               >
                 <IconCheckCircle className="h-3.5 w-3.5" />
@@ -369,10 +377,11 @@ export default function PublicationEditor() {
           )}
 
           <div className="flex items-center gap-3">
+            {/* ← changed: full-width on mobile for an easier tap target, auto-width from sm: up */}
             <button
               type="submit"
               disabled={saving}
-              className="flex cursor-pointer items-center gap-2 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {saving ? (
                 <>

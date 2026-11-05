@@ -85,8 +85,6 @@ export default function AdminPosts() {
   const tabCounts = { all: totalCount, published: publishedCount, draft: draftCount }
 
   return (
-    // ← changed: padding now scales down on small screens (px-4 py-6) up to
-    // the previous desktop values (lg:px-16 lg:py-12) instead of being fixed
     <main className="px-4 py-6 sm:px-8 sm:py-8 lg:px-16 lg:py-12">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
@@ -111,8 +109,6 @@ export default function AdminPosts() {
           </Link>
         </div>
 
-        {/* ← changed: wrapped in an overflow-x-auto scroller so the tab group
-            never breaks the page layout on very narrow phones */}
         <div className="mt-5 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <div className="inline-flex rounded-lg bg-gray-100 p-1">
             {TABS.map((tab) => (
@@ -134,11 +130,79 @@ export default function AdminPosts() {
         {loading ? (
           <p className="mt-8 text-gray-500">Loading…</p>
         ) : (
-          <div className="mt-5 rounded-xl bg-white shadow-sm ring-1 ring-gray-200 p-4 sm:p-5">
-            {/* ← added: horizontal scroll wrapper so the table never squashes
-                or breaks layout on phones — it scrolls instead */}
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+          <div className="mt-5 rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
+            {/* ← changed: removed the overflow-x-auto + min-w table wrapper. Below sm,
+                rows render as a card list (handled below); at sm and up, a real table. */}
+
+            {/* mobile card list — sm:hidden */}
+            <ul className="divide-y divide-gray-100 px-4 py-2 sm:hidden">
+              {paginatedPosts.map((post) => {
+                const isPublished = post.status === 'published'
+                return (
+                  <li key={post.id} className="py-3">
+                    <div className="flex items-start gap-2.5">
+                      <span
+                        className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: isPublished ? '#1B5E4F' : '#94A3B8' }}
+                      >
+                        {isPublished ? (
+                          <IconCheckCircle className="h-3 w-3 text-white" />
+                        ) : (
+                          <IconEdit className="h-3 w-3 text-white" />
+                        )}
+                      </span>
+                      <p className="min-w-0 flex-1 break-words font-medium text-gray-900">{post.title}</p>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between gap-2 pl-8">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="flex items-center gap-1 truncate text-xs text-gray-500">
+                          <IconTag className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                          <span className="truncate">{post.categories?.name ?? '—'}</span>
+                        </span>
+                        <span
+                          className={
+                            isPublished
+                              ? 'shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'
+                              : 'shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600'
+                          }
+                        >
+                          {post.status}
+                        </span>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Link
+                          to={`/admin/posts/${post.id}/edit`}
+                          aria-label="Edit post"
+                          title="Edit"
+                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[#1B5E4F] transition hover:bg-[#EAF5F1]"
+                        >
+                          <IconEdit className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(post.id, post.title)}
+                          aria-label="Delete post"
+                          title="Delete"
+                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                        >
+                          <IconTrash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+
+              {filteredPosts.length === 0 && (
+                <p className="py-6 text-center text-gray-500">
+                  {activeTab !== 'all' ? `No ${activeTab === 'published' ? 'published' : 'draft'} posts.` : 'No posts yet.'}
+                </p>
+              )}
+            </ul>
+
+            {/* desktop/tablet table — hidden below sm */}
+            <div className="hidden p-5 sm:block">
+              <table className="w-full text-left text-sm">
                 <thead className="border-b border-gray-200 text-gray-500">
                   <tr>
                     <th className="pb-2">Post</th>
@@ -209,13 +273,13 @@ export default function AdminPosts() {
                   })}
                 </tbody>
               </table>
-            </div>
 
-            {filteredPosts.length === 0 && (
-              <p className="py-6 text-center text-gray-500">
-                {activeTab !== 'all' ? `No ${activeTab === 'published' ? 'published' : 'draft'} posts.` : 'No posts yet.'}
-              </p>
-            )}
+              {filteredPosts.length === 0 && (
+                <p className="py-6 text-center text-gray-500">
+                  {activeTab !== 'all' ? `No ${activeTab === 'published' ? 'published' : 'draft'} posts.` : 'No posts yet.'}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
