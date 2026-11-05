@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
-import { useAuth } from '../../context/AuthContext' // ← added
+import { useAuth } from '../../context/AuthContext'
 import RichTextEditor from '../../components/RichTextEditor'
 import {
   getPostById,
@@ -18,7 +18,7 @@ const emptyPost = {
   excerpt: '',
   content: '',
   category_id: '',
-  author_id: null, // ← changed: replaces author_first_name / author_second_name
+  author_id: null,
   status: 'draft',
   cover_image_url: null,
   published_at: null,
@@ -28,7 +28,7 @@ export default function PostEditor() {
   const { id } = useParams()
   const isEditing = Boolean(id)
   const navigate = useNavigate()
-  const { user } = useAuth() // ← added
+  const { user } = useAuth()
 
   const [form, setForm] = useState(emptyPost)
   const [categories, setCategories] = useState([])
@@ -48,7 +48,7 @@ export default function PostEditor() {
         excerpt: post.excerpt ?? '',
         content: post.content ?? '',
         category_id: post.category_id ?? '',
-        author_id: post.author_id ?? null, // ← changed: replaces author_first_name / author_second_name
+        author_id: post.author_id ?? null,
         status: post.status ?? 'draft',
         cover_image_url: post.cover_image_url ?? null,
         published_at: post.published_at ?? null,
@@ -75,8 +75,6 @@ export default function PostEditor() {
     }
   }
 
-  // Called by the rich text editor when an image is picked from the toolbar.
-  // Takes a File and must resolve to the public image URL.
   async function handleEditorImageUpload(file) {
     return uploadCoverImage(file)
   }
@@ -86,8 +84,6 @@ export default function PostEditor() {
     setSaving(true)
     setError(null)
 
-    // ── changed: attach the logged-in admin as author on a new post; keep the
-    //    original author on an edit, so editing someone's post never reassigns it ──
     const payload = {
       ...form,
       slug: slugify(form.title),
@@ -97,7 +93,6 @@ export default function PostEditor() {
           ? form.published_at ?? new Date().toISOString()
           : null,
     }
-    // ─────────────────────────────────────────────────────────────────────
 
     try {
       if (isEditing) {
@@ -114,7 +109,9 @@ export default function PostEditor() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    // ← changed: padding scales down on small screens (px-4 py-8) up to the
+    // previous desktop values (lg:px-8 lg:py-12)
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
       <h1 className="text-2xl font-bold">{isEditing ? 'Edit Post' : 'New Post'}</h1>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -128,9 +125,6 @@ export default function PostEditor() {
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
           />
         </div>
-
-        {/* ── removed: Author first name / Author last name fields — author is
-            now attached automatically from the logged-in admin's profile ── */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Category</label>
@@ -160,15 +154,25 @@ export default function PostEditor() {
         <div>
           <label className="block text-sm font-medium text-gray-700">Cover Image</label>
           {form.cover_image_url && (
-            <img src={form.cover_image_url} alt="Cover preview" className="mt-2 h-40 w-auto rounded-md object-cover" />
+            // ← changed: full-width up to a capped size on mobile instead of
+            // a bare h-40 w-auto, so the preview never gets cramped or
+            // overflows a narrow screen
+            <img
+              src={form.cover_image_url}
+              alt="Cover preview"
+              className="mt-2 h-40 w-full max-w-xs rounded-md object-cover sm:w-auto"
+            />
           )}
-          <input type="file" accept="image/*" onChange={handleCoverUpload} className="mt-2" />
+          <input type="file" accept="image/*" onChange={handleCoverUpload} className="mt-2 w-full text-sm" />
           {uploadingCover && <p className="mt-1 text-sm text-gray-500">Uploading…</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Content</label>
-          <div className="mt-1">
+          {/* ← added: overflow-x-auto safety net in case the rich text
+              toolbar inside RichTextEditor is wider than a narrow phone
+              screen — it scrolls instead of breaking the page layout */}
+          <div className="mt-1 overflow-x-auto">
             <RichTextEditor
               value={form.content}
               onChange={(html) => updateField('content', html)}
@@ -194,7 +198,7 @@ export default function PostEditor() {
         <button
           type="submit"
           disabled={saving || uploadingCover}
-          className="cursor-pointer rounded-md bg-[#1B5E4F] px-5 py-2 text-white hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full cursor-pointer rounded-md bg-[#1B5E4F] px-5 py-2.5 text-white hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
         >
           {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Post'}
         </button>
