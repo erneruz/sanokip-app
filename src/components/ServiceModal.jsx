@@ -1,6 +1,7 @@
 // src/components/ServiceModal.jsx
 import { useEffect, useRef, useState } from 'react'
 import ServiceRequestForm from './ServiceRequestForm'
+import { sanitizeHtml, htmlToPlainText } from '../utils/richText'
 
 function PlaceholderImage({ className }) {
   return (
@@ -64,6 +65,11 @@ export default function ServiceModal({ service, allServices, onClose, onSelectSe
     .filter((s) => s.categoryId === service.categoryId && s.id !== service.id)
     .slice(0, 3)
 
+  // ← added: description is now rich-text HTML (from the Quill editor), so it's
+  // sanitized and rendered as HTML instead of printed as raw text
+  const descriptionHtml = sanitizeHtml(service.description)
+  const hasDescription = htmlToPlainText(service.description).length > 0
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
@@ -126,9 +132,16 @@ export default function ServiceModal({ service, allServices, onClose, onSelectSe
           />
         ) : (
           <div className="px-6 py-8 sm:px-10 sm:py-10">
-            <p className="text-base leading-loose text-gray-700 whitespace-pre-line">
-              {service.description}
-            </p>
+            {hasDescription ? (
+              // ← changed: render sanitized HTML instead of the raw string, with
+              // break-words as a safety net against the Quill &nbsp; overflow bug
+              <div
+                className="max-w-none text-base leading-loose text-gray-700 break-words [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:text-[#1B5E4F] [&_a]:underline [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+              />
+            ) : (
+              <p className="text-base text-gray-400">No description yet.</p>
+            )}
 
             <div className="flex flex-wrap gap-3 pt-8 mt-8 border-t border-gray-100">
               <button

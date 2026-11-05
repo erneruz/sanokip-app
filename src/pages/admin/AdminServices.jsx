@@ -133,7 +133,8 @@ export default function AdminServices() {
       : allServices.filter((s) => s.categoryId === activeCategoryFilter)
 
   return (
-    <main className="px-8 py-10">
+    // ← changed: padding scales down on small screens instead of fixed px-8 py-10
+    <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center text-white rounded-lg w-9 h-9 bg-[#1B5E4F]">
@@ -147,7 +148,7 @@ export default function AdminServices() {
         <button
           onClick={() => setEditingService(null)}
           disabled={lines.length === 0}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-[#1B5E4F] px-4 py-2 text-sm font-medium text-white hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#1B5E4F] px-4 py-2 text-sm font-medium text-white hover:bg-[#154A3F] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <IconPlus className="w-4 h-4" />
           New Service
@@ -157,7 +158,7 @@ export default function AdminServices() {
       {/* Add a category */}
       <form
         onSubmit={handleAddCategory}
-        className="flex flex-wrap items-end gap-3 p-5 mt-6 bg-white shadow-sm rounded-xl ring-1 ring-gray-200"
+        className="flex flex-wrap items-end gap-3 p-4 mt-6 bg-white shadow-sm rounded-xl ring-1 ring-gray-200 sm:p-5"
       >
         <div className="flex-1 min-w-[220px]">
           <label className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500">
@@ -173,7 +174,7 @@ export default function AdminServices() {
         <button
           type="submit"
           disabled={addingCategory}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
           <IconPlus className="w-4 h-4" />
           Add Category

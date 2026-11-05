@@ -1,4 +1,5 @@
 // src/components/ServiceCard.jsx
+import { htmlToPlainText } from '../utils/richText'
 
 function PlaceholderImage({ className }) {
   return (
@@ -50,8 +51,10 @@ export default function ServiceCard({ service, onExplore }) {
           {service.name}
         </h3>
         <span className="block h-[3px] w-8 bg-black mt-2 mb-3 transition-all duration-300 group-hover:w-12" />
+        {/* ← changed: strip HTML tags down to plain text before truncating, instead of
+            printing the raw rich-text HTML (<p>, &nbsp;, etc.) straight into the card */}
         <p className="text-sm leading-relaxed text-gray-600 line-clamp-3">
-          {service.description}
+          {htmlToPlainText(service.description)}
         </p>
 
         <button
