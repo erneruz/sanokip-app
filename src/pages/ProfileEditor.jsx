@@ -7,7 +7,6 @@ import {
   uploadAvatar,
 } from '../services/profileService'
 
-// ← added: the full academic ladder, A2 up to Full Professor, for the Degree dropdown
 const DEGREE_OPTIONS = [
   'A2',
   'A1 / Advanced Diploma',
@@ -183,28 +182,32 @@ export default function ProfileEditor({
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="shrink-0 overflow-x-auto border-b border-gray-100 px-4 pt-3 sm:px-6">
-          <div className="flex gap-1">
-            {tabs.map((t) => {
-              const TabIcon = t.icon
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setTab(t.key)}
-                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3.5 py-2 text-sm font-medium transition-colors ${
-                    tab === t.key
-                      ? 'border-b-2 border-[#1B5E4F] text-[#1B5E4F]'
-                      : 'border-b-2 border-transparent text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  <TabIcon className="h-4 w-4" />
-                  {t.label}
-                </button>
-              )
-            })}
+        {/* Tabs — ← changed: wrapped so a fade-edge hint can show there's more to
+            scroll to, matching the pattern already used on AdminProjects */}
+        <div className="relative shrink-0 border-b border-gray-100">
+          <div className="overflow-x-auto px-4 pt-3 sm:px-6">
+            <div className="flex gap-1">
+              {tabs.map((t) => {
+                const TabIcon = t.icon
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTab(t.key)}
+                    className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3.5 py-2 text-sm font-medium transition-colors ${
+                      tab === t.key
+                        ? 'border-b-2 border-[#1B5E4F] text-[#1B5E4F]'
+                        : 'border-b-2 border-transparent text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    <TabIcon className="h-4 w-4" />
+                    {t.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent sm:hidden" />
         </div>
 
         {/* Body */}
@@ -378,8 +381,6 @@ export default function ProfileEditor({
                 {academic.map((a, i) => (
                   <RepeatableCard key={a._key} index={i} icon={IconGraduationCap} onRemove={() => removeAcademic(a._key)}>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {/* ← changed: Degree is now a dropdown (A2 through Full Professor)
-                          instead of a free-text input */}
                       <Field label="Degree">
                         <select
                           value={a.degree}
@@ -522,8 +523,9 @@ export default function ProfileEditor({
             )}
           </div>
 
-          {/* Footer */}
-          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6">
+          {/* Footer — ← changed: explicit bg-white + a top shadow so it reads as a
+              clearly anchored part of the card, not a strip floating over the backdrop */}
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-4 py-4 shadow-[0_-2px_8px_rgba(0,0,0,0.04)] sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6">
             <button
               type="button"
               onClick={onClose}
