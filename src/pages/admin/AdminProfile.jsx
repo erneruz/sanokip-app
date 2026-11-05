@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getFullProfile } from '../../services/profileService'
-import ProfileEditor from '../ProfileEditor' // ← changed: was './ProfileEditor'
+import ProfileEditor from '../ProfileEditor'
 
 export default function AdminProfile() {
   const { user } = useAuth()
@@ -46,26 +46,29 @@ export default function AdminProfile() {
   }
 
   if (loading) {
-    return <main className="px-8 py-10 text-gray-500">Loading profile…</main>
+    return <main className="px-4 py-6 text-gray-500 sm:px-8 sm:py-10">Loading profile…</main>
   }
 
   const displayName = `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || 'Your Profile'
 
   return (
-    <main className="px-8 py-10">
+    <main className="px-4 py-6 sm:px-8 sm:py-10">
       {toast && (
-        <div className={`fixed right-6 top-6 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+        <div className={`fixed right-4 top-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg sm:right-6 sm:top-6 ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
           {toast.message}
         </div>
       )}
 
       {/* ── Header card ── */}
       <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-        <div className="h-36 bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F]" />
-        <div className="px-8 pb-6">
-          <div className="-mt-14 flex items-end justify-between">
-            <div className="flex items-end gap-4">
-              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full ring-4 ring-white bg-gray-100 shadow-md">
+        <div className="h-28 bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] sm:h-36" />
+        {/* Mobile: avatar centered and overlapping the banner, name block fully below
+            it, full-width Edit button. From sm: up, back to the original side-by-side
+            layout (avatar + info on the left, Edit button on the right). */}
+        <div className="px-4 pb-6 sm:px-8">
+          <div className="flex flex-col items-center text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+            <div className="flex flex-col items-center sm:flex-row sm:items-end sm:gap-4">
+              <div className="-mt-10 h-20 w-20 shrink-0 overflow-hidden rounded-full ring-4 ring-white bg-gray-100 shadow-md sm:-mt-14 sm:h-28 sm:w-28">
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt={displayName} className="h-full w-full object-cover" />
                 ) : (
@@ -74,7 +77,7 @@ export default function AdminProfile() {
                   </div>
                 )}
               </div>
-              <div className="rounded-xl bg-white/70 px-4 py-2 backdrop-blur-sm">
+              <div className="mt-3 min-w-0 rounded-xl px-4 py-2 sm:mt-0 sm:bg-white/70 sm:backdrop-blur-sm">
                 <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
                 {profile?.current_position && (
                   <p className="text-sm text-gray-700">
@@ -82,13 +85,13 @@ export default function AdminProfile() {
                     {profile.organization ? ` at ${profile.organization}` : ''}
                   </p>
                 )}
-                <p className="text-sm text-gray-500">{profile?.email ?? user?.email}</p>
+                <p className="truncate text-sm text-gray-500">{profile?.email ?? user?.email}</p>
                 {profile?.location && <p className="text-xs text-gray-400">{profile.location}</p>}
               </div>
             </div>
 
             <button onClick={() => setModalOpen(true)}
-              className="cursor-pointer rounded-md bg-[#1B5E4F] px-5 py-2 text-sm text-white hover:bg-[#154A3F]">
+              className="mt-4 w-full cursor-pointer rounded-md bg-[#1B5E4F] px-5 py-2 text-sm text-white hover:bg-[#154A3F] sm:mt-0 sm:w-auto">
               Edit Profile
             </button>
           </div>
@@ -99,7 +102,7 @@ export default function AdminProfile() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left: Personal information */}
         <div className="space-y-6 lg:col-span-1">
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
             <h2 className="text-sm font-semibold text-gray-900">Contact & Basic Info</h2>
             <div className="mt-4 space-y-4">
               <ReadField label="Phone" value={profile?.phone} />
@@ -113,7 +116,7 @@ export default function AdminProfile() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
             <h2 className="text-sm font-semibold text-gray-900">Areas of Expertise</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {profile?.areas_of_expertise?.length ? (
@@ -131,7 +134,7 @@ export default function AdminProfile() {
         <div className="space-y-6 lg:col-span-2">
           <ReadSection title="Biography" value={profile?.bio} />
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
             <h2 className="text-sm font-semibold text-gray-900">Academic Information</h2>
             {academic.length ? (
               <div className="mt-4 space-y-4">
@@ -155,7 +158,7 @@ export default function AdminProfile() {
             )}
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
             <h2 className="text-sm font-semibold text-gray-900">Professional Qualifications & Certifications</h2>
             {certifications.length ? (
               <div className="mt-4 space-y-4">
@@ -212,9 +215,9 @@ function ReadField({ label, value, isLink }) {
 
 function ReadSection({ title, value }) {
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
       <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
-      <p className="mt-3 whitespace-pre-line text-sm text-gray-600">{value || '—'}</p>
+      <p className="mt-3 whitespace-pre-line break-words text-sm text-gray-600">{value || '—'}</p>
     </div>
   )
 }
