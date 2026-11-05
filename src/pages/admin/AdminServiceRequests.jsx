@@ -178,9 +178,10 @@ export default function AdminServiceRequests() {
   const visible = filter === 'all' ? requests : requests.filter((r) => r.status === filter)
 
   return (
-    <main className="px-8 py-10">
+    // ← changed: padding scales down on small screens instead of fixed px-8 py-10
+    <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center text-white rounded-lg w-9 h-9 bg-[#1B5E4F]">
+        <div className="flex items-center justify-center text-white rounded-lg w-9 h-9 bg-[#1B5E4F] shrink-0">
           <IconMailIcon className="w-5 h-5" />
         </div>
         <div>
@@ -237,21 +238,26 @@ export default function AdminServiceRequests() {
                 key={r.id}
                 className={`overflow-hidden bg-white border border-l-4 border-gray-200 shadow-sm rounded-xl transition hover:shadow-md ${STATUS_BORDER[r.status] ?? 'border-l-gray-300'}`}
               >
-                <div className="flex flex-wrap items-start justify-between gap-4 p-5">
-                  <div className="flex items-start flex-1 min-w-0 gap-4">
+                {/* ← changed: card is now a vertical stack on mobile — the info block
+                    (avatar, name, service, contact) takes full width, and the status
+                    select + delete button sit on their own row underneath instead of
+                    squeezing into the same row and forcing the title to wrap badly.
+                    From sm: up, it goes back to the original side-by-side layout. */}
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+                  <div className="flex items-start flex-1 min-w-0 gap-3 sm:gap-4">
                     {/* Avatar */}
                     <div className="flex items-center justify-center text-sm font-semibold text-white rounded-full w-11 h-11 shrink-0 bg-[#1B5E4F]">
                       {initials(r.requester_name)}
                     </div>
 
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                           {r.category_name}
                         </p>
                         <StatusBadge status={r.status} />
                       </div>
-                      <p className="mt-0.5 text-base font-bold text-gray-900">{r.service_name}</p>
+                      <p className="mt-0.5 text-base font-bold leading-snug text-gray-900">{r.service_name}</p>
 
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <span className="text-sm font-medium text-gray-900">{r.requester_name}</span>
@@ -267,17 +273,24 @@ export default function AdminServiceRequests() {
                         )}
                       </div>
 
+                      {/* ← changed: phone and email are now tap-to-call / tap-to-email links */}
                       <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3 text-sm text-gray-600">
-                        <span className="inline-flex items-center gap-1.5">
-                          <IconPhone className="w-4 h-4 text-gray-400" />
+                        <a
+                          href={`tel:${r.phone_dial_code}${r.phone_number}`}
+                          className="inline-flex items-center gap-1.5 hover:text-[#1B5E4F] hover:underline"
+                        >
+                          <IconPhone className="w-4 h-4 text-gray-400 shrink-0" />
                           {r.phone_dial_code} {r.phone_number}
-                        </span>
+                        </a>
+                        <a
+                          href={`mailto:${r.email}`}
+                          className="inline-flex min-w-0 items-center gap-1.5 hover:text-[#1B5E4F] hover:underline"
+                        >
+                          <IconMailIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                          <span className="truncate">{r.email}</span>
+                        </a>
                         <span className="inline-flex items-center gap-1.5">
-                          <IconMailIcon className="w-4 h-4 text-gray-400" />
-                          {r.email}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <IconPin className="w-4 h-4 text-gray-400" />
+                          <IconPin className="w-4 h-4 text-gray-400 shrink-0" />
                           {[r.district_county, r.province_state, r.country].filter(Boolean).join(', ')}
                         </span>
                       </div>
@@ -285,7 +298,7 @@ export default function AdminServiceRequests() {
                       {r.message && (
                         <div className="flex gap-2 mt-3">
                           <IconQuote className="w-4 h-4 mt-0.5 text-gray-300 shrink-0" />
-                          <div>
+                          <div className="min-w-0">
                             <p className={`text-sm text-gray-700 ${isExpanded ? '' : 'line-clamp-2'}`}>
                               {r.message}
                             </p>
@@ -311,11 +324,14 @@ export default function AdminServiceRequests() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  {/* ← changed: status select grows to fill the row on mobile (flex-1),
+                      delete button stays fixed-size; from sm: up both shrink back to
+                      their compact inline size on the right */}
+                  <div className="flex items-center gap-2 border-t border-gray-100 pt-3 sm:shrink-0 sm:border-t-0 sm:pt-0">
                     <select
                       value={r.status}
                       onChange={(e) => handleStatusChange(r.id, e.target.value)}
-                      className="px-2 py-1.5 text-sm bg-white border border-gray-300 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B5E4F]"
+                      className="flex-1 cursor-pointer rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B5E4F] sm:flex-none"
                     >
                       {STATUS_OPTIONS.map((o) => (
                         <option key={o.value} value={o.value}>
@@ -326,7 +342,7 @@ export default function AdminServiceRequests() {
                     <button
                       onClick={() => handleDelete(r)}
                       aria-label="Delete request"
-                      className="flex items-center justify-center w-8 h-8 text-gray-400 transition rounded-md cursor-pointer hover:bg-red-50 hover:text-red-600"
+                      className="flex items-center justify-center w-8 h-8 text-gray-400 transition rounded-md cursor-pointer hover:bg-red-50 hover:text-red-600 shrink-0"
                     >
                       <IconTrash className="w-4 h-4" />
                     </button>
