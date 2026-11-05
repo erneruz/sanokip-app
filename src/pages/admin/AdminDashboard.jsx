@@ -2,13 +2,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { getDashboardStats } from '../../services/dashboardService'
 import { getAllPostsForAdmin } from '../../services/postsService'
-import { useAuth } from '../../context/AuthContext' // ← added
-import { getFullProfile } from '../../services/profileService' // ← added
+import { useAuth } from '../../context/AuthContext'
+import { getFullProfile } from '../../services/profileService'
 import {
   IconDocument, IconCheckCircle, IconEdit, IconChat, IconThumbsUp, IconThumbsDown,
   IconUsers, IconQuote, IconMail, IconCalendar, IconWrench, IconFolder,
@@ -59,6 +58,7 @@ function BreakdownLink({ label, value, icon: Icon, to, color }) {
   )
 }
 
+// ← this now covers every breakdown on the page (previously some used a bar chart)
 function PieBreakdownCard({ title, total, slices, items }) {
   const hasData = slices.some((s) => s.value > 0)
 
@@ -106,46 +106,14 @@ function PieBreakdownCard({ title, total, slices, items }) {
   )
 }
 
-function BarBreakdownCard({ title, data, items }) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5">
-      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
-
-      <div className="mt-3 h-48">
-        {data.length === 0 ? (
-          <p className="text-sm text-gray-500">No data yet.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={55} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={24} />
-              <Tooltip wrapperStyle={{ zIndex: 50 }} />
-              <Bar dataKey="value" radius={[5, 5, 0, 0]}>
-                {data.map((d) => (
-                  <Cell key={d.label} fill={d.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-0.5 sm:grid-cols-3">
-        {items.map((item) => (
-          <BreakdownLink key={item.label} {...item} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function RecentPostsCard({ posts }) {
+// ← changed: Recent Posts is now a full-width table, shown at the bottom of
+// the page instead of inside the breakdowns grid
+function RecentPostsTable({ posts }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-900">Recent Posts</h2>
-        <Link to="/admin/posts" className="text-xs text-gray-500 hover:text-[#1B5E4F]">
+        <Link to="/admin/posts" className="text-xs font-medium text-[#1B5E4F] hover:underline">
           View all →
         </Link>
       </div>
@@ -153,42 +121,63 @@ function RecentPostsCard({ posts }) {
       {posts.length === 0 ? (
         <p className="mt-6 text-sm text-gray-500">No posts yet.</p>
       ) : (
-        <div className="mt-3 space-y-0.5">
-          {posts.map((post) => {
-            const isPublished = post.status === 'published'
-            return (
-              <div
-                key={post.id}
-                className="flex items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-sm transition hover:bg-[#EAF5F1]"
-              >
-                <span className="flex min-w-0 items-center gap-2 text-gray-700">
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: isPublished ? '#1B5E4F' : LIGHT_GREY }}
-                  >
-                    {isPublished ? (
-                      <IconCheckCircle className="h-3 w-3 text-white" />
-                    ) : (
-                      <IconEdit className="h-3 w-3 text-white" />
-                    )}
-                  </span>
-                  <span className="truncate">{post.title}</span>
-                </span>
-                <span className="flex shrink-0 items-center gap-3">
-                  <span className="hidden max-w-[7rem] truncate text-xs text-gray-400 sm:inline">
-                    {post.categories?.name ?? '—'}
-                  </span>
-                  <Link
-                    to={`/admin/posts/${post.id}/edit`}
-                    aria-label="Edit post"
-                    className="text-[#1B5E4F] hover:text-[#154A3F]"
-                  >
-                    <IconEdit className="h-3.5 w-3.5" />
-                  </Link>
-                </span>
-              </div>
-            )
-          })}
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead className="border-b border-gray-200 text-gray-500">
+              <tr>
+                <th className="pb-2">Post</th>
+                <th className="pb-2">Category</th>
+                <th className="pb-2">Status</th>
+                <th className="pb-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posts.map((post) => {
+                const isPublished = post.status === 'published'
+                return (
+                  <tr key={post.id} className="border-b border-gray-100 last:border-b-0">
+                    <td className="py-2.5">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: isPublished ? '#1B5E4F' : LIGHT_GREY }}
+                        >
+                          {isPublished ? (
+                            <IconCheckCircle className="h-3 w-3 text-white" />
+                          ) : (
+                            <IconEdit className="h-3 w-3 text-white" />
+                          )}
+                        </span>
+                        <span className="truncate font-medium text-gray-900">{post.title}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 text-gray-500">{post.categories?.name ?? '—'}</td>
+                    <td className="py-2.5">
+                      <span
+                        className={
+                          isPublished
+                            ? 'rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'
+                            : 'rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600'
+                        }
+                      >
+                        {post.status}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <Link
+                        to={`/admin/posts/${post.id}/edit`}
+                        aria-label="Edit post"
+                        title="Edit"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#1B5E4F] transition hover:bg-[#EAF5F1]"
+                      >
+                        <IconEdit className="h-4 w-4" />
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -196,17 +185,15 @@ function RecentPostsCard({ posts }) {
 }
 
 export default function AdminDashboard() {
-  const { user } = useAuth() // ← added
+  const { user } = useAuth()
   const [stats, setStats] = useState(null)
   const [allPosts, setAllPosts] = useState([])
-  const [adminProfile, setAdminProfile] = useState(null) // ← added
+  const [adminProfile, setAdminProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        // ← changed: also fetch the logged-in admin's profile, same way
-        // AdminProfile.jsx does, so the header can greet them by name
         const [statsData, posts, profileData] = await Promise.all([
           getDashboardStats(),
           getAllPostsForAdmin(),
@@ -225,7 +212,7 @@ export default function AdminDashboard() {
   }, [user?.id])
 
   if (loading) {
-    return <main className="px-8 py-10 text-gray-500">Loading dashboard…</main>
+    return <main className="px-4 py-8 text-gray-500 sm:px-6 lg:px-8">Loading dashboard…</main>
   }
 
   const recentPosts = allPosts.slice(0, 5)
@@ -237,8 +224,6 @@ export default function AdminDashboard() {
     day: 'numeric',
   })
 
-  // ← added: the admin's display name for the greeting — falls back to their
-  // email if the profile has no name on file yet
   const adminDisplayName =
     `${adminProfile?.first_name ?? ''} ${adminProfile?.last_name ?? ''}`.trim() || user?.email || 'Admin'
 
@@ -250,6 +235,33 @@ export default function AdminDashboard() {
   const postsSlices = [
     { label: 'Published', value: stats.publishedPosts, color: '#1B5E4F' },
     { label: 'Draft', value: stats.draftPosts, color: DARK_SLATE },
+  ]
+
+  const postCategoryCounts = {}
+  allPosts.forEach((post) => {
+    const name = post.categories?.name ?? 'Uncategorized'
+    postCategoryCounts[name] = (postCategoryCounts[name] ?? 0) + 1
+  })
+  const postCategoryEntries = withPaletteColor(
+    Object.entries(postCategoryCounts).map(([name, count]) => ({ name, count }))
+  )
+  const postsByCategoryData = postCategoryEntries.map((c) => ({ label: c.name, value: c.count, color: c.color }))
+  const postsByCategoryItems = [
+    { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument, to: '/admin/posts', color: LIGHT_GREY },
+    ...postCategoryEntries.map((c) => ({ label: c.name, value: c.count, icon: IconTag, to: '/admin/posts', color: c.color })),
+  ]
+
+  const engagementTotal = stats.totalComments + stats.totalLikes + stats.totalDislikes
+  const engagementSlices = [
+    { label: 'Comments', value: stats.totalComments, color: '#2563EB' },
+    { label: 'Likes', value: stats.totalLikes, color: '#1B5E4F' },
+    { label: 'Dislikes', value: stats.totalDislikes, color: '#DC2626' },
+  ]
+  const engagementItems = [
+    { label: 'Total Reactions', value: engagementTotal, icon: IconActivity, color: LIGHT_GREY },
+    { label: 'Comments', value: stats.totalComments, icon: IconChat, color: '#2563EB' },
+    { label: 'Likes', value: stats.totalLikes, icon: IconThumbsUp, color: '#1B5E4F' },
+    { label: 'Dislikes', value: stats.totalDislikes, icon: IconThumbsDown, color: '#DC2626' },
   ]
 
   const publicationsItems = [
@@ -272,33 +284,6 @@ export default function AdminDashboard() {
     { label: 'Completed', value: stats.completedProjects, color: '#1B5E4F' },
     { label: 'Ongoing', value: stats.ongoingProjects, color: '#2563EB' },
     { label: 'Upcoming', value: stats.upcomingProjects, color: DARK_SLATE },
-  ]
-
-  const engagementTotal = stats.totalComments + stats.totalLikes + stats.totalDislikes
-  const engagementSlices = [
-    { label: 'Comments', value: stats.totalComments, color: '#2563EB' },
-    { label: 'Likes', value: stats.totalLikes, color: '#1B5E4F' },
-    { label: 'Dislikes', value: stats.totalDislikes, color: '#DC2626' },
-  ]
-  const engagementItems = [
-    { label: 'Total Engagement', value: engagementTotal, icon: IconActivity, color: LIGHT_GREY },
-    { label: 'Comments', value: stats.totalComments, icon: IconChat, color: '#2563EB' },
-    { label: 'Likes', value: stats.totalLikes, icon: IconThumbsUp, color: '#1B5E4F' },
-    { label: 'Dislikes', value: stats.totalDislikes, icon: IconThumbsDown, color: '#DC2626' },
-  ]
-
-  const postCategoryCounts = {}
-  allPosts.forEach((post) => {
-    const name = post.categories?.name ?? 'Uncategorized'
-    postCategoryCounts[name] = (postCategoryCounts[name] ?? 0) + 1
-  })
-  const postCategoryEntries = withPaletteColor(
-    Object.entries(postCategoryCounts).map(([name, count]) => ({ name, count }))
-  )
-  const postsByCategoryData = postCategoryEntries.map((c) => ({ label: c.name, value: c.count, color: c.color }))
-  const postsByCategoryItems = [
-    { label: 'Total Posts', value: stats.totalPosts, icon: IconDocument, to: '/admin/posts', color: LIGHT_GREY },
-    ...postCategoryEntries.map((c) => ({ label: c.name, value: c.count, icon: IconTag, to: '/admin/posts', color: c.color })),
   ]
 
   const serviceCategoryEntries = withPaletteColor(stats.servicesByCategory ?? [])
@@ -324,7 +309,17 @@ export default function AdminDashboard() {
     { label: 'Archived', value: stats.archivedRequests, color: DARK_SLATE },
   ]
 
+  // ← added: Other Modules is now a pie card too — total is the sum of the
+  // four independent module counts, shown as proportional slices
+  const otherModulesTotal = stats.totalUsers + stats.totalTestimonials + stats.totalMessages + stats.totalEvents
+  const otherModulesSlices = [
+    { label: 'Users', value: stats.totalUsers, color: '#4F46E5' },
+    { label: 'Testimonials', value: stats.totalTestimonials, color: '#DB2777' },
+    { label: 'Messages', value: stats.totalMessages, color: '#0891B2' },
+    { label: 'Events', value: stats.totalEvents, color: '#EA580C' },
+  ]
   const otherModuleItems = [
+    { label: 'Total Modules', value: otherModulesTotal, icon: IconDashboardGrid, color: LIGHT_GREY },
     { label: 'Users', value: stats.totalUsers, icon: IconUsers, to: '/admin/users', color: '#4F46E5' },
     { label: 'Testimonials', value: stats.totalTestimonials, icon: IconQuote, to: '/admin/testimonials', color: '#DB2777' },
     { label: 'Messages', value: stats.totalMessages, icon: IconMail, to: '/admin/messages', color: '#0891B2' },
@@ -332,21 +327,19 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <main className="px-8 py-10">
+    <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
       <div className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3.5">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white shadow-sm">
             <IconDashboardGrid className="h-5 w-5" />
           </span>
           <div>
-            {/* ← changed: now shows the logged-in admin's name, bold and
-                uppercase (uppercase comes from the className on this <p>) */}
             <p className="text-xs font-semibold uppercase tracking-wider text-[#1B5E4F]">
               {getGreeting()}, <span className="font-extrabold">{adminDisplayName}</span>
             </p>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Peakstar Dashboard Overview</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Peakstar Engineering Dashboard</h1>
             <p className="mt-1 max-w-xl text-sm text-gray-500">
-              A real-time snapshot of Peakstar's content, projects, services, and client engagement | everything in one place.
+              A real-time snapshot of Peakstar Engineering contents, projects, services, and client engagement | everything in one place.
             </p>
           </div>
         </div>
@@ -357,36 +350,31 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* ← changed: one continuous grid, grouped topic by topic — Posts,
+          then Publications, Projects, Services, Requested Services,
+          Other Modules — every card is now a pie chart */}
       <section className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Breakdowns</h2>
-        <div className="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           <PieBreakdownCard title="Posts Breakdown" total={stats.totalPosts} slices={postsSlices} items={postsItems} />
+          <PieBreakdownCard title="Posts by Category" total={stats.totalPosts} slices={postsByCategoryData} items={postsByCategoryItems} />
+          <PieBreakdownCard title="Reactions Breakdown" total={engagementTotal} slices={engagementSlices} items={engagementItems} />
+
           <PieBreakdownCard title="Publications Breakdown" total={stats.totalPublications} slices={publicationsSlices} items={publicationsItems} />
           <PieBreakdownCard title="Projects Breakdown" total={stats.totalProjects} slices={projectsSlices} items={projectsItems} />
-          <PieBreakdownCard title="Engagement Breakdown" total={engagementTotal} slices={engagementSlices} items={engagementItems} />
-          <div className="md:col-span-2">
-            <RecentPostsCard posts={recentPosts} />
-          </div>
+          <PieBreakdownCard title="Services Breakdown" total={stats.totalServices} slices={servicesByCategoryData} items={servicesItems} />
+
+          <PieBreakdownCard title="Requested Services Breakdown" total={stats.totalServiceRequests} slices={serviceRequestsData} items={serviceRequestsItems} />
+          <PieBreakdownCard title="Other Modules Breakdown" total={otherModulesTotal} slices={otherModulesSlices} items={otherModuleItems} />
         </div>
       </section>
 
+      {/* ← changed: Recent Posts moved out of the breakdowns grid entirely,
+          now its own full-width table section at the bottom of the page */}
       <section className="mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Category & Status Breakdowns</h2>
-        <div className="mt-3 grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <BarBreakdownCard title="Posts by Category" data={postsByCategoryData} items={postsByCategoryItems} />
-          <BarBreakdownCard title="Services by Category" data={servicesByCategoryData} items={servicesItems} />
-          <BarBreakdownCard title="Requests by Status" data={serviceRequestsData} items={serviceRequestsItems} />
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Other Modules</h2>
-        <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-5">
-          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 sm:grid-cols-4">
-            {otherModuleItems.map((item) => (
-              <BreakdownLink key={item.label} {...item} />
-            ))}
-          </div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Activity</h2>
+        <div className="mt-3">
+          <RecentPostsTable posts={recentPosts} />
         </div>
       </section>
     </main>
