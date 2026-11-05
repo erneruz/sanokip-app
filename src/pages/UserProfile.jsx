@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getFullProfile } from '../services/profileService'
-import ProfileEditor from './ProfileEditor' // ← changed: was './admin/ProfileEditor'
+import ProfileEditor from './ProfileEditor'
 
 export default function UserProfile() {
   const { user, signOut } = useAuth()
@@ -16,8 +16,6 @@ export default function UserProfile() {
   const [toast, setToast] = useState(null)
   const menuRef = useRef(null)
 
-  // ⚠️ Adjust this to match your real schema if it's not `role === 'admin'`
-  // (could be `profile?.is_admin`, `profile?.user_type === 'admin'`, etc.)
   const isAdmin = profile?.role === 'admin'
 
   useEffect(() => {
@@ -76,9 +74,10 @@ export default function UserProfile() {
     <div className="min-h-screen bg-gray-50">
       <main className="mx-auto max-w-5xl px-6 py-12">
         {toast && (
+          // ← changed: success toast now brand green instead of near-black
           <div
             className={`fixed right-6 top-6 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${
-              toast.type === 'success' ? 'bg-gray-900' : 'bg-red-600'
+              toast.type === 'success' ? 'bg-[#1B5E4F]' : 'bg-red-600'
             }`}
           >
             {toast.message}
@@ -87,7 +86,8 @@ export default function UserProfile() {
 
         {/* ── Header card ── */}
         <div className="relative overflow-visible rounded-2xl bg-white shadow-md ring-1 ring-gray-200">
-          <div className="h-28 rounded-t-2xl bg-gradient-to-r from-black via-gray-700 to-gray-400" />
+          {/* ← changed: banner now the logo's teal gradient instead of black→gray */}
+          <div className="h-28 rounded-t-2xl bg-gradient-to-r from-[#0F3D32] via-[#1B5E4F] to-[#2F9678]" />
 
           {/* Three-dot menu */}
           <div className="absolute right-5 top-5" ref={menuRef}>
@@ -106,7 +106,7 @@ export default function UserProfile() {
                     <Link
                       to="/admin"
                       onClick={() => setMenuOpen(false)}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-[#EAF5F1] hover:text-[#0F3D32]"
                     >
                       <ShieldIcon />
                       Admin Portal
@@ -119,7 +119,7 @@ export default function UserProfile() {
                     setMenuOpen(false)
                     setModalOpen(true)
                   }}
-                  className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-[#EAF5F1] hover:text-[#0F3D32]"
                 >
                   <EditIcon />
                   Edit Profile
@@ -129,7 +129,7 @@ export default function UserProfile() {
                     setMenuOpen(false)
                     signOut()
                   }}
-                  className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 hover:bg-gray-50"
+                  className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
                 >
                   <LogOutIcon />
                   Sign out
@@ -143,7 +143,7 @@ export default function UserProfile() {
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt={displayName} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-gray-400">
+                <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-[#1B5E4F]">
                   {displayName?.[0]?.toUpperCase() ?? '?'}
                 </div>
               )}
@@ -186,9 +186,10 @@ export default function UserProfile() {
               <div className="mt-4 flex flex-wrap gap-2">
                 {profile?.areas_of_expertise?.length ? (
                   profile.areas_of_expertise.map((tag) => (
+                    // ← changed: brand tint instead of plain gray
                     <span
                       key={tag}
-                      className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+                      className="rounded-full bg-[#EAF5F1] px-3 py-1 text-xs font-medium text-[#1B5E4F]"
                     >
                       {tag}
                     </span>
@@ -214,15 +215,17 @@ export default function UserProfile() {
                 <div className="mt-5 space-y-5">
                   {academic.map((a) => (
                     <div key={a.id} className="border-b border-gray-100 pb-5 last:border-0 last:pb-0">
-                      <p className="text-sm font-semibold text-gray-900">
+                      {/* ← changed: small inline cap icon next to the degree, brand green */}
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                        <CapIcon className="h-3.5 w-3.5 shrink-0 text-[#1B5E4F]" />
                         {a.degree}
                         {a.field ? ` in ${a.field}` : ''}
                       </p>
-                      <p className="mt-0.5 text-sm text-gray-600">
+                      <p className="mt-0.5 pl-5 text-sm text-gray-600">
                         {a.institution}
                         {a.country ? `, ${a.country}` : ''}
                       </p>
-                      <p className="mt-1 text-xs text-gray-400">
+                      <p className="mt-1 pl-5 text-xs text-gray-400">
                         {a.start_year || '—'} – {a.completion_year || 'Present'}
                         {a.specialization ? ` · ${a.specialization}` : ''}
                       </p>
@@ -240,12 +243,16 @@ export default function UserProfile() {
                 <div className="mt-5 space-y-5">
                   {certifications.map((c) => (
                     <div key={c.id} className="border-b border-gray-100 pb-5 last:border-0 last:pb-0">
-                      <p className="text-sm font-semibold text-gray-900">{c.certification_name}</p>
-                      <p className="mt-0.5 text-sm text-gray-600">
+                      {/* ← changed: small inline badge icon next to the certification name */}
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                        <BadgeIcon className="h-3.5 w-3.5 shrink-0 text-[#1B5E4F]" />
+                        {c.certification_name}
+                      </p>
+                      <p className="mt-0.5 pl-5 text-sm text-gray-600">
                         {c.certification_body}
                         {c.certification_number ? ` · No. ${c.certification_number}` : ''}
                       </p>
-                      <p className="mt-1 text-xs text-gray-400">
+                      <p className="mt-1 pl-5 text-xs text-gray-400">
                         {c.year_obtained ? `Obtained ${c.year_obtained}` : ''}
                         {c.expiry_date ? ` · Expires ${c.expiry_date}` : ''}
                         {c.specialization ? ` · ${c.specialization}` : ''}
@@ -275,11 +282,13 @@ export default function UserProfile() {
   )
 }
 
-/* ── Shared card title: visually distinct from body content ── */
+/* ← changed: icon now sits in a brand-gradient badge instead of a bare gray glyph */
 function CardTitle({ icon, children }) {
   return (
-    <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-      <span className="text-gray-400">{icon}</span>
+    <div className="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white">
+        {icon}
+      </span>
       <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">{children}</h2>
     </div>
   )
@@ -288,7 +297,8 @@ function CardTitle({ icon, children }) {
 function ReadField({ icon, label, value, isLink }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500">
+      {/* ← changed: brand tint instead of plain gray */}
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#EAF5F1] text-[#1B5E4F]">
         {icon}
       </span>
       <div className="min-w-0">
@@ -298,7 +308,7 @@ function ReadField({ icon, label, value, isLink }) {
             href={value}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-0.5 block truncate text-sm font-medium text-gray-900 hover:underline"
+            className="mt-0.5 block truncate text-sm font-medium text-gray-900 hover:text-[#1B5E4F] hover:underline"
           >
             {value}
           </a>
@@ -397,18 +407,18 @@ function LinkIcon() {
   )
 }
 
-function CapIcon() {
+function CapIcon({ className = '' }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} width={className ? undefined : 16} height={className ? undefined : 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 10 12 5 2 10l10 5 10-5Z" />
       <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />
     </svg>
   )
 }
 
-function BadgeIcon() {
+function BadgeIcon({ className = '' }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} width={className ? undefined : 16} height={className ? undefined : 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="8" r="6" />
       <path d="M9 14 7 22l5-3 5 3-2-8" />
     </svg>
