@@ -80,7 +80,7 @@ function Navbar() {
                     />
                     <div className="flex flex-col justify-center leading-none">
                         <span className="text-xl font-extrabold tracking-tight text-[#1B5E4F]">
-                            Peakstar
+                            Peak Star
                         </span>
                         <span className="mt-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#1B5E4F]/55">
                             <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-[#1B5E4F]/55" />

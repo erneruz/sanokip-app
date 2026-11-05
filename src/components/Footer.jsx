@@ -1,5 +1,6 @@
 // src/components/Footer.jsx
 import { Link } from 'react-router-dom'
+import peakstarLogo from '../assets/images/peakstar-logo-white.png'
 
 const navigate = [
   { label: 'Home', to: '/blog' },
@@ -18,8 +19,8 @@ const company = [
 ]
 
 const legal = [
-  { label: 'Peakstar CBC - Community Benefit Company', to: null },
-  { label: 'HQ: KK 513 St, Kicukiro District, Kigali, Rwanda', to: null },
+  { label: 'Peakstar CBC - Community Benefit Company', to: null, icon: 'building' },
+  { label: 'HQ: KK 513 St, Kicukiro District, Kigali, Rwanda', to: null, icon: 'pin' },
   { label: 'Privacy Policy', to: '/privacy' },
   { label: 'Terms & Conditions', to: '/terms' },
 ]
@@ -39,7 +40,11 @@ function FooterColumn({ title, links }) {
                 {item.label}
               </Link>
             ) : (
-              <span className="text-sm text-gray-300">{item.label}</span>
+              <span className="flex items-start gap-2 text-sm text-gray-300">
+                {item.icon === 'building' && <IconBuilding className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#4FB28E]" />}
+                {item.icon === 'pin' && <IconPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#4FB28E]" />}
+                <span>{item.label}</span>
+              </span>
             )}
           </li>
         ))}
@@ -53,29 +58,26 @@ export default function Footer() {
 
   return (
     <footer className="relative overflow-hidden text-white">
+      <div className="h-1 bg-gradient-to-r from-[#0F3D32] via-[#1B5E4F] to-[#2F9678]" />
+
       {/* ── Galaxy background image, fixed/"stuck" in place while content scrolls over it ── */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/images/galaxy-footer.jpeg')",
-          backgroundAttachment: 'fixed', // ← this is what gives the "stuck" / parallax feel
+          backgroundAttachment: 'fixed',
         }}
       />
-      {/* Dark overlay so white text stays readable over the bright galaxy core */}
-      <div className="absolute inset-0 bg-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0F3D32]/90 via-[#0F3D32]/88 to-[#0C3229]/92" />
 
       {/* ── Content ── */}
       <div className="relative mx-auto max-w-6xl px-6 py-16">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-          {/* Brand block */}
+          {/* Brand block — ← changed: white backdrop card removed now that the
+              logo file itself is white and already reads cleanly on the dark teal footer */}
           <div>
-            <div className="mb-4 flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-white/5 backdrop-blur-sm">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold tracking-tight">Peakstar</span>
+            <div className="mb-5">
+              <img src={peakstarLogo} alt="Peakstar" className="h-14 w-auto" />
             </div>
             <p className="text-sm leading-relaxed text-gray-300">
               Mapping Rwanda's ground truth — geospatial technology and data
@@ -107,7 +109,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="relative border-t border-white/10 bg-black/40 backdrop-blur-sm">
+      <div className="relative border-t border-white/10 bg-[#0C3229]/70 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-gray-300 md:flex-row">
           <p>© {year} Peakstar Ltd· A Registered Private Company in Rwanda</p>
           <div className="flex gap-6">
@@ -132,6 +134,26 @@ function SocialIcon({ href, label, children }) {
     >
       {children}
     </a>
+  )
+}
+
+function IconBuilding(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="4" y="2" width="16" height="20" rx="1" />
+      <line x1="9" y1="7" x2="9" y2="7.01" /><line x1="15" y1="7" x2="15" y2="7.01" />
+      <line x1="9" y1="11" x2="9" y2="11.01" /><line x1="15" y1="11" x2="15" y2="11.01" />
+      <line x1="9" y1="15" x2="15" y2="15" />
+    </svg>
+  )
+}
+
+function IconPin(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
   )
 }
 
