@@ -7,6 +7,20 @@ import {
   uploadAvatar,
 } from '../services/profileService'
 
+// ← added: the full academic ladder, A2 up to Full Professor, for the Degree dropdown
+const DEGREE_OPTIONS = [
+  'A2',
+  'A1 / Advanced Diploma',
+  'Associate Degree',
+  "Bachelor's Degree",
+  'Postgraduate Diploma',
+  "Master's Degree",
+  'Doctor of Philosophy (PhD)',
+  'Assistant Professor',
+  'Associate Professor',
+  'Full Professor',
+]
+
 const emptyAcademic = () => ({
   _key: crypto.randomUUID(),
   degree: '',
@@ -143,8 +157,6 @@ export default function ProfileEditor({
   ]
 
   return (
-    // ← changed: no padding/rounding on mobile so the modal fills the screen like a
-    // proper mobile sheet; from sm: up it's back to the original centered card
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 sm:px-4 sm:py-8"
       onClick={onClose}
@@ -153,7 +165,7 @@ export default function ProfileEditor({
         className="flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-xl sm:h-auto sm:max-h-[88vh] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header — ← added: brand gradient icon badge, matching the other editors */}
+        {/* Header */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white shadow-sm">
@@ -171,8 +183,7 @@ export default function ProfileEditor({
           </button>
         </div>
 
-        {/* Tabs — ← changed: icon-prefixed, brand-colored active state, horizontal
-            scroller so they never break layout on a narrow phone */}
+        {/* Tabs */}
         <div className="shrink-0 overflow-x-auto border-b border-gray-100 px-4 pt-3 sm:px-6">
           <div className="flex gap-1">
             {tabs.map((t) => {
@@ -208,8 +219,6 @@ export default function ProfileEditor({
 
             {tab === 'basic' && (
               <div className="space-y-6">
-                {/* Avatar — ← changed: camera-icon badge overlaid on the avatar itself,
-                    styled in brand colors, instead of a plain "Change Photo" button */}
                 <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <div className="relative shrink-0">
                     <div className="h-24 w-24 overflow-hidden rounded-full bg-gray-100 ring-4 ring-[#EAF5F1]">
@@ -369,12 +378,23 @@ export default function ProfileEditor({
                 {academic.map((a, i) => (
                   <RepeatableCard key={a._key} index={i} icon={IconGraduationCap} onRemove={() => removeAcademic(a._key)}>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {/* ← changed: Degree is now a dropdown (A2 through Full Professor)
+                          instead of a free-text input */}
                       <Field label="Degree">
-                        <input
+                        <select
                           value={a.degree}
                           onChange={(e) => updateAcademic(a._key, 'degree', e.target.value)}
-                          className={inputClass}
-                        />
+                          className={`${inputClass} cursor-pointer bg-white`}
+                        >
+                          <option value="" disabled>
+                            Select degree…
+                          </option>
+                          {DEGREE_OPTIONS.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
                       </Field>
                       <Field label="Field of Study">
                         <input
@@ -502,8 +522,7 @@ export default function ProfileEditor({
             )}
           </div>
 
-          {/* Footer — ← changed: buttons stack full-width on mobile, brand green Save
-              button with icon/spinner instead of plain black */}
+          {/* Footer */}
           <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6">
             <button
               type="button"
