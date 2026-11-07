@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import peakstarLogo from '../assets/images/peakstar-logo-white.png'
 
 const navigate = [
-  { label: 'Home', to: '/blog' },
+  { label: 'Home', to: '/' }, // ← changed: Home now has its own page (it used to go to /blog)
   { label: 'About', to: '/about' },
   { label: 'Services', to: '/services' },
   { label: 'Projects', to: '/projects' },

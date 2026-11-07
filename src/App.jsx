@@ -1,11 +1,12 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
 import RequireAdmin from './components/RequireAdmin'
 import RequireAuth from './components/RequireAuth'
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
+import Home from './pages/Home' // ← added: the new Home page
 import Blog from './pages/Blog'
 import Post from './pages/Post'
 import About from './pages/About'
@@ -40,7 +41,8 @@ function App() {
         <ScrollToTop />
         <Routes>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<Navigate to="/blog" replace />} />
+            {/* ← changed: "/" now shows the Home page (it used to redirect to /blog) */}
+            <Route path="/" element={<Home />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/posts/:slug" element={<Post />} />
             <Route path="/publications" element={<Publications />} />
