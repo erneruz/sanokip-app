@@ -491,24 +491,27 @@ export default function Publications() {
           )}
 
           {/* search */}
+          {/* ← changed: icon wrapped in its own positioned span with an
+              explicit z-index and higher-contrast color, instead of relying
+              on default stacking order, in case that was ever the real
+              cause of it not showing */}
           <div className="relative mt-8">
-            <SearchIcon
-              size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/60"
-            />
+            <span className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-white/90">
+              <SearchIcon size={18} />
+            </span>
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search publications…"
-              className="w-full rounded-lg border border-white/20 bg-white/10 py-2.5 pl-11 pr-11 text-white placeholder-white/55 outline-none backdrop-blur-sm transition focus:border-white/70 focus:bg-white/15 [&::-webkit-search-cancel-button]:hidden"
+              className="relative w-full rounded-lg border border-white/20 bg-white/10 py-2.5 pl-11 pr-11 text-white placeholder-white/55 outline-none backdrop-blur-sm transition focus:border-white/70 focus:bg-white/15 [&::-webkit-search-cancel-button]:hidden"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="absolute right-3 top-1/2 grid size-7 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/15 hover:text-white"
+                className="absolute right-3 top-1/2 z-10 grid size-7 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/15 hover:text-white"
               >
                 <CloseIcon size={16} />
               </button>
