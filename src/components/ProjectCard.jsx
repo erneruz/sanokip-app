@@ -1,82 +1,105 @@
 // src/components/ProjectCard.jsx
 import { htmlToPlainText } from '../utils/richText'
+import ProjectStatusBadge from './ProjectStatusBadge'
 
-const STATUS_CONFIG = {
-  completed: { label: 'Completed', className: 'bg-gray-900 text-white' },
-  ongoing: { label: 'Ongoing', className: 'bg-blue-600 text-white' },
-  upcoming: { label: 'Upcoming', className: 'bg-white text-gray-700 ring-1 ring-gray-300' },
+function MapPinIcon({ className = '' }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
+}
+
+function CalendarIcon({ className = '' }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+    </svg>
+  )
+}
+
+function ImageIcon({ className = '' }) {
+  return (
+    <svg className={className} width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="1.6" />
+      <path d="m21 16-5-5-9 9" />
+    </svg>
+  )
+}
+
+function ArrowRightIcon({ className = '' }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12h14M13 5l7 7-7 7" />
+    </svg>
+  )
 }
 
 export default function ProjectCard({ project, onOpen }) {
-  const status = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.completed
-
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen(project)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onOpen(project)
-        }
-      }}
-      className="project-card-link group block cursor-pointer"
-    >
-      <style>{`
-        @keyframes project-card-settle {
-          0% { transform: translateY(0) rotate(0deg); }
-          40% { transform: translateY(-7px) rotate(-0.4deg); }
-          70% { transform: translateY(-6px) rotate(0.3deg); }
-          100% { transform: translateY(-6px) rotate(0deg); }
-        }
-        .project-card-link:hover .project-card {
-          animation: project-card-settle 0.45s ease-out forwards;
-        }
-      `}</style>
-
-      <article className="project-card h-full overflow-hidden rounded-xl bg-white shadow-md transition-shadow duration-300 ease-out hover:shadow-2xl">
-        <div className="relative overflow-hidden">
+    <article className="h-full">
+      <button
+        type="button"
+        onClick={() => onOpen(project)}
+        className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#1B5E4F]/10 bg-white text-left shadow-[0_1px_2px_rgba(13,58,49,0.06),0_8px_24px_-12px_rgba(13,58,49,0.2)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(13,58,49,0.08),0_20px_40px_-14px_rgba(13,58,49,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B5E4F]"
+      >
+        {/* image: fixed shape, so every card is the same size */}
+        <div className="relative aspect-[16/10] overflow-hidden bg-[#DCE9E5]">
           {project.image_url ? (
             <img
               src={project.image_url}
               alt={project.title}
-              className="aspect-[16/10] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="flex aspect-[16/10] w-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-sm text-white/70">
+              <ImageIcon />
               No image available
             </div>
           )}
 
-          <span className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide shadow-sm ${status.className}`}>
-            {status.label}
-          </span>
+          <div className="absolute left-4 top-4">
+            <ProjectStatusBadge status={project.status} />
+          </div>
         </div>
 
-        <div className="p-5">
-          <h3 className="text-lg font-semibold text-gray-900 transition-colors duration-300 group-hover:text-gray-600">
+        <div className="flex flex-1 flex-col p-5">
+          <h3 className="line-clamp-2 text-lg font-semibold leading-snug text-[#0D3A31] transition-colors group-hover:text-[#1B5E4F]">
             {project.title}
           </h3>
 
-          {/* ← changed: render plain text stripped from the rich HTML, not the raw HTML string */}
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-600">
+          <div className="mt-2.5 h-[3px] w-8 rounded-full bg-[#2F8F7A] transition-all duration-300 group-hover:w-14" />
+
+          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-600">
             {htmlToPlainText(project.description)}
           </p>
 
-          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
-            {project.location && (
-              <p className="text-xs text-gray-500">{project.location}</p>
-            )}
-            <span className="flex items-center gap-1 text-xs font-medium text-gray-900 transition-transform duration-300 group-hover:translate-x-0.5">
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#1B5E4F]/10 pt-4">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+              {project.location && (
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <MapPinIcon className="shrink-0 text-[#2F8F7A]" />
+                  <span className="truncate">{project.location}</span>
+                </span>
+              )}
+              {project.year && (
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarIcon className="shrink-0 text-[#2F8F7A]" />
+                  {project.year}
+                </span>
+              )}
+            </div>
+
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#1B5E4F]">
               View Project
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M13 5l7 7-7 7" />
-              </svg>
+              <ArrowRightIcon className="transition-transform duration-200 group-hover:translate-x-1" />
             </span>
           </div>
         </div>
-      </article>
-    </div>
+      </button>
+    </article>
   )
 }
