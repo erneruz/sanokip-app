@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import { getPostBySlug } from "../services/postsService";
 import PostReactions from "../components/PostReactions";
 import CommentsSection from "../components/CommentsSection";
+import ShareModal from "../components/ShareModal";
 
 /*
   Peak Star brand colours (taken from the logo)
@@ -87,19 +88,13 @@ function ArrowLeftIcon(props) {
   );
 }
 
-function LinkIcon(props) {
+function ShareIcon(props) {
   return (
     <Svg {...props}>
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-    </Svg>
-  );
-}
-
-function CheckIcon(props) {
-  return (
-    <Svg {...props}>
-      <path d="m5 12 5 5L20 7" />
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
     </Svg>
   );
 }
@@ -123,7 +118,7 @@ function Post() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   // Reading time: tags are removed first so only the real words are counted
   const readingTime = post?.content
@@ -154,21 +149,6 @@ function Post() {
 
     loadPost();
   }, [slug]);
-
-
-  // --------------------------------------------------
-  // COPY LINK
-  // --------------------------------------------------
-
-  async function handleCopyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Could not copy link:", err);
-    }
-  }
 
 
   // --------------------------------------------------
@@ -375,7 +355,7 @@ function Post() {
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
-            {/* SHARE + BACK */}
+            {/* BACK + SHARE */}
             <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[#1B5E4F]/10 pt-6">
               <Link
                 to="/blog"
@@ -387,11 +367,11 @@ function Post() {
 
               <button
                 type="button"
-                onClick={handleCopyLink}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#1B5E4F]/25 bg-[#E6F1EE] px-4 py-2 text-sm font-medium text-[#1B5E4F] transition hover:border-[#1B5E4F] hover:bg-[#d8ebe5] active:scale-95"
+                onClick={() => setShowShare(true)}
+                className="group inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-[#154A3E] hover:shadow-md active:scale-95"
               >
-                {copied ? <CheckIcon size={15} /> : <LinkIcon size={15} />}
-                {copied ? "Link copied" : "Copy link"}
+                <ShareIcon size={15} className="transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110" />
+                Share
               </button>
             </div>
 
@@ -408,6 +388,14 @@ function Post() {
           </div>
         </div>
       </div>
+
+      {/* SHARE POPUP */}
+      <ShareModal
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        url={window.location.href}
+        title={post.title}
+      />
 
     </main>
   );
