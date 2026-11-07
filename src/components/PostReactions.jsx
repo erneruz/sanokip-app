@@ -2,14 +2,19 @@
 import { useState, useEffect } from 'react'
 import { submitReaction, getVisitorReaction, getReactionCounts } from '../services/reactionService'
 import { getVisitorId } from '../utils/visitorId'
+import { useAuth } from '../context/AuthContext'
 
 export default function PostReactions({ postId }) {
+  const { user } = useAuth()
+
   const [counts, setCounts] = useState({ likes: 0, dislikes: 0 })
   const [myReaction, setMyReaction] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
-  const visitorId = getVisitorId()
+  // Signed-in people react with their account (follows them on any device);
+  // visitors keep using the anonymous browser id.
+  const visitorId = user?.id ?? getVisitorId()
 
   useEffect(() => {
     let cancelled = false

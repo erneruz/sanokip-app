@@ -1,20 +1,54 @@
 // src/components/CommentForm.jsx
 import { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+
+// Real name of the signed-in person.
+// Order: profile (first + last name) -> account metadata -> email prefix.
+function getDisplayName(user, profile) {
+  if (!user) return ''
+
+  const fromProfile = `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim()
+  if (fromProfile) return fromProfile
+
+  const meta = user.user_metadata ?? {}
+  const fromMeta =
+    `${meta.first_name ?? ''} ${meta.last_name ?? ''}`.trim() ||
+    meta.full_name ||
+    meta.name ||
+    ''
+  if (fromMeta) return fromMeta
+
+  return user.email ? user.email.split('@')[0] : ''
+}
 
 export default function CommentForm({ onSubmit, submitting, submitLabel = 'Post Comment' }) {
+  const { user, profile } = useAuth()
+  const signedInName = getDisplayName(user, profile)
+  const isSignedIn = Boolean(user && signedInName)
+
   const [name, setName] = useState('')
   const [comment, setComment] = useState('')
   const [nameError, setNameError] = useState(false)
+  const [avatarFailed, setAvatarFailed] = useState(false)
+
+  const avatarUrl = profile?.avatar_url
 
   async function handleSubmit(e) {
     e.preventDefault()
 
-    if (!name.trim()) {
+    // Signed-in people always comment under their real name
+    const finalName = isSignedIn ? signedInName : name.trim()
+
+    if (!finalName) {
       setNameError(true)
       return
     }
 
-    await onSubmit({ name: name.trim(), comment: comment.trim() })
+    await onSubmit({
+      name: finalName,
+      comment: comment.trim(),
+      userId: isSignedIn ? user.id : null,
+    })
     setName('')
     setComment('')
     setNameError(false)
@@ -30,29 +64,60 @@ export default function CommentForm({ onSubmit, submitting, submitLabel = 'Post 
         Add your comment
       </h3>
 
-      <label className="mt-4 flex items-center gap-1.5 text-sm font-medium text-[#0D3A31]">
-        <UserIcon className="h-3.5 w-3.5 text-[#1B5E4F]" />
-        Name
-      </label>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => {
-          setName(e.target.value)
-          if (nameError) setNameError(false)
-        }}
-        placeholder="Enter your name"
-        className={
-          nameError
-            ? 'mt-1.5 w-full rounded-lg border-2 border-red-400 bg-white px-3 py-2 text-sm focus:outline-none'
-            : 'mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1B5E4F] focus:ring-1 focus:ring-[#1B5E4F]'
-        }
-      />
-      {nameError && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-red-600">
-          <AlertIcon className="h-3.5 w-3.5 shrink-0" />
-          Name is required
-        </p>
+      {isSignedIn ? (
+        <div className="mt-4 flex items-center gap-3 rounded-lg border border-[#1B5E4F]/15 bg-[#E6F1EE] px-3 py-2.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-xs font-bold text-white shadow-sm ring-2 ring-white">
+            {avatarUrl && !avatarFailed ? (
+              <img
+                src={avatarUrl}
+                alt={signedInName}
+                onError={() => setAvatarFailed(true)}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              signedInName
+                .split(/\s+/)
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase()
+            )}
+          </span>
+          <div className="min-w-0 text-sm">
+            <p className="text-xs text-gray-500">Commenting as</p>
+            <p className="flex items-center gap-1.5 truncate font-semibold text-[#0D3A31]">
+              {signedInName}
+              <VerifiedIcon className="h-3.5 w-3.5 shrink-0 text-[#1B5E4F]" />
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <label className="mt-4 flex items-center gap-1.5 text-sm font-medium text-[#0D3A31]">
+            <UserIcon className="h-3.5 w-3.5 text-[#1B5E4F]" />
+            Name
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (nameError) setNameError(false)
+            }}
+            placeholder="Enter your name"
+            className={
+              nameError
+                ? 'mt-1.5 w-full rounded-lg border-2 border-red-400 bg-white px-3 py-2 text-sm focus:outline-none'
+                : 'mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1B5E4F] focus:ring-1 focus:ring-[#1B5E4F]'
+            }
+          />
+          {nameError && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-red-600">
+              <AlertIcon className="h-3.5 w-3.5 shrink-0" />
+              Name is required
+            </p>
+          )}
+        </>
       )}
 
       <label className="mt-4 flex items-center gap-1.5 text-sm font-medium text-[#0D3A31]">
@@ -86,10 +151,12 @@ export default function CommentForm({ onSubmit, submitting, submitLabel = 'Post 
           )}
         </button>
 
-        <p className="inline-flex items-center gap-1.5 text-sm text-gray-500">
-          <UserIcon className="h-3.5 w-3.5 text-[#2F8F7A]" />
-          Posting as a guest.
-        </p>
+        {!isSignedIn && (
+          <p className="inline-flex items-center gap-1.5 text-sm text-gray-500">
+            <UserIcon className="h-3.5 w-3.5 text-[#2F8F7A]" />
+            Posting as a guest.
+          </p>
+        )}
       </div>
     </form>
   )
@@ -109,6 +176,15 @@ function UserIcon({ className }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+    </svg>
+  )
+}
+
+function VerifiedIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" />
+      <path d="m9 12 2 2 4-4" />
     </svg>
   )
 }

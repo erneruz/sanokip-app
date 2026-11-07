@@ -7,6 +7,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [role, setRole] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -18,12 +19,16 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         const { data } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, first_name, last_name, avatar_url')
           .eq('id', session.user.id)
           .maybeSingle()
-        if (!cancelled) setRole(data?.role ?? 'user')
+        if (!cancelled) {
+          setRole(data?.role ?? 'user')
+          setProfile(data ?? null)
+        }
       } else {
         setRole(null)
+        setProfile(null)
       }
 
       if (!cancelled) setLoading(false)
@@ -44,6 +49,7 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     role,
+    profile,
     isAdmin: role === 'admin',
     loading,
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),

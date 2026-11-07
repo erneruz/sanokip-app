@@ -4,7 +4,7 @@ import { supabase } from "../supabase";
 export async function getApprovedComments(postId) {
   const { data, error } = await supabase
     .from("comments")
-    .select("id, name, comment, parent_id, created_at")
+    .select("id, name, comment, parent_id, created_at, user_id, profiles ( avatar_url )")
     .eq("post_id", postId)
     .eq("status", "approved")
     .order("created_at", { ascending: false });
@@ -22,6 +22,7 @@ export async function submitComment({
   email = null,
   comment,
   parentId = null,
+  userId = null,
 }) {
   const { data, error } = await supabase
     .from("comments")
@@ -31,6 +32,7 @@ export async function submitComment({
       email,
       comment,
       parent_id: parentId,
+      user_id: userId,
       status: "approved",
     })
     .select()

@@ -14,6 +14,26 @@ function initials(name) {
   return name.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase()
 }
 
+// Round picture if the author uploaded one, green initials otherwise
+function CommentAvatar({ name, url }) {
+  const [failed, setFailed] = useState(false)
+
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-xs font-bold text-white shadow-sm">
+      {url && !failed ? (
+        <img
+          src={url}
+          alt={name}
+          onError={() => setFailed(true)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        initials(name)
+      )}
+    </div>
+  )
+}
+
 export default function CommentItem({ comment, onReply, onDelete, replying, isReply = false }) {
   const { user } = useAuth()
   const [showReplyForm, setShowReplyForm] = useState(false)
@@ -23,7 +43,10 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
   const [counts, setCounts] = useState({ likes: 0, dislikes: 0 })
   const [myReaction, setMyReaction] = useState(null)
   const [reacting, setReacting] = useState(false)
-  const visitorId = getVisitorId()
+
+  // Signed-in people react with their account (follows them on any device);
+  // visitors keep using the anonymous browser id.
+  const visitorId = user?.id ?? getVisitorId()
 
   useEffect(() => {
     let cancelled = false
@@ -67,6 +90,7 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
   // ─────────────────────────────────────────────────────────────────────
 
   const replyCount = comment.replies.length
+  const avatarUrl = comment.profiles?.avatar_url || comment.avatar_url || null
 
   // Small action buttons under each comment
   const actionClass =
@@ -98,9 +122,7 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
         }
       `}</style>
 
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-xs font-bold text-white shadow-sm">
-        {initials(comment.name)}
-      </div>
+      <CommentAvatar name={comment.name} url={avatarUrl} />
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
