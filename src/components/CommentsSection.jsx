@@ -74,9 +74,14 @@ export default function CommentsSection({ postId }) {
         }
       `}</style>
 
-      <h2 className="comments-heading inline-flex items-center gap-2 text-lg font-bold text-gray-900">
-        <ChatIcon className="comments-icon h-5 w-5 text-gray-700" />
-        Comments <span className="text-gray-400">({comments.length})</span>
+      <h2 className="comments-heading inline-flex items-center gap-3 text-lg font-bold text-[#0D3A31]">
+        <span className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white shadow-sm">
+          <ChatIcon className="comments-icon h-[18px] w-[18px]" />
+        </span>
+        Comments
+        <span className="rounded-full bg-[#E6F1EE] px-2.5 py-0.5 text-sm font-semibold text-[#1B5E4F]">
+          {comments.length}
+        </span>
       </h2>
 
       <div className="mt-6">
@@ -84,11 +89,28 @@ export default function CommentsSection({ postId }) {
       </div>
 
       {loading ? (
-        <p className="mt-8 text-gray-500">Loading comments…</p>
+        <div className="mt-8 space-y-4">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex animate-pulse gap-3 rounded-xl border border-[#1B5E4F]/10 p-4">
+              <div className="h-9 w-9 shrink-0 rounded-full bg-[#DCE9E5]" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-32 rounded bg-[#DCE9E5]" />
+                <div className="h-3 w-full rounded bg-[#E6F1EE]" />
+                <div className="h-3 w-2/3 rounded bg-[#E6F1EE]" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : tree.length === 0 ? (
-        <p className="mt-8 text-gray-500">No comments yet. Be the first to comment.</p>
+        <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed border-[#1B5E4F]/30 bg-[#F1F6F4] px-6 py-10 text-center">
+          <span className="grid size-12 place-items-center rounded-full bg-[#E6F1EE] text-[#1B5E4F]">
+            <ChatIcon className="h-6 w-6" />
+          </span>
+          <p className="font-medium text-[#0D3A31]">No comments yet.</p>
+          <p className="text-sm text-gray-500">Be the first to share your thoughts.</p>
+        </div>
       ) : (
-        <div className="mt-8 space-y-6">
+        <div className="mt-8 space-y-4">
           {tree.map((comment) => (
             <CommentItem
               key={comment.id}

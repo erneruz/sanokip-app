@@ -19,7 +19,7 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [showReplies, setShowReplies] = useState(true)
 
-  // ── added: per-comment like/dislike state ──────────────────────────
+  // ── per-comment like/dislike state ──────────────────────────
   const [counts, setCounts] = useState({ likes: 0, dislikes: 0 })
   const [myReaction, setMyReaction] = useState(null)
   const [reacting, setReacting] = useState(false)
@@ -68,12 +68,23 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
 
   const replyCount = comment.replies.length
 
+  // Small action buttons under each comment
+  const actionClass =
+    'inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition-colors hover:bg-[#E6F1EE] hover:text-[#1B5E4F]'
+
+  const reactionClass = (active) =>
+    `comment-reaction-btn inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+      active
+        ? 'bg-[#E6F1EE] text-[#1B5E4F]'
+        : 'text-gray-500 hover:bg-[#E6F1EE] hover:text-[#1B5E4F]'
+    }`
+
   return (
     <div
       className={
         isReply
           ? 'flex gap-3'
-          : 'flex gap-3 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0'
+          : 'flex gap-3 rounded-xl border border-[#1B5E4F]/10 bg-[#F8FBFA] p-4'
       }
     >
       <style>{`
@@ -87,14 +98,15 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
         }
       `}</style>
 
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-xs font-bold text-white shadow-sm">
         {initials(comment.name)}
       </div>
 
-      <div className="flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="font-semibold text-gray-900">{comment.name}</span>
-          <span className="text-xs text-gray-400">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="font-semibold text-[#0D3A31]">{comment.name}</span>
+          <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+            <CalendarIcon className="h-3 w-3 text-[#2F8F7A]" />
             {new Date(comment.created_at).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
@@ -103,19 +115,17 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
           </span>
         </div>
 
-        <p className="mt-1 text-gray-700">{comment.comment}</p>
+        <p className="mt-1 break-words text-gray-700">{comment.comment}</p>
 
-        <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-          {/* ── added: like / dislike buttons ── */}
+        <div className="mt-2 -ml-2 flex flex-wrap items-center gap-1">
+          {/* ── like / dislike buttons ── */}
           <button
             onClick={() => handleReact('like')}
             disabled={reacting}
-            className={`comment-reaction-btn flex cursor-pointer items-center gap-1 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-              myReaction === 'like' ? 'text-gray-900' : 'hover:text-gray-900'
-            }`}
+            className={reactionClass(myReaction === 'like')}
           >
             <ThumbsUpIcon
-              className="comment-reaction-icon h-4 w-4"
+              className="comment-reaction-icon h-3.5 w-3.5"
               filled={myReaction === 'like'}
             />
             {counts.likes > 0 && counts.likes}
@@ -124,30 +134,38 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
           <button
             onClick={() => handleReact('dislike')}
             disabled={reacting}
-            className={`comment-reaction-btn flex cursor-pointer items-center gap-1 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-              myReaction === 'dislike' ? 'text-gray-900' : 'hover:text-gray-900'
-            }`}
+            className={reactionClass(myReaction === 'dislike')}
           >
             <ThumbsDownIcon
-              className="comment-reaction-icon h-4 w-4"
+              className="comment-reaction-icon h-3.5 w-3.5"
               filled={myReaction === 'dislike'}
             />
             {counts.dislikes > 0 && counts.dislikes}
           </button>
           {/* ─────────────────────────────────────── */}
 
-          <button onClick={() => setShowReplyForm((v) => !v)} className="cursor-pointer font-medium hover:text-gray-900">
+          <button onClick={() => setShowReplyForm((v) => !v)} className={actionClass}>
+            <ReplyIcon className="h-3.5 w-3.5" />
             Reply
           </button>
 
           {user && (
-            <button onClick={() => onDelete(comment.id)} className="cursor-pointer font-medium text-red-500 hover:text-red-700">
+            <button
+              onClick={() => onDelete(comment.id)}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
+            >
+              <TrashIcon className="h-3.5 w-3.5" />
               Delete
             </button>
           )}
 
           {replyCount > 0 && (
-            <button onClick={() => setShowReplies((v) => !v)} className="cursor-pointer font-medium hover:text-gray-900">
+            <button onClick={() => setShowReplies((v) => !v)} className={actionClass}>
+              {showReplies ? (
+                <ChevronUpIcon className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDownIcon className="h-3.5 w-3.5" />
+              )}
               {showReplies ? `Hide replies` : `View ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
             </button>
           )}
@@ -168,7 +186,7 @@ export default function CommentItem({ comment, onReply, onDelete, replying, isRe
         )}
 
         {showReplies && replyCount > 0 && (
-          <div className="mt-4 space-y-4 border-l border-gray-100 pl-4">
+          <div className="mt-4 space-y-4 border-l-2 border-[#2F8F7A]/30 pl-4">
             {comment.replies.map((reply) => (
               <CommentItem
                 key={reply.id}
@@ -193,6 +211,50 @@ function adjustCounts(counts, from, to) {
   if (to === 'like') next.likes += 1
   if (to === 'dislike') next.dislikes += 1
   return next
+}
+
+function CalendarIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+    </svg>
+  )
+}
+
+function ReplyIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 17 4 12l5-5" />
+      <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+    </svg>
+  )
+}
+
+function TrashIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    </svg>
+  )
+}
+
+function ChevronDownIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
+function ChevronUpIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m18 15-6-6-6 6" />
+    </svg>
+  )
 }
 
 function ThumbsUpIcon({ className, filled }) {

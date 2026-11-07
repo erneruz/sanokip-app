@@ -54,6 +54,14 @@ export default function PostReactions({ postId }) {
     }
   }
 
+  // Button look: filled brand green when chosen, soft green tint otherwise
+  const buttonClass = (active) =>
+    `reaction-btn group flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
+      active
+        ? 'bg-[#1B5E4F] text-white shadow-md'
+        : 'bg-[#E6F1EE] text-[#1B5E4F] ring-1 ring-[#1B5E4F]/15 hover:-translate-y-0.5 hover:bg-[#d8ebe5] hover:shadow-sm'
+    }`
+
   return (
     <div>
       <style>{`
@@ -67,41 +75,36 @@ export default function PostReactions({ postId }) {
         }
       `}</style>
 
-      <h3 className="font-semibold text-gray-900">Was this article helpful?</h3>
+      <h3 className="flex items-center gap-2 font-semibold text-[#0D3A31]">
+        <BulbIcon className="h-[18px] w-[18px] text-[#2F8F7A]" />
+        Was this article helpful?
+      </h3>
 
       <div className="mt-4 flex gap-3">
         <button
           onClick={() => handleReact('like')}
           disabled={submitting}
-          className={`reaction-btn group flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
-            myReaction === 'like'
-              ? 'bg-gray-900 text-white shadow-md'
-              : 'bg-gray-100 text-gray-700 hover:-translate-y-0.5 hover:bg-gray-200 hover:shadow-sm'
-          }`}
+          className={buttonClass(myReaction === 'like')}
         >
           <ThumbsUpIcon
-            className={`reaction-icon h-4 w-4 ${myReaction === 'like' ? 'text-white' : 'text-gray-600'}`}
+            className="reaction-icon h-4 w-4"
             filled={myReaction === 'like'}
           />
           Like
-          <span className={myReaction === 'like' ? 'text-gray-300' : 'text-gray-500'}>{counts.likes}</span>
+          <span className={myReaction === 'like' ? 'text-white/70' : 'text-[#1B5E4F]/60'}>{counts.likes}</span>
         </button>
 
         <button
           onClick={() => handleReact('dislike')}
           disabled={submitting}
-          className={`reaction-btn group flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
-            myReaction === 'dislike'
-              ? 'bg-gray-900 text-white shadow-md'
-              : 'bg-gray-100 text-gray-700 hover:-translate-y-0.5 hover:bg-gray-200 hover:shadow-sm'
-          }`}
+          className={buttonClass(myReaction === 'dislike')}
         >
           <ThumbsDownIcon
-            className={`reaction-icon h-4 w-4 ${myReaction === 'dislike' ? 'text-white' : 'text-gray-600'}`}
+            className="reaction-icon h-4 w-4"
             filled={myReaction === 'dislike'}
           />
           Dislike
-          <span className={myReaction === 'dislike' ? 'text-gray-300' : 'text-gray-500'}>{counts.dislikes}</span>
+          <span className={myReaction === 'dislike' ? 'text-white/70' : 'text-[#1B5E4F]/60'}>{counts.dislikes}</span>
         </button>
       </div>
 
@@ -117,6 +120,15 @@ function adjustCounts(counts, from, to) {
   if (to === 'like') next.likes += 1
   if (to === 'dislike') next.dislikes += 1
   return next
+}
+
+function BulbIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18h6M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3Z" />
+    </svg>
+  )
 }
 
 function ThumbsUpIcon({ className, filled }) {
