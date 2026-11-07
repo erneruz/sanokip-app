@@ -88,3 +88,22 @@ export async function getReactionCounts(postId) {
     dislikes,
   };
 }
+
+
+/**
+ * Get everyone who reacted to a post (newest first).
+ *
+ * Each item: { reaction, user_id, first_name, last_name, avatar_url, created_at }
+ * People who reacted without signing in have user_id = null.
+ */
+export async function getPostReactors(postId) {
+  const { data, error } = await supabase.rpc("get_post_reactors", {
+    p_post_id: postId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}
