@@ -65,7 +65,7 @@ export default function Projects() {
         const data = await getProjects()
         if (cancelled) return
         setProjects(data)
-      } catch (err) {
+      } catch { // ← changed: removed the unused "err" name
         if (!cancelled) setError('Unable to load projects. Please try again later.')
       } finally {
         if (!cancelled) setLoading(false)

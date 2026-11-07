@@ -35,7 +35,7 @@ function Blog() {
                 if (cancelled) return;
                 setPosts(posts);
                 setTotalPages(totalPages);
-            } catch (error) {
+            } catch { // ← changed: removed the unused "error" name
                 if (!cancelled) setError("Unable to load posts. Please try again later.");
             } finally {
                 if (!cancelled) setLoading(false);

@@ -64,7 +64,8 @@ export default function ProfileEditor({
   })
   const [tagInput, setTagInput] = useState('')
 
-  const [avatarUrl, setAvatarUrl] = useState(initialProfile?.avatar_url || null)
+  // ← changed: removed the unused setter "setAvatarUrl" (it was never called)
+  const [avatarUrl] = useState(initialProfile?.avatar_url || null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const fileInputRef = useRef(null)
@@ -182,7 +183,7 @@ export default function ProfileEditor({
           </button>
         </div>
 
-        {/* Tabs — ← changed: wrapped so a fade-edge hint can show there's more to
+        {/* Tabs — wrapped so a fade-edge hint can show there's more to
             scroll to, matching the pattern already used on AdminProjects */}
         <div className="relative shrink-0 border-b border-gray-100">
           <div className="overflow-x-auto px-4 pt-3 sm:px-6">
@@ -523,7 +524,7 @@ export default function ProfileEditor({
             )}
           </div>
 
-          {/* Footer — ← changed: explicit bg-white + a top shadow so it reads as a
+          {/* Footer — explicit bg-white + a top shadow so it reads as a
               clearly anchored part of the card, not a strip floating over the backdrop */}
           <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-4 py-4 shadow-[0_-2px_8px_rgba(0,0,0,0.04)] sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6">
             <button
