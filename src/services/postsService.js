@@ -72,12 +72,18 @@ export async function getPostBySlug(slug) {
 // ── end changed ──────────────────────────────────────────────────────
 
 // ── added: pagination ──────────────────────────────────────────────
+//
+// ← changed: the first page now holds 10 posts (1 featured card + 9 in the
+//    grid, which fills a 3 x 3 grid exactly). Every other page holds 9.
 
+const FIRST_PAGE_SIZE = 10;
 const PAGE_SIZE = 9;
 
 export async function getPaginatedPosts(page = 1, categorySlug = 'all') {
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  // Page 1 starts at 0 and takes 10. Page 2 starts at 10, page 3 at 19, and so on.
+  const from = page <= 1 ? 0 : FIRST_PAGE_SIZE + (page - 2) * PAGE_SIZE;
+  const size = page <= 1 ? FIRST_PAGE_SIZE : PAGE_SIZE;
+  const to = from + size - 1;
 
   let query = supabase
     .from('posts')
@@ -89,6 +95,10 @@ export async function getPaginatedPosts(page = 1, categorySlug = 'all') {
       cover_image_url,
       author_first_name,
       author_second_name,
+      author_id,
+      profiles (
+        avatar_url
+      ),
       published_at,
       categories${categorySlug !== 'all' ? '!inner' : ''} (
         id,
@@ -112,9 +122,16 @@ export async function getPaginatedPosts(page = 1, categorySlug = 'all') {
     throw error;
   }
 
+  // ← changed: total pages = page 1 (10 posts) + however many pages of 9 are needed for the rest
+  const total = count ?? 0;
+  let totalPages = 0;
+  if (total > 0) {
+    totalPages = total <= FIRST_PAGE_SIZE ? 1 : 1 + Math.ceil((total - FIRST_PAGE_SIZE) / PAGE_SIZE);
+  }
+
   return {
     posts: data ?? [],
-    totalPages: Math.ceil((count ?? 0) / PAGE_SIZE),
+    totalPages,
   };
 }
 
@@ -343,7 +360,7 @@ export async function getPaginatedPostsByAuthor(authorId, page = 1) {
   };
 }
 
-// ── end added ────────────────────────────────────────────────────────\
+// ── end added ────────────────────────────────────────────────────────
 
 
 // ── added: count of distinct topics (categories) across ALL of an author's
