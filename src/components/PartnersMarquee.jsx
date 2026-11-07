@@ -58,9 +58,13 @@ function ArrowRightIcon(props) {
 }
 
 export default function PartnersMarquee() {
-  // Four copies of the list. The animation slides the track by exactly one
-  // copy (25%), then restarts, so the loop never shows a jump.
-  const track = [...partners, ...partners, ...partners, ...partners]
+  // Eight copies of the list, so the track always stays wider than the screen.
+  // The animation slides the track by exactly one quarter of its width, which
+  // is two copies, then restarts, so the loop never shows a jump.
+  const track = [
+    ...partners, ...partners, ...partners, ...partners,
+    ...partners, ...partners, ...partners, ...partners,
+  ]
 
   return (
     <section className="relative isolate overflow-hidden border-t border-[#1B5E4F]/10 bg-[#F1F6F4]">
@@ -129,24 +133,25 @@ export default function PartnersMarquee() {
         </div>
 
         {/* ---------- scrolling logos ---------- */}
-        {/* ← changed: no white cards any more. Each logo sits directly on the
-            background, grayscale until hovered, then full color and slightly larger. */}
+        {/* ← changed: gap between logos raised from "px-6 sm:px-7" to
+            "px-8 sm:px-9". To change it again, edit those two numbers
+            (bigger number = more space between logos). */}
         <div className="partners-viewport mt-12 overflow-hidden py-4">
           <div className="partners-track flex w-max items-center">
             {track.map((partner, i) => (
-              <div key={`${partner.name}-${i}`} className="shrink-0 px-6 sm:px-8">
+              <div key={`${partner.name}-${i}`} className="shrink-0 px-8 sm:px-9">
                 <a
                   href={partner.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   title={partner.name}
                   aria-label={partner.name}
-                  className="group flex h-20 w-40 items-center justify-center"
+                  className="group flex h-20 items-center justify-center"
                 >
                   <img
                     src={partner.logo}
                     alt={partner.name}
-                    className="max-h-16 w-auto max-w-full object-contain opacity-75 grayscale transition duration-300 group-hover:scale-110 group-hover:opacity-100 group-hover:grayscale-0"
+                    className="max-h-16 w-auto max-w-[9rem] object-contain opacity-75 grayscale transition duration-300 group-hover:scale-110 group-hover:opacity-100 group-hover:grayscale-0"
                   />
                 </a>
               </div>
