@@ -10,6 +10,16 @@ import {
   IconBook, IconCalendar, IconWrench, IconFolder,
 } from '../components/icons'
 
+// ← added: speech-bubble icon for the Messages link
+function IconChat(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
+      <path d="M8.5 11h7M8.5 14h4" />
+    </svg>
+  )
+}
+
 const navSections = [
   {
     // ← changed: was "Overview"
@@ -21,6 +31,7 @@ const navSections = [
       { label: 'Projects', to: '/admin/projects', icon: IconFolder },
       { label: 'Services', to: '/admin/services', icon: IconWrench },
       { label: 'Service Requests', to: '/admin/service-requests', icon: IconMail },
+      { label: 'Messages', to: '/admin/messages', icon: IconChat }, // ← added
       { label: 'Users', to: '/admin/users', icon: IconUsers },
     ],
   },
