@@ -1,5 +1,6 @@
 // src/pages/admin/AdminMessages.jsx
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   getContactMessages,
   updateContactMessageStatus,
@@ -141,8 +142,17 @@ export default function AdminMessages() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
-  const [filter, setFilter] = useState('all')
   const [selectedId, setSelectedId] = useState(null)
+
+  // ← changed: the active tab lives in the web address (?status=new),
+  // so links from the dashboard and the sidebar open the right tab
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlStatus = searchParams.get('status')
+  const filter = STATUS_OPTIONS.some((o) => o.value === urlStatus) ? urlStatus : 'all'
+  function setFilter(value) {
+    if (value === 'all') setSearchParams({})
+    else setSearchParams({ status: value })
+  }
 
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')

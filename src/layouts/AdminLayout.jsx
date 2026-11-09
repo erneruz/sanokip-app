@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
+import { getUnreadMessageCount, MESSAGES_CHANGED_EVENT } from '../services/contactMessagesService' // ← added
 import ProfileMenu from '../components/ProfileMenu'
 import logo from '../assets/images/logo.png'
 import {
@@ -20,6 +21,8 @@ function IconChat(props) {
   )
 }
 
+const MESSAGES_PATH = '/admin/messages'
+
 const navSections = [
   {
     // ← changed: was "Overview"
@@ -31,7 +34,7 @@ const navSections = [
       { label: 'Projects', to: '/admin/projects', icon: IconFolder },
       { label: 'Services', to: '/admin/services', icon: IconWrench },
       { label: 'Service Requests', to: '/admin/service-requests', icon: IconMail },
-      { label: 'Messages', to: '/admin/messages', icon: IconChat }, // ← added
+      { label: 'Messages', to: MESSAGES_PATH, icon: IconChat },
       { label: 'Users', to: '/admin/users', icon: IconUsers },
     ],
   },
@@ -102,6 +105,30 @@ export default function AdminLayout() {
       .then(setProfile)
       .catch((err) => console.error('Failed to load profile:', err))
   }, [user?.id])
+
+  // ← added: number of new (unread) messages, shown as the red count.
+  // It refreshes when a message changes, every 30 seconds, and when you come back to the tab.
+  const [unread, setUnread] = useState(0)
+  useEffect(() => {
+    let cancelled = false
+    const refresh = () => {
+      getUnreadMessageCount()
+        .then((n) => {
+          if (!cancelled) setUnread(n)
+        })
+        .catch(() => {})
+    }
+    refresh()
+    const timer = setInterval(refresh, 30000)
+    window.addEventListener(MESSAGES_CHANGED_EVENT, refresh)
+    window.addEventListener('focus', refresh)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      window.removeEventListener(MESSAGES_CHANGED_EVENT, refresh)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [])
 
   // ← added: desktop icon-only collapse, persisted so it stays how you left it
   const [collapsed, setCollapsed] = useState(() => {
@@ -192,24 +219,59 @@ export default function AdminLayout() {
                 {section.label}
               </p>
               <div className="mt-2 space-y-1">
-                {section.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    onClick={() => setMobileOpen(false)}
-                    title={collapsed ? item.label : undefined}
-                    className={({ isActive }) =>
-                      (isActive
-                        ? 'flex items-center gap-3 rounded-lg bg-white/15 px-3 py-2 text-sm font-medium text-white '
-                        : 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white ') +
-                      (collapsed ? 'md:justify-center' : '')
-                    }
-                  >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    <span className={collapsed ? 'md:hidden' : ''}>{item.label}</span>
-                  </NavLink>
-                ))}
+                {section.items.map((item) => {
+                  // ← added: red count on the Messages link; when there are new
+                  // messages, the link opens the "New" tab directly
+                  const badge = item.to === MESSAGES_PATH ? unread : 0
+                  const target = badge > 0 ? `${MESSAGES_PATH}?status=new` : item.to
+                  const badgeText = badge > 99 ? '99+' : String(badge)
+
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={target}
+                      end={item.end}
+                      onClick={() => setMobileOpen(false)}
+                      title={
+                        badge > 0
+                          ? `${item.label}: ${badge} new`
+                          : collapsed
+                            ? item.label
+                            : undefined
+                      }
+                      className={({ isActive }) =>
+                        'relative ' +
+                        (isActive
+                          ? 'flex items-center gap-3 rounded-lg bg-white/15 px-3 py-2 text-sm font-medium text-white '
+                          : 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white ') +
+                        (collapsed ? 'md:justify-center' : '')
+                      }
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className={collapsed ? 'md:hidden' : ''}>{item.label}</span>
+
+                      {badge > 0 && (
+                        <span
+                          aria-label={`${badge} new messages`}
+                          className={
+                            'ml-auto inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white shadow ' +
+                            (collapsed ? 'md:hidden' : '')
+                          }
+                        >
+                          {badgeText}
+                        </span>
+                      )}
+                      {badge > 0 && collapsed && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute right-1 top-0.5 hidden h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow md:flex"
+                        >
+                          {badgeText}
+                        </span>
+                      )}
+                    </NavLink>
+                  )
+                })}
               </div>
             </div>
           ))}
@@ -261,9 +323,12 @@ export default function AdminLayout() {
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
-            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100"
+            className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100"
           >
             <IconMenu className="h-5 w-5" />
+            {unread > 0 && (
+              <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+            )}
           </button>
           <img src={logo} alt="Peakstar" className="h-7 w-7 object-contain" />
           <span className="text-sm font-semibold text-gray-900">Peakstar Admin</span>

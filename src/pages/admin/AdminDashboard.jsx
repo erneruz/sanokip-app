@@ -7,6 +7,7 @@ import {
 import { getDashboardStats } from '../../services/dashboardService'
 import { getAllPostsForAdmin } from '../../services/postsService'
 import { getAllPublications } from '../../services/publicationsService'
+import { getContactMessageCounts } from '../../services/contactMessagesService' // ← added
 import { getCategory } from '../../constants/publications'
 import { useAuth } from '../../context/AuthContext'
 import { getFullProfile } from '../../services/profileService'
@@ -188,21 +189,24 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null)
   const [allPosts, setAllPosts] = useState([])
   const [allPublications, setAllPublications] = useState([]) // ← added
+  const [messageCounts, setMessageCounts] = useState(null) // ← added
   const [adminProfile, setAdminProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [statsData, posts, publications, profileData] = await Promise.all([
+        const [statsData, posts, publications, profileData, msgCounts] = await Promise.all([
           getDashboardStats(),
           getAllPostsForAdmin(),
           getAllPublications(), // ← added
           user?.id ? getFullProfile(user.id).catch(() => null) : Promise.resolve(null),
+          getContactMessageCounts().catch(() => null), // ← added: a failure here never breaks the dashboard
         ])
         setStats(statsData)
         setAllPosts(posts)
         setAllPublications(publications) // ← added
+        setMessageCounts(msgCounts) // ← added
         setAdminProfile(profileData?.profile ?? null)
       } catch (err) {
         console.error('Failed to load dashboard:', err)
@@ -339,18 +343,36 @@ export default function AdminDashboard() {
     { label: 'Archived', value: stats.archivedRequests, color: DARK_SLATE },
   ]
 
-  const otherModulesTotal = stats.totalUsers + stats.totalTestimonials + stats.totalMessages + stats.totalEvents
+  // ← added: messages from the "Write to us" form, by status. Each status link
+  // opens the Messages page showing only that status (?status=...).
+  const mc = messageCounts ?? { new: 0, read: 0, replied: 0, archived: 0, total: 0 }
+  const messagesItems = [
+    { label: 'Total Messages', value: mc.total, icon: IconChat, to: '/admin/messages', color: LIGHT_GREY },
+    { label: 'New', value: mc.new, icon: IconMail, to: '/admin/messages?status=new', color: '#2563EB' },
+    { label: 'Read', value: mc.read, icon: IconEye, to: '/admin/messages?status=read', color: '#D97706' },
+    { label: 'Replied', value: mc.replied, icon: IconReply, to: '/admin/messages?status=replied', color: '#1B5E4F' },
+    { label: 'Archived', value: mc.archived, icon: IconArchive, to: '/admin/messages?status=archived', color: DARK_SLATE },
+  ]
+  const messagesSlices = [
+    { label: 'New', value: mc.new, color: '#2563EB' },
+    { label: 'Read', value: mc.read, color: '#D97706' },
+    { label: 'Replied', value: mc.replied, color: '#1B5E4F' },
+    { label: 'Archived', value: mc.archived, color: DARK_SLATE },
+  ]
+
+  // ← changed: the Messages line now uses the real message total
+  const otherModulesTotal = stats.totalUsers + stats.totalTestimonials + mc.total + stats.totalEvents
   const otherModulesSlices = [
     { label: 'Users', value: stats.totalUsers, color: '#4F46E5' },
     { label: 'Testimonials', value: stats.totalTestimonials, color: '#DB2777' },
-    { label: 'Messages', value: stats.totalMessages, color: '#0891B2' },
+    { label: 'Messages', value: mc.total, color: '#0891B2' },
     { label: 'Events', value: stats.totalEvents, color: '#EA580C' },
   ]
   const otherModuleItems = [
     { label: 'Total Modules', value: otherModulesTotal, icon: IconDashboardGrid, color: LIGHT_GREY },
     { label: 'Users', value: stats.totalUsers, icon: IconUsers, to: '/admin/users', color: '#4F46E5' },
     { label: 'Testimonials', value: stats.totalTestimonials, icon: IconQuote, to: '/admin/testimonials', color: '#DB2777' },
-    { label: 'Messages', value: stats.totalMessages, icon: IconMail, to: '/admin/messages', color: '#0891B2' },
+    { label: 'Messages', value: mc.total, icon: IconMail, to: '/admin/messages', color: '#0891B2' },
     { label: 'Events', value: stats.totalEvents, icon: IconCalendar, to: '/admin/events', color: '#EA580C' },
   ]
 
@@ -379,8 +401,25 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* ← added: red alert, only while there are new (unread) messages */}
+      {mc.new > 0 && (
+        <Link
+          to="/admin/messages?status=new"
+          className="mt-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm transition hover:bg-red-100"
+        >
+          <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-red-500 px-2 text-xs font-bold text-white shadow">
+            {mc.new}
+          </span>
+          <span className="font-medium text-red-800">
+            You have {mc.new} unread {mc.new === 1 ? 'message' : 'messages'} waiting.
+          </span>
+          <span className="ml-auto shrink-0 text-xs font-semibold text-red-700">Read now →</span>
+        </Link>
+      )}
+
       {/* ← changed: added "Publications by Category" right after
-          "Publications Breakdown", same pattern as Posts by Category */}
+          "Publications Breakdown", same pattern as Posts by Category;
+          added "Messages Breakdown" after "Requested Services Breakdown" */}
       <section className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Breakdowns</h2>
         <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -394,6 +433,8 @@ export default function AdminDashboard() {
 
           <PieBreakdownCard title="Services Breakdown" total={stats.totalServices} slices={servicesByCategoryData} items={servicesItems} />
           <PieBreakdownCard title="Requested Services Breakdown" total={stats.totalServiceRequests} slices={serviceRequestsData} items={serviceRequestsItems} />
+          <PieBreakdownCard title="Messages Breakdown" total={mc.total} slices={messagesSlices} items={messagesItems} />
+
           <PieBreakdownCard title="Other Modules Breakdown" total={otherModulesTotal} slices={otherModulesSlices} items={otherModuleItems} />
         </div>
       </section>
@@ -454,6 +495,22 @@ function IconDashboardGrid(props) {
       <rect x="13" y="3" width="8" height="5" rx="1.5" />
       <rect x="13" y="11" width="8" height="10" rx="1.5" />
       <rect x="3" y="14" width="8" height="7" rx="1.5" />
+    </svg>
+  )
+}
+// ← added: "read" and "replied" icons for the Messages Breakdown
+function IconEye(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+function IconReply(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
     </svg>
   )
 }
