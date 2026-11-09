@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
-import { getUnreadMessageCount, MESSAGES_CHANGED_EVENT } from '../services/contactMessagesService' // ← added
+import { getUnreadMessageCount, MESSAGES_CHANGED_EVENT } from '../services/contactMessagesService'
+import { getNewServiceRequestCount, SERVICE_REQUESTS_CHANGED_EVENT } from '../services/serviceRequestsService' // ← added
+import { getNewUserCount, USERS_SEEN_EVENT } from '../services/usersService' // ← added
 import ProfileMenu from '../components/ProfileMenu'
 import logo from '../assets/images/logo.png'
 import {
@@ -22,6 +24,8 @@ function IconChat(props) {
 }
 
 const MESSAGES_PATH = '/admin/messages'
+const REQUESTS_PATH = '/admin/service-requests'
+const USERS_PATH = '/admin/users'
 
 const navSections = [
   {
@@ -33,9 +37,9 @@ const navSections = [
       { label: 'Publications', to: '/admin/publications', icon: IconBook },
       { label: 'Projects', to: '/admin/projects', icon: IconFolder },
       { label: 'Services', to: '/admin/services', icon: IconWrench },
-      { label: 'Service Requests', to: '/admin/service-requests', icon: IconMail },
+      { label: 'Service Requests', to: REQUESTS_PATH, icon: IconMail },
       { label: 'Messages', to: MESSAGES_PATH, icon: IconChat },
-      { label: 'Users', to: '/admin/users', icon: IconUsers },
+      { label: 'Users', to: USERS_PATH, icon: IconUsers },
     ],
   },
   {
@@ -106,29 +110,43 @@ export default function AdminLayout() {
       .catch((err) => console.error('Failed to load profile:', err))
   }, [user?.id])
 
-  // ← added: number of new (unread) messages, shown as the red count.
-  // It refreshes when a message changes, every 30 seconds, and when you come back to the tab.
-  const [unread, setUnread] = useState(0)
+  // ← added: red counts for new messages, new service requests and new registered users.
+  // They refresh when something changes, every 30 seconds, and when you come back to the tab.
+  const [unreadMessages, setUnreadMessages] = useState(0)
+  const [newRequests, setNewRequests] = useState(0)
+  const [newUsers, setNewUsers] = useState(0)
+
   useEffect(() => {
     let cancelled = false
     const refresh = () => {
-      getUnreadMessageCount()
-        .then((n) => {
-          if (!cancelled) setUnread(n)
-        })
-        .catch(() => {})
+      Promise.allSettled([
+        getUnreadMessageCount(),
+        getNewServiceRequestCount(),
+        user?.id ? getNewUserCount(user.id) : Promise.resolve(0),
+      ]).then(([m, r, u]) => {
+        if (cancelled) return
+        if (m.status === 'fulfilled') setUnreadMessages(m.value)
+        if (r.status === 'fulfilled') setNewRequests(r.value)
+        if (u.status === 'fulfilled') setNewUsers(u.value)
+      })
     }
     refresh()
     const timer = setInterval(refresh, 30000)
     window.addEventListener(MESSAGES_CHANGED_EVENT, refresh)
+    window.addEventListener(SERVICE_REQUESTS_CHANGED_EVENT, refresh)
+    window.addEventListener(USERS_SEEN_EVENT, refresh)
     window.addEventListener('focus', refresh)
     return () => {
       cancelled = true
       clearInterval(timer)
       window.removeEventListener(MESSAGES_CHANGED_EVENT, refresh)
+      window.removeEventListener(SERVICE_REQUESTS_CHANGED_EVENT, refresh)
+      window.removeEventListener(USERS_SEEN_EVENT, refresh)
       window.removeEventListener('focus', refresh)
     }
-  }, [])
+  }, [user?.id])
+
+  const totalAlerts = unreadMessages + newRequests + newUsers
 
   // ← added: desktop icon-only collapse, persisted so it stays how you left it
   const [collapsed, setCollapsed] = useState(() => {
@@ -220,10 +238,19 @@ export default function AdminLayout() {
               </p>
               <div className="mt-2 space-y-1">
                 {section.items.map((item) => {
-                  // ← added: red count on the Messages link; when there are new
-                  // messages, the link opens the "New" tab directly
-                  const badge = item.to === MESSAGES_PATH ? unread : 0
-                  const target = badge > 0 ? `${MESSAGES_PATH}?status=new` : item.to
+                  // ← added: red count on Messages, Service Requests and Users.
+                  // Messages and Service Requests open straight on their "New" tab.
+                  let badge = 0
+                  let target = item.to
+                  if (item.to === MESSAGES_PATH) {
+                    badge = unreadMessages
+                    if (badge > 0) target = `${MESSAGES_PATH}?status=new`
+                  } else if (item.to === REQUESTS_PATH) {
+                    badge = newRequests
+                    if (badge > 0) target = `${REQUESTS_PATH}?status=new`
+                  } else if (item.to === USERS_PATH) {
+                    badge = newUsers
+                  }
                   const badgeText = badge > 99 ? '99+' : String(badge)
 
                   return (
@@ -252,7 +279,7 @@ export default function AdminLayout() {
 
                       {badge > 0 && (
                         <span
-                          aria-label={`${badge} new messages`}
+                          aria-label={`${badge} new`}
                           className={
                             'ml-auto inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white shadow ' +
                             (collapsed ? 'md:hidden' : '')
@@ -326,7 +353,7 @@ export default function AdminLayout() {
             className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100"
           >
             <IconMenu className="h-5 w-5" />
-            {unread > 0 && (
+            {totalAlerts > 0 && (
               <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
             )}
           </button>

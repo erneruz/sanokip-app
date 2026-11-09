@@ -1,7 +1,13 @@
 // src/pages/admin/AdminUsers.jsx
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { getAllUsers, setUserRole, deleteUserProfile } from '../../services/usersService'
+import {
+  getAllUsers,
+  setUserRole,
+  deleteUserProfile,
+  getUsersLastSeen,
+  markUsersSeen,
+} from '../../services/usersService'
 import { useAuth } from '../../context/AuthContext'
 
 export default function AdminUsers() {
@@ -11,6 +17,13 @@ export default function AdminUsers() {
   const [updatingId, setUpdatingId] = useState(null)
   const [openMenuId, setOpenMenuId] = useState(null)
   const menuRef = useRef(null)
+
+  // ← added: the moment you last opened this page. People who registered after it
+  // get a "New" tag. Opening the page then clears the red count in the sidebar.
+  const [lastSeen] = useState(() => getUsersLastSeen(currentUser.id))
+  useEffect(() => {
+    markUsersSeen(currentUser.id)
+  }, [currentUser.id])
 
   async function load() {
     setLoading(true)
@@ -104,6 +117,8 @@ export default function AdminUsers() {
               const isSelf = u.id === currentUser.id
               const isBusy = updatingId === u.id
               const isAdmin = u.role === 'admin'
+              // ← added: registered since the last time this page was opened
+              const isNewUser = !isSelf && !!u.created_at && new Date(u.created_at) > new Date(lastSeen)
 
               return (
                 // ← changed: added `relative` and right padding on mobile so the actions
@@ -128,6 +143,11 @@ export default function AdminUsers() {
                     {isSelf && (
                       <span className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
                         You
+                      </span>
+                    )}
+                    {isNewUser && (
+                      <span className="shrink-0 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                        New
                       </span>
                     )}
                   </div>

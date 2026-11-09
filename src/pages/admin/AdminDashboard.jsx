@@ -7,7 +7,9 @@ import {
 import { getDashboardStats } from '../../services/dashboardService'
 import { getAllPostsForAdmin } from '../../services/postsService'
 import { getAllPublications } from '../../services/publicationsService'
-import { getContactMessageCounts } from '../../services/contactMessagesService' // ← added
+import { getContactMessageCounts } from '../../services/contactMessagesService'
+import { getNewServiceRequestCount } from '../../services/serviceRequestsService' // ← added
+import { getNewUserCount } from '../../services/usersService'
 import { getCategory } from '../../constants/publications'
 import { useAuth } from '../../context/AuthContext'
 import { getFullProfile } from '../../services/profileService'
@@ -188,25 +190,31 @@ export default function AdminDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState(null)
   const [allPosts, setAllPosts] = useState([])
-  const [allPublications, setAllPublications] = useState([]) // ← added
-  const [messageCounts, setMessageCounts] = useState(null) // ← added
+  const [allPublications, setAllPublications] = useState([])
+  const [messageCounts, setMessageCounts] = useState(null)
+  const [unreadRequests, setUnreadRequests] = useState(0) // ← added
+  const [newUsers, setNewUsers] = useState(0)
   const [adminProfile, setAdminProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [statsData, posts, publications, profileData, msgCounts] = await Promise.all([
+        const [statsData, posts, publications, profileData, msgCounts, unreadReqCount, newUserCount] = await Promise.all([
           getDashboardStats(),
           getAllPostsForAdmin(),
-          getAllPublications(), // ← added
+          getAllPublications(),
           user?.id ? getFullProfile(user.id).catch(() => null) : Promise.resolve(null),
-          getContactMessageCounts().catch(() => null), // ← added: a failure here never breaks the dashboard
+          getContactMessageCounts().catch(() => null), // a failure here never breaks the dashboard
+          getNewServiceRequestCount().catch(() => 0), // ← added: requests not opened yet
+          user?.id ? getNewUserCount(user.id).catch(() => 0) : Promise.resolve(0),
         ])
         setStats(statsData)
         setAllPosts(posts)
-        setAllPublications(publications) // ← added
-        setMessageCounts(msgCounts) // ← added
+        setAllPublications(publications)
+        setMessageCounts(msgCounts)
+        setUnreadRequests(unreadReqCount)
+        setNewUsers(newUserCount)
         setAdminProfile(profileData?.profile ?? null)
       } catch (err) {
         console.error('Failed to load dashboard:', err)
@@ -263,8 +271,6 @@ export default function AdminDashboard() {
     })),
   ]
 
-  // ← added: same pattern as Posts by Category, built from the publications
-  // list using the same getCategory() label lookup AdminPublications uses
   const pubCategoryCounts = {}
   allPublications.forEach((pub) => {
     const label = getCategory(pub.category)?.label || pub.category || 'Uncategorized'
@@ -329,11 +335,11 @@ export default function AdminDashboard() {
 
   const serviceRequestsItems = [
     { label: 'Total Requests', value: stats.totalServiceRequests, icon: IconInbox, to: '/admin/service-requests', color: LIGHT_GREY },
-    { label: 'New', value: stats.newRequests, icon: IconMail, to: '/admin/service-requests', color: '#2563EB' },
-    { label: 'Contacted', value: stats.contactedRequests, icon: IconChat, to: '/admin/service-requests', color: '#D97706' },
-    { label: 'In Progress', value: stats.inProgressRequests, icon: IconClock, to: '/admin/service-requests', color: '#7C3AED' },
-    { label: 'Resolved', value: stats.resolvedRequests, icon: IconCheckCircle, to: '/admin/service-requests', color: '#1B5E4F' },
-    { label: 'Archived', value: stats.archivedRequests, icon: IconArchive, to: '/admin/service-requests', color: DARK_SLATE },
+    { label: 'New', value: stats.newRequests, icon: IconMail, to: '/admin/service-requests?status=new', color: '#2563EB' },
+    { label: 'Contacted', value: stats.contactedRequests, icon: IconChat, to: '/admin/service-requests?status=contacted', color: '#D97706' },
+    { label: 'In Progress', value: stats.inProgressRequests, icon: IconClock, to: '/admin/service-requests?status=in_progress', color: '#7C3AED' },
+    { label: 'Resolved', value: stats.resolvedRequests, icon: IconCheckCircle, to: '/admin/service-requests?status=resolved', color: '#1B5E4F' },
+    { label: 'Archived', value: stats.archivedRequests, icon: IconArchive, to: '/admin/service-requests?status=archived', color: DARK_SLATE },
   ]
   const serviceRequestsData = [
     { label: 'New', value: stats.newRequests, color: '#2563EB' },
@@ -343,8 +349,6 @@ export default function AdminDashboard() {
     { label: 'Archived', value: stats.archivedRequests, color: DARK_SLATE },
   ]
 
-  // ← added: messages from the "Write to us" form, by status. Each status link
-  // opens the Messages page showing only that status (?status=...).
   const mc = messageCounts ?? { new: 0, read: 0, replied: 0, archived: 0, total: 0 }
   const messagesItems = [
     { label: 'Total Messages', value: mc.total, icon: IconChat, to: '/admin/messages', color: LIGHT_GREY },
@@ -360,7 +364,6 @@ export default function AdminDashboard() {
     { label: 'Archived', value: mc.archived, color: DARK_SLATE },
   ]
 
-  // ← changed: the Messages line now uses the real message total
   const otherModulesTotal = stats.totalUsers + stats.totalTestimonials + mc.total + stats.totalEvents
   const otherModulesSlices = [
     { label: 'Users', value: stats.totalUsers, color: '#4F46E5' },
@@ -375,6 +378,31 @@ export default function AdminDashboard() {
     { label: 'Messages', value: mc.total, icon: IconMail, to: '/admin/messages', color: '#0891B2' },
     { label: 'Events', value: stats.totalEvents, icon: IconCalendar, to: '/admin/events', color: '#EA580C' },
   ]
+
+  // red alert bars, only for things that need attention right now
+  const alerts = [
+    {
+      key: 'messages',
+      count: mc.new,
+      to: '/admin/messages?status=new',
+      text: (n) => `${n} unread ${n === 1 ? 'message' : 'messages'}`,
+      action: 'Read now →',
+    },
+    {
+      key: 'requests',
+      count: unreadRequests, // ← changed: requests not opened yet
+      to: '/admin/service-requests?status=new',
+      text: (n) => `${n} new service ${n === 1 ? 'request' : 'requests'}`,
+      action: 'Review now →',
+    },
+    {
+      key: 'users',
+      count: newUsers,
+      to: '/admin/users',
+      text: (n) => `${n} new registered ${n === 1 ? 'user' : 'users'}`,
+      action: 'View users →',
+    },
+  ].filter((a) => a.count > 0)
 
   return (
     <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -401,25 +429,24 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ← added: red alert, only while there are new (unread) messages */}
-      {mc.new > 0 && (
-        <Link
-          to="/admin/messages?status=new"
-          className="mt-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm transition hover:bg-red-100"
-        >
-          <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-red-500 px-2 text-xs font-bold text-white shadow">
-            {mc.new}
-          </span>
-          <span className="font-medium text-red-800">
-            You have {mc.new} unread {mc.new === 1 ? 'message' : 'messages'} waiting.
-          </span>
-          <span className="ml-auto shrink-0 text-xs font-semibold text-red-700">Read now →</span>
-        </Link>
+      {alerts.length > 0 && (
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {alerts.map((a) => (
+            <Link
+              key={a.key}
+              to={a.to}
+              className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm transition hover:bg-red-100"
+            >
+              <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-red-500 px-2 text-xs font-bold text-white shadow">
+                {a.count}
+              </span>
+              <span className="font-medium text-red-800">{a.text(a.count)}</span>
+              <span className="ml-auto shrink-0 text-xs font-semibold text-red-700">{a.action}</span>
+            </Link>
+          ))}
+        </div>
       )}
 
-      {/* ← changed: added "Publications by Category" right after
-          "Publications Breakdown", same pattern as Posts by Category;
-          added "Messages Breakdown" after "Requested Services Breakdown" */}
       <section className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Breakdowns</h2>
         <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -498,7 +525,6 @@ function IconDashboardGrid(props) {
     </svg>
   )
 }
-// ← added: "read" and "replied" icons for the Messages Breakdown
 function IconEye(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

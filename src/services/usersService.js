@@ -31,3 +31,46 @@ export async function deleteUserProfile(userId) {
   if (error) throw error
 }
 // ─────────────────────────────────────────────────────────────────────
+
+// ── added: "new registered users" alert ────────────────────────────────
+// The time the admin last opened the Users page is kept in this browser.
+// Users who registered after that moment count as new.
+
+export const USERS_SEEN_EVENT = 'admin-users-seen'
+
+const seenKey = (adminId) => `admin-users-last-seen:${adminId}`
+
+// First time ever: start counting from now, so old users are not flagged as new.
+export function getUsersLastSeen(adminId) {
+  try {
+    const stored = localStorage.getItem(seenKey(adminId))
+    if (stored) return stored
+    const now = new Date().toISOString()
+    localStorage.setItem(seenKey(adminId), now)
+    return now
+  } catch {
+    return new Date().toISOString()
+  }
+}
+
+// Called when the admin opens the Users page: the red count goes away.
+export function markUsersSeen(adminId) {
+  try {
+    localStorage.setItem(seenKey(adminId), new Date().toISOString())
+    window.dispatchEvent(new Event(USERS_SEEN_EVENT))
+  } catch {
+    /* ignore */
+  }
+}
+
+// Number of people registered since the admin last opened the Users page.
+export async function getNewUserCount(adminId) {
+  const since = getUsersLastSeen(adminId)
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .gt('created_at', since)
+    .neq('id', adminId)
+  if (error) throw error
+  return count ?? 0
+}
