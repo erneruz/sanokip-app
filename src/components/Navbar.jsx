@@ -5,12 +5,13 @@ import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
 import logo from '../assets/images/logo.png'
 
-// ← changed: each link now has "match", the list of addresses it covers.
-// A link stays active on its own page AND on every page under those addresses,
-// for example /blog, /blog/some-post, /post/some-post.
-// If your single post page uses another address, add it to the Blog list.
+// ← changed: '/' is now the Gateway page, so the Engineering home lives here
+const HOME_PATH = '/engineering'
+
+// Each link has "match", the list of addresses it covers. A link stays active on
+// its own page AND on every page under those addresses (for example a single post).
 const navLinks = [
-    { to: '/', label: 'Home', end: true },
+    { to: HOME_PATH, label: 'Home', end: true },
     { to: '/about', label: 'About Us', match: ['/about'] },
     { to: '/services', label: 'Services', match: ['/services', '/service'] },
     { to: '/projects', label: 'Projects', match: ['/projects', '/project'] },
@@ -18,11 +19,12 @@ const navLinks = [
     { to: '/publications', label: 'Publications', match: ['/publications', '/publication'] },
 ]
 
-// ← added: true when the current address belongs to this link
+// true when the current address belongs to this link
 function isLinkActive(link, pathname) {
-    if (link.end) return pathname === link.to
+    const path = pathname.replace(/\/+$/, '') || '/'
+    if (link.end) return path === link.to
     return (link.match ?? [link.to]).some(
-        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+        (prefix) => path === prefix || path.startsWith(`${prefix}/`)
     )
 }
 
@@ -71,7 +73,7 @@ function Navbar() {
         setMenuOpen(false)
         setMobileOpen(false)
         await signOut()
-        navigate('/')
+        navigate(HOME_PATH) // ← changed: was '/'
     }
 
     const displayName = profile?.first_name
@@ -81,8 +83,8 @@ function Navbar() {
     return (
         <header className="sticky top-0 z-50 border-b border-[#EAF5F1] bg-white/90 shadow-[0_1px_0_rgba(15,61,50,0.04)] backdrop-blur-md">
             <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
-                {/* Logo */}
-                <Link to="/" className="group flex shrink-0 items-center gap-2.5">
+                {/* Logo ← changed: goes to the Engineering home */}
+                <Link to={HOME_PATH} className="group flex shrink-0 items-center gap-2.5">
                     <img
                         src={logo}
                         alt="Peakstar"
@@ -101,7 +103,6 @@ function Navbar() {
 
                 <div className="hidden items-center gap-8 text-sm md:flex">
                     {navLinks.map((link) => {
-                        // ← changed: "active" now comes from our own check
                         const active = isLinkActive(link, location.pathname)
                         return (
                             <NavLink
@@ -248,7 +249,6 @@ function Navbar() {
                     <div className="mx-auto max-w-6xl px-6 py-4">
                         <div className="flex flex-col gap-1">
                             {navLinks.map((link) => {
-                                // ← changed: same check as the desktop menu
                                 const active = isLinkActive(link, location.pathname)
                                 return (
                                     <NavLink

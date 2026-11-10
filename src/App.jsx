@@ -1,12 +1,14 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
+import SwitchSiteButton from './components/SwitchSiteButton' // ← added: "Back to Peak Star Group" button
 import RequireAdmin from './components/RequireAdmin'
 import RequireAuth from './components/RequireAuth'
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
-import Home from './pages/Home' // ← added: the new Home page
+import Gateway from './pages/Gateway'
+import Home from './pages/Home'
 import Blog from './pages/Blog'
 import Post from './pages/Post'
 import About from './pages/About'
@@ -27,24 +29,68 @@ import ComingSoon from './pages/admin/ComingSoon'
 import Services from './pages/Services'
 import AdminServices from './pages/admin/AdminServices'
 import AdminServiceRequests from './pages/admin/AdminServiceRequests'
-import AdminMessages from './pages/admin/AdminMessages' // ← added
-import AdminSubscribers from './pages/admin/AdminSubscribers' // ← added
+import AdminMessages from './pages/admin/AdminMessages'
+import AdminSubscribers from './pages/admin/AdminSubscribers'
 
 
 import Register from './pages/Register'
 import AdminUsers from './pages/admin/AdminUsers'
-import AdminUserProfile from './pages/admin/AdminUserProfile' // ← added
+import AdminUserProfile from './pages/admin/AdminUserProfile'
 import UserProfile from './pages/UserProfile'
+
+// The page at "/".
+// Normal visitors see the Gateway. But links that were made for the Engineering
+// home (the unsubscribe link in subscriber emails, and the "Become a partner"
+// button) still start with "/?...". Those are sent on to /engineering, keeping
+// the same ?query and #section, so they keep working.
+function RootRoute() {
+  const { search, hash } = useLocation()
+  const params = new URLSearchParams(search)
+
+  if (params.has('unsubscribe') || params.has('topic') || hash === '#send-message') {
+    return <Navigate to={`/engineering${search}${hash}`} replace />
+  }
+  return <Gateway />
+}
+
+// TEMPORARY page for /entertainment until the real Entertainment site is built.
+function EntertainmentSoon() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[#F1F6F4] px-6 text-center">
+      <span className="rounded-full bg-[#E6F1EE] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#1B5E4F] ring-1 ring-[#1B5E4F]/15">
+        Peakstar Entertainment
+      </span>
+      <h1 className="mt-5 text-3xl font-bold text-[#0D3A31]">Coming very soon</h1>
+      <p className="mt-3 max-w-md text-sm text-gray-600">
+        We are building a home for talents in music, football, basketball, volleyball and more.
+      </p>
+      <Link
+        to="/"
+        className="mt-6 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#154A3E]"
+      >
+        Back to the choice page
+      </Link>
+    </main>
+  )
+}
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
+        {/* ← added: floating button on the Engineering site that goes back to the Gateway */}
+        <SwitchSiteButton />
         <Routes>
+          {/* "/" is the Gateway, with no navbar or footer around it */}
+          <Route path="/" element={<RootRoute />} />
+
+          {/* Entertainment (temporary page for now) */}
+          <Route path="/entertainment/*" element={<EntertainmentSoon />} />
+
+          {/* Peakstar Engineering: the normal site, navbar and footer unchanged */}
           <Route element={<MainLayout />}>
-            {/* ← changed: "/" now shows the Home page (it used to redirect to /blog) */}
-            <Route path="/" element={<Home />} />
+            <Route path="/engineering" element={<Home />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/posts/:slug" element={<Post />} />
             <Route path="/publications" element={<Publications />} />
@@ -74,14 +120,14 @@ function App() {
             <Route path="events" element={<ComingSoon title="Events" />} />
             <Route path="services" element={<AdminServices />} />
             <Route path="service-requests" element={<AdminServiceRequests />} />
-            <Route path="messages" element={<AdminMessages />} /> {/* ← added */}
-            <Route path="subscribers" element={<AdminSubscribers />} /> {/* ← added */}
+            <Route path="messages" element={<AdminMessages />} />
+            <Route path="subscribers" element={<AdminSubscribers />} />
             <Route path="projects" element={<AdminProjects />} />
             <Route path="projects/new" element={<ProjectEditor />} />
             <Route path="projects/:id/edit" element={<ProjectEditor />} />
 
             <Route path="users" element={<AdminUsers />} />
-            <Route path="users/:userId" element={<AdminUserProfile />} /> {/* ← added */}
+            <Route path="users/:userId" element={<AdminUserProfile />} />
           </Route>
         </Routes>
       </BrowserRouter>
