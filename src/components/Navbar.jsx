@@ -5,14 +5,26 @@ import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
 import logo from '../assets/images/logo.png'
 
+// ← changed: each link now has "match", the list of addresses it covers.
+// A link stays active on its own page AND on every page under those addresses,
+// for example /blog, /blog/some-post, /post/some-post.
+// If your single post page uses another address, add it to the Blog list.
 const navLinks = [
     { to: '/', label: 'Home', end: true },
-    { to: '/about', label: 'About Us' },
-    { to: '/services', label: 'Services' },
-    { to: '/projects', label: 'Projects' },
-    { to: '/blog', label: 'Blog & News' },
-    { to: '/publications', label: 'Publications' },
+    { to: '/about', label: 'About Us', match: ['/about'] },
+    { to: '/services', label: 'Services', match: ['/services', '/service'] },
+    { to: '/projects', label: 'Projects', match: ['/projects', '/project'] },
+    { to: '/blog', label: 'Blog & News', match: ['/blog', '/post', '/posts', '/article', '/articles', '/news'] },
+    { to: '/publications', label: 'Publications', match: ['/publications', '/publication'] },
 ]
+
+// ← added: true when the current address belongs to this link
+function isLinkActive(link, pathname) {
+    if (link.end) return pathname === link.to
+    return (link.match ?? [link.to]).some(
+        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    )
+}
 
 function Navbar() {
     const { user, signOut } = useAuth()
@@ -69,9 +81,7 @@ function Navbar() {
     return (
         <header className="sticky top-0 z-50 border-b border-[#EAF5F1] bg-white/90 shadow-[0_1px_0_rgba(15,61,50,0.04)] backdrop-blur-md">
             <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
-                {/* Logo — ← changed: added a small letter-spaced "ENGINEERING" tagline
-                    under the wordmark, and shifted the green to match the logo's own
-                    teal (#1B5E4F) instead of the near-black #0F3D32 */}
+                {/* Logo */}
                 <Link to="/" className="group flex shrink-0 items-center gap-2.5">
                     <img
                         src={logo}
@@ -90,29 +100,27 @@ function Navbar() {
                 </Link>
 
                 <div className="hidden items-center gap-8 text-sm md:flex">
-                    {navLinks.map((link) => (
-                        <NavLink
-                            key={link.to}
-                            to={link.to}
-                            end={link.end}
-                            className={({ isActive }) =>
-                                `group relative py-1 transition-colors duration-300 ${
-                                    isActive ? 'font-medium text-[#0F3D32]' : 'text-gray-500 hover:text-[#0F3D32]'
-                                }`
-                            }
-                        >
-                            {({ isActive }) => (
-                                <>
-                                    {link.label}
-                                    <span
-                                        className={`absolute -bottom-0.5 left-0 h-[2px] rounded-full bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] transition-all duration-300 ease-out ${
-                                            isActive ? 'w-full' : 'w-0 group-hover:w-full'
-                                        }`}
-                                    />
-                                </>
-                            )}
-                        </NavLink>
-                    ))}
+                    {navLinks.map((link) => {
+                        // ← changed: "active" now comes from our own check
+                        const active = isLinkActive(link, location.pathname)
+                        return (
+                            <NavLink
+                                key={link.to}
+                                to={link.to}
+                                end={link.end}
+                                className={`group relative py-1 transition-colors duration-300 ${
+                                    active ? 'font-medium text-[#0F3D32]' : 'text-gray-500 hover:text-[#0F3D32]'
+                                }`}
+                            >
+                                {link.label}
+                                <span
+                                    className={`absolute -bottom-0.5 left-0 h-[2px] rounded-full bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] transition-all duration-300 ease-out ${
+                                        active ? 'w-full' : 'w-0 group-hover:w-full'
+                                    }`}
+                                />
+                            </NavLink>
+                        )
+                    })}
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -239,22 +247,24 @@ function Navbar() {
                 <div className="border-t border-[#EAF5F1] bg-white md:hidden">
                     <div className="mx-auto max-w-6xl px-6 py-4">
                         <div className="flex flex-col gap-1">
-                            {navLinks.map((link) => (
-                                <NavLink
-                                    key={link.to}
-                                    to={link.to}
-                                    end={link.end}
-                                    className={({ isActive }) =>
-                                        `rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                                            isActive
+                            {navLinks.map((link) => {
+                                // ← changed: same check as the desktop menu
+                                const active = isLinkActive(link, location.pathname)
+                                return (
+                                    <NavLink
+                                        key={link.to}
+                                        to={link.to}
+                                        end={link.end}
+                                        className={`rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                                            active
                                                 ? 'bg-[#EAF5F1] font-medium text-[#0F3D32]'
                                                 : 'text-gray-600 hover:bg-gray-50 hover:text-[#0F3D32]'
-                                        }`
-                                    }
-                                >
-                                    {link.label}
-                                </NavLink>
-                            ))}
+                                        }`}
+                                    >
+                                        {link.label}
+                                    </NavLink>
+                                )
+                            })}
                         </div>
 
                         <div className="my-4 border-t border-gray-100" />
