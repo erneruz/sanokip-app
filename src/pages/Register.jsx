@@ -2,6 +2,35 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AuthShell, {
+  AuthField,
+  AuthButton,
+  PasswordToggle,
+  IconMail,
+  IconLock,
+  IconUser,
+  IconCap,
+  IconMap,
+  IconCheck,
+} from '../components/AuthShell'
+
+// 0 to 4: how strong the password looks
+function passwordScore(password) {
+  let score = 0
+  if (password.length >= 6) score++
+  if (password.length >= 10) score++
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++
+  if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) score++
+  return score
+}
+
+const STRENGTH = [
+  { label: 'Too short', color: 'bg-gray-200', text: 'text-gray-400' },
+  { label: 'Weak', color: 'bg-red-400', text: 'text-red-500' },
+  { label: 'Fair', color: 'bg-amber-400', text: 'text-amber-600' },
+  { label: 'Good', color: 'bg-[#2F8F7A]', text: 'text-[#2F8F7A]' },
+  { label: 'Strong', color: 'bg-[#1B5E4F]', text: 'text-[#1B5E4F]' },
+]
 
 export default function Register() {
   const { signUp } = useAuth()
@@ -9,6 +38,7 @@ export default function Register() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
@@ -30,140 +60,135 @@ export default function Register() {
     setSubmitting(false)
   }
 
+  const score = password ? passwordScore(password) : 0
+  const strength = STRENGTH[score]
+
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      {/* -------------------------------------------- */}
-      {/* LEFT: FORM */}
-      {/* -------------------------------------------- */}
-      <div className="flex items-center justify-center bg-gray-50 px-6 py-12">
-        <div className="w-full max-w-sm">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z" />
-              </svg>
-            </div>
-            <span className="font-semibold text-gray-900">Sanokip</span>
+    <AuthShell
+      panelSide="left"
+      eyebrow="Join Peakstar Engineering"
+      title={
+        <>
+          Create your profile,
+          <br />
+          get started today.
+        </>
+      }
+      text="One account gives you a professional profile that shows who you are and what you know."
+      features={[
+        { icon: <IconUser />, text: 'A public profile with your photo and bio' },
+        { icon: <IconCap />, text: 'Your qualifications and certifications in one place' },
+        { icon: <IconMap />, text: 'Be found for the expertise you offer' },
+      ]}
+    >
+      {done ? (
+        <div className="text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E6F1EE] text-[#1B5E4F] ring-8 ring-[#E6F1EE]/60">
+            <IconCheck />
           </div>
-
-          {done ? (
-            <>
-              <h1 className="mt-10 text-3xl font-bold text-gray-900">Check your email</h1>
-              <p className="mt-2 text-sm text-gray-500">
-                We've sent a confirmation link to <strong>{email}</strong>. Confirm it, then sign in.
-              </p>
-              <Link
-                to="/login"
-                className="mt-8 inline-block w-full rounded-xl bg-black py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-gray-900"
-              >
-                Back to Sign In
-              </Link>
-            </>
-          ) : (
-            <>
-              <h1 className="mt-10 text-3xl font-bold text-gray-900">Create an account</h1>
-              <p className="mt-2 text-sm text-gray-500">Join Sanokip to manage your profile.</p>
-
-              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">First Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
-                  />
-                  <p className="mt-1.5 text-xs text-gray-400">At least 6 characters.</p>
-                </div>
-
-                {error && (
-                  <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full cursor-pointer rounded-xl bg-black py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {submitting ? 'Creating account…' : 'Create Account'}
-                </button>
-              </form>
-
-              <p className="mt-6 text-center text-sm text-gray-500">
-                Already have an account? <Link to="/login" className="font-medium text-gray-900 underline">Sign in</Link>
-              </p>
-            </>
-          )}
+          <h1 className="mt-6 text-3xl font-bold tracking-tight text-[#0F3D32]">Check your email</h1>
+          <p className="mt-3 text-sm leading-relaxed text-gray-500">
+            We've sent a confirmation link to <strong className="text-gray-800">{email}</strong>. Confirm it, then sign in.
+          </p>
+          <p className="mt-3 rounded-lg bg-[#F1F6F4] px-3 py-2 text-xs text-gray-500">
+            Can't see it? Look in your spam or junk folder.
+          </p>
+          <Link
+            to="/login"
+            className="mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] py-3 text-sm font-semibold text-white shadow-md shadow-[#1B5E4F]/25 transition hover:from-[#0D3A31] hover:to-[#2F8F7A]"
+          >
+            Back to Sign In
+          </Link>
         </div>
-      </div>
+      ) : (
+        <>
+          <h1 className="text-3xl font-bold tracking-tight text-[#0F3D32]">Create an account</h1>
+          <p className="mt-2 text-sm text-gray-500">Join Peakstar Engineering to manage your profile.</p>
 
-      {/* -------------------------------------------- */}
-      {/* RIGHT: ILLUSTRATION PANEL (hidden on small screens) */}
-      {/* -------------------------------------------- */}
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-black via-gray-700 to-white lg:block">
-        <div className="absolute -left-10 top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute bottom-24 right-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
+          <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <AuthField
+                id="reg-first"
+                label="First name"
+                icon={<IconUser />}
+                type="text"
+                required
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+              <AuthField
+                id="reg-last"
+                label="Last name"
+                icon={<IconUser />}
+                type="text"
+                required
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
 
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 800" preserveAspectRatio="xMidYMax slice">
-          <circle cx="300" cy="220" r="110" fill="#FFFFFF" opacity="0.12" />
-          <circle cx="300" cy="220" r="70" fill="#FFFFFF" opacity="0.25" />
+            <AuthField
+              id="reg-email"
+              label="Email"
+              icon={<IconMail />}
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
 
-          <path d="M0 480 Q150 420 300 470 T600 460 V800 H0 Z" fill="#FFFFFF" opacity="0.08" />
-          <path d="M0 560 Q180 500 340 550 T600 540 V800 H0 Z" fill="#FFFFFF" opacity="0.15" />
-          <path d="M0 640 Q200 590 350 630 T600 620 V800 H0 Z" fill="#FFFFFF" opacity="0.25" />
+            <AuthField
+              id="reg-password"
+              label="Password"
+              icon={<IconLock />}
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={6}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              right={<PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />}
+              hint={
+                <div className="mt-2">
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map((n) => (
+                      <span
+                        key={n}
+                        className={`h-1.5 flex-1 rounded-full transition-colors ${
+                          password && n <= score ? strength.color : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className={`mt-1.5 text-xs ${password ? strength.text : 'text-gray-400'}`}>
+                    {password ? strength.label : 'At least 6 characters.'}
+                  </p>
+                </div>
+              }
+            />
 
-          {[80, 150, 220, 480, 540].map((x, i) => (
-            <g key={i} transform={`translate(${x}, ${680 + (i % 2) * 20})`}>
-              <line x1="0" y1="0" x2="0" y2="70" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="3" />
-              <line x1="0" y1="10" x2="-14" y2="-6" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="2" />
-              <line x1="0" y1="20" x2="13" y2="4" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="2" />
-              <line x1="0" y1="34" x2="-12" y2="18" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="2" />
-              <line x1="0" y1="46" x2="11" y2="30" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="2" />
-            </g>
-          ))}
-        </svg>
+            {error && (
+              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+            )}
 
-        <div className="absolute inset-x-0 bottom-10 px-12 text-center">
-          <p className="text-lg font-semibold text-white drop-shadow">Join Sanokip</p>
-          <p className="mt-1 text-sm text-white/70 drop-shadow">Create your profile and get started.</p>
-        </div>
-      </div>
-    </div>
+            <AuthButton type="submit" disabled={submitting} loading={submitting} loadingText="Creating account…">
+              Create Account
+            </AuthButton>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-[#1B5E4F] hover:text-[#0F3D32] hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </>
+      )}
+    </AuthShell>
   )
 }
