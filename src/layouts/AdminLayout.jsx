@@ -4,16 +4,17 @@ import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
 import { getUnreadMessageCount, MESSAGES_CHANGED_EVENT } from '../services/contactMessagesService'
-import { getNewServiceRequestCount, SERVICE_REQUESTS_CHANGED_EVENT } from '../services/serviceRequestsService' // ← added
-import { getNewUserCount, USERS_SEEN_EVENT } from '../services/usersService' // ← added
+import { getNewServiceRequestCount, SERVICE_REQUESTS_CHANGED_EVENT } from '../services/serviceRequestsService'
+import { getNewUserCount, USERS_SEEN_EVENT } from '../services/usersService'
+import { getNewSubscriberCount, SUBSCRIBERS_CHANGED_EVENT } from '../services/subscribersService'
 import ProfileMenu from '../components/ProfileMenu'
 import logo from '../assets/images/logo.png'
 import {
-  IconGrid, IconDocument, IconUsers, IconQuote, IconMail,
-  IconBook, IconCalendar, IconWrench, IconFolder,
+  IconGrid, IconDocument, IconUsers, IconMail,
+  IconBook, IconWrench, IconFolder,
 } from '../components/icons'
 
-// ← added: speech-bubble icon for the Messages link
+// speech-bubble icon for the Messages link
 function IconChat(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -23,13 +24,24 @@ function IconChat(props) {
   )
 }
 
+// bell icon for the Subscribers link
+function IconBellNav(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </svg>
+  )
+}
+
 const MESSAGES_PATH = '/admin/messages'
 const REQUESTS_PATH = '/admin/service-requests'
 const USERS_PATH = '/admin/users'
+const SUBSCRIBERS_PATH = '/admin/subscribers'
 
+// ← changed: the "Coming soon" group (Testimonials, Events) is removed
 const navSections = [
   {
-    // ← changed: was "Overview"
     label: 'Peakstar Engineering',
     items: [
       { label: 'Dashboard', to: '/admin', end: true, icon: IconGrid },
@@ -39,20 +51,13 @@ const navSections = [
       { label: 'Services', to: '/admin/services', icon: IconWrench },
       { label: 'Service Requests', to: REQUESTS_PATH, icon: IconMail },
       { label: 'Messages', to: MESSAGES_PATH, icon: IconChat },
+      { label: 'Subscribers', to: SUBSCRIBERS_PATH, icon: IconBellNav },
       { label: 'Users', to: USERS_PATH, icon: IconUsers },
-    ],
-  },
-  {
-    label: 'Coming soon',
-    items: [
-      { label: 'Testimonials', to: '/admin/testimonials', icon: IconQuote },
-      { label: 'Events', to: '/admin/events', icon: IconCalendar },
     ],
   },
 ]
 
-// ← added: new bottom section, placeholder for now — no routes exist yet for
-// these, so nothing fake is linked; just the header, as asked
+// placeholder for now, no routes exist yet for these
 const entertainmentSection = {
   label: 'Peakstar Entertainment',
   note: 'More modules coming soon',
@@ -110,11 +115,13 @@ export default function AdminLayout() {
       .catch((err) => console.error('Failed to load profile:', err))
   }, [user?.id])
 
-  // ← added: red counts for new messages, new service requests and new registered users.
-  // They refresh when something changes, every 30 seconds, and when you come back to the tab.
+  // red counts for new messages, new service requests, new registered users and
+  // new subscribers. They refresh when something changes, every 30 seconds, and
+  // when you come back to the tab.
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [newRequests, setNewRequests] = useState(0)
   const [newUsers, setNewUsers] = useState(0)
+  const [newSubscribers, setNewSubscribers] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -123,11 +130,13 @@ export default function AdminLayout() {
         getUnreadMessageCount(),
         getNewServiceRequestCount(),
         user?.id ? getNewUserCount(user.id) : Promise.resolve(0),
-      ]).then(([m, r, u]) => {
+        getNewSubscriberCount(),
+      ]).then(([m, r, u, s]) => {
         if (cancelled) return
         if (m.status === 'fulfilled') setUnreadMessages(m.value)
         if (r.status === 'fulfilled') setNewRequests(r.value)
         if (u.status === 'fulfilled') setNewUsers(u.value)
+        if (s.status === 'fulfilled') setNewSubscribers(s.value)
       })
     }
     refresh()
@@ -135,6 +144,7 @@ export default function AdminLayout() {
     window.addEventListener(MESSAGES_CHANGED_EVENT, refresh)
     window.addEventListener(SERVICE_REQUESTS_CHANGED_EVENT, refresh)
     window.addEventListener(USERS_SEEN_EVENT, refresh)
+    window.addEventListener(SUBSCRIBERS_CHANGED_EVENT, refresh)
     window.addEventListener('focus', refresh)
     return () => {
       cancelled = true
@@ -142,13 +152,14 @@ export default function AdminLayout() {
       window.removeEventListener(MESSAGES_CHANGED_EVENT, refresh)
       window.removeEventListener(SERVICE_REQUESTS_CHANGED_EVENT, refresh)
       window.removeEventListener(USERS_SEEN_EVENT, refresh)
+      window.removeEventListener(SUBSCRIBERS_CHANGED_EVENT, refresh)
       window.removeEventListener('focus', refresh)
     }
   }, [user?.id])
 
-  const totalAlerts = unreadMessages + newRequests + newUsers
+  const totalAlerts = unreadMessages + newRequests + newUsers + newSubscribers
 
-  // ← added: desktop icon-only collapse, persisted so it stays how you left it
+  // desktop icon-only collapse, persisted so it stays how you left it
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('admin-sidebar-collapsed') === '1'
@@ -164,7 +175,7 @@ export default function AdminLayout() {
     }
   }, [collapsed])
 
-  // ← added: mobile off-canvas drawer state
+  // mobile off-canvas drawer state
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const adminDisplayName =
@@ -238,7 +249,7 @@ export default function AdminLayout() {
               </p>
               <div className="mt-2 space-y-1">
                 {section.items.map((item) => {
-                  // ← added: red count on Messages, Service Requests and Users.
+                  // red count on Messages, Service Requests, Subscribers and Users.
                   // Messages and Service Requests open straight on their "New" tab.
                   let badge = 0
                   let target = item.to
@@ -250,6 +261,8 @@ export default function AdminLayout() {
                     if (badge > 0) target = `${REQUESTS_PATH}?status=new`
                   } else if (item.to === USERS_PATH) {
                     badge = newUsers
+                  } else if (item.to === SUBSCRIBERS_PATH) {
+                    badge = newSubscribers
                   }
                   const badgeText = badge > 99 ? '99+' : String(badge)
 
@@ -303,7 +316,7 @@ export default function AdminLayout() {
             </div>
           ))}
 
-          {/* ← added: Peakstar Entertainment section */}
+          {/* Peakstar Entertainment section */}
           <div className="mb-2">
             <p className={'truncate px-3 text-xs font-semibold uppercase tracking-wider text-white/40 ' + (collapsed ? 'md:hidden' : '')}>
               {entertainmentSection.label}
@@ -316,8 +329,7 @@ export default function AdminLayout() {
 
         <div className="shrink-0 border-t border-white/10 px-3 py-3">
           {collapsed ? (
-            // ← collapsed desktop fallback: avatar + sign-out icon only (no
-            // access to ProfileMenu's internals, so this is a simple stand-in)
+            // collapsed desktop fallback: avatar + sign-out icon only
             <div className="hidden flex-col items-center gap-2 md:flex">
               <div
                 title={adminDisplayName}
@@ -345,7 +357,7 @@ export default function AdminLayout() {
       {/* PAGE CONTENT */}
       {/* -------------------------------------------- */}
       <div className="min-w-0 flex-1 overflow-x-hidden">
-        {/* ← added: mobile-only top bar with the menu button that opens the drawer */}
+        {/* mobile-only top bar with the menu button that opens the drawer */}
         <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 md:hidden">
           <button
             onClick={() => setMobileOpen(true)}

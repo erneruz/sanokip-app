@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import peakstarLogo from '../assets/images/peakstar-logo-white.png'
+import { subscribeToUpdates, unsubscribeByToken } from '../services/subscribersService'
 
 const navigate = [
   { label: 'Home', to: '/' }, // Home has its own page (it used to go to /blog)
@@ -130,17 +131,100 @@ function BackToTop() {
   )
 }
 
+// ── Card shown when someone opens the unsubscribe link from an email ───────
+function UnsubscribeNotice({ state, onClose }) {
+  if (!state) return null
+
+  const content = {
+    loading: { title: 'Please wait…', text: 'Updating your subscription.' },
+    done: {
+      title: "You've been unsubscribed",
+      text: 'You will not receive any more updates from Peak Star Engineering. You can subscribe again at any time from the footer.',
+    },
+    invalid: {
+      title: 'This link is not valid',
+      text: 'The unsubscribe link may be old or incomplete. Please use the link from your latest email.',
+    },
+  }[state]
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0A2E27]/60 p-6 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-2xl bg-white p-7 text-center shadow-2xl"
+      >
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#E6F1EE] text-[#1B5E4F]">
+          {state === 'invalid' ? <IconMail className="h-5 w-5" /> : <IconCheck className="h-5 w-5" />}
+        </div>
+        <h2 className="mt-4 text-lg font-bold text-[#0F3D32]">{content.title}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-gray-500">{content.text}</p>
+        {state !== 'loading' && (
+          <button
+            onClick={onClose}
+            className="mt-6 inline-flex h-10 cursor-pointer items-center rounded-lg bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] px-5 text-sm font-semibold text-white transition hover:from-[#0D3A31] hover:to-[#2F9678]"
+          >
+            Close
+          </button>
+        )}
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 export default function Footer() {
   const year = new Date().getFullYear()
   const [email, setEmail] = useState('')
-  const [subscribed, setSubscribed] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [subMessage, setSubMessage] = useState(null) // { type: 'ok' | 'info' | 'error', text }
+  const [unsubState, setUnsubState] = useState(null) // null | 'loading' | 'done' | 'invalid'
   const [footerRef, inView] = useInView(0.1)
 
-  function handleSubscribe(e) {
+  // Opened from the "Unsubscribe" link in an email: /?unsubscribe=<token>
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('unsubscribe')
+    if (!token) return
+
+    setUnsubState('loading')
+    unsubscribeByToken(token)
+      .then((ok) => setUnsubState(ok ? 'done' : 'invalid'))
+      .catch(() => setUnsubState('invalid'))
+
+    // remove the token from the address bar
+    const url = new URL(window.location.href)
+    url.searchParams.delete('unsubscribe')
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+  }, [])
+
+  async function handleSubscribe(e) {
     e.preventDefault()
-    if (!email.trim()) return
-    setSubscribed(true)
-    setEmail('')
+    const value = email.trim()
+    if (!value || submitting) return
+
+    setSubmitting(true)
+    setSubMessage(null)
+    try {
+      const result = await subscribeToUpdates(value)
+      if (result === 'already') {
+        setSubMessage({ type: 'info', text: "You're already subscribed. Thank you!" })
+      } else {
+        setSubMessage({ type: 'ok', text: "Thanks, you're on the list! You'll hear from us about new updates." })
+      }
+      setEmail('')
+    } catch (err) {
+      const invalid = String(err?.message ?? '').includes('invalid_email')
+      setSubMessage({
+        type: 'error',
+        text: invalid ? 'Please enter a valid email address.' : 'Something went wrong. Please try again.',
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -333,7 +417,7 @@ export default function Footer() {
           <div className="footer-reveal" style={{ '--d': '0.35s' }}>
             <FooterHeading>Subscribe</FooterHeading>
             <p className="text-sm leading-relaxed text-gray-300">
-              Occasional updates on new projects, publications, and insights | no spam.
+              Get updates on new projects, publications, services and posts | no spam.
             </p>
             <form onSubmit={handleSubscribe} className="mt-4">
               <div className="flex items-center gap-1.5 rounded-xl bg-white p-1.5 pl-3 shadow-sm ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-[#2F9678]">
@@ -344,20 +428,28 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
-                  className="w-full bg-transparent py-1.5 text-sm text-[#0F3D32] placeholder-gray-400 outline-none"
+                  disabled={submitting}
+                  className="w-full bg-transparent py-1.5 text-sm text-[#0F3D32] placeholder-gray-400 outline-none disabled:opacity-60"
                 />
                 <button
                   type="submit"
                   aria-label="Subscribe"
-                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-br from-[#1B5E4F] to-[#2F9678] text-white shadow-sm transition hover:scale-105 hover:shadow-md"
+                  disabled={submitting}
+                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-br from-[#1B5E4F] to-[#2F9678] text-white shadow-sm transition hover:scale-105 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <IconArrowRight className="h-4 w-4" />
+                  {submitting ? <IconSpinner className="h-4 w-4" /> : <IconArrowRight className="h-4 w-4" />}
                 </button>
               </div>
-              {subscribed && (
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-[#7AC9AA]">
-                  <IconCheck className="h-3.5 w-3.5 shrink-0" />
-                  Thanks — you're on the list!
+
+              {subMessage && (
+                <p
+                  className={
+                    'mt-2 flex items-start gap-1.5 text-xs ' +
+                    (subMessage.type === 'error' ? 'text-red-300' : 'text-[#7AC9AA]')
+                  }
+                >
+                  {subMessage.type !== 'error' && <IconCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
+                  <span>{subMessage.text}</span>
                 </p>
               )}
             </form>
@@ -411,6 +503,7 @@ export default function Footer() {
       </div>
 
       <BackToTop />
+      <UnsubscribeNotice state={unsubState} onClose={() => setUnsubState(null)} />
     </footer>
   )
 }
@@ -463,6 +556,14 @@ function IconCheck(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
+function IconSpinner(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" className={`animate-spin ${props.className ?? ''}`}>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+      <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   )
 }

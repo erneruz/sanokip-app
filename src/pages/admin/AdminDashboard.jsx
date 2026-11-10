@@ -8,14 +8,15 @@ import { getDashboardStats } from '../../services/dashboardService'
 import { getAllPostsForAdmin } from '../../services/postsService'
 import { getAllPublications } from '../../services/publicationsService'
 import { getContactMessageCounts } from '../../services/contactMessagesService'
-import { getNewServiceRequestCount } from '../../services/serviceRequestsService' // ← added
+import { getNewServiceRequestCount } from '../../services/serviceRequestsService'
 import { getNewUserCount } from '../../services/usersService'
+import { getNewSubscriberCount, getSubscriberCounts } from '../../services/subscribersService'
 import { getCategory } from '../../constants/publications'
 import { useAuth } from '../../context/AuthContext'
 import { getFullProfile } from '../../services/profileService'
 import {
   IconDocument, IconCheckCircle, IconEdit, IconChat, IconThumbsUp, IconThumbsDown,
-  IconUsers, IconQuote, IconMail, IconCalendar, IconWrench, IconFolder, IconBook,
+  IconUsers, IconMail, IconCalendar, IconWrench, IconFolder, IconBook,
 } from '../../components/icons'
 
 const LIGHT_GREY = '#94A3B8'
@@ -192,22 +193,29 @@ export default function AdminDashboard() {
   const [allPosts, setAllPosts] = useState([])
   const [allPublications, setAllPublications] = useState([])
   const [messageCounts, setMessageCounts] = useState(null)
-  const [unreadRequests, setUnreadRequests] = useState(0) // ← added
+  const [subscriberCounts, setSubscriberCounts] = useState(null) // ← added
+  const [unreadRequests, setUnreadRequests] = useState(0)
   const [newUsers, setNewUsers] = useState(0)
+  const [newSubscribers, setNewSubscribers] = useState(0)
   const [adminProfile, setAdminProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [statsData, posts, publications, profileData, msgCounts, unreadReqCount, newUserCount] = await Promise.all([
+        const [
+          statsData, posts, publications, profileData, msgCounts,
+          unreadReqCount, newUserCount, newSubCount, subCounts,
+        ] = await Promise.all([
           getDashboardStats(),
           getAllPostsForAdmin(),
           getAllPublications(),
           user?.id ? getFullProfile(user.id).catch(() => null) : Promise.resolve(null),
           getContactMessageCounts().catch(() => null), // a failure here never breaks the dashboard
-          getNewServiceRequestCount().catch(() => 0), // ← added: requests not opened yet
+          getNewServiceRequestCount().catch(() => 0), // requests not opened yet
           user?.id ? getNewUserCount(user.id).catch(() => 0) : Promise.resolve(0),
+          getNewSubscriberCount().catch(() => 0), // subscribers not seen yet
+          getSubscriberCounts().catch(() => null), // ← added: numbers for the pie chart
         ])
         setStats(statsData)
         setAllPosts(posts)
@@ -215,6 +223,8 @@ export default function AdminDashboard() {
         setMessageCounts(msgCounts)
         setUnreadRequests(unreadReqCount)
         setNewUsers(newUserCount)
+        setNewSubscribers(newSubCount)
+        setSubscriberCounts(subCounts)
         setAdminProfile(profileData?.profile ?? null)
       } catch (err) {
         console.error('Failed to load dashboard:', err)
@@ -364,19 +374,31 @@ export default function AdminDashboard() {
     { label: 'Archived', value: mc.archived, color: DARK_SLATE },
   ]
 
-  const otherModulesTotal = stats.totalUsers + stats.totalTestimonials + mc.total + stats.totalEvents
+  // ← added: subscribers by status. Each status link opens the Subscribers page
+  // showing only that status (?status=...).
+  const sc = subscriberCounts ?? { active: 0, unsubscribed: 0, total: 0 }
+  const subscribersItems = [
+    { label: 'Total Subscribers', value: sc.total, icon: IconBell, to: '/admin/subscribers', color: LIGHT_GREY },
+    { label: 'Active', value: sc.active, icon: IconCheckCircle, to: '/admin/subscribers?status=active', color: '#1B5E4F' },
+    { label: 'Unsubscribed', value: sc.unsubscribed, icon: IconUserOff, to: '/admin/subscribers?status=unsubscribed', color: DARK_SLATE },
+  ]
+  const subscribersSlices = [
+    { label: 'Active', value: sc.active, color: '#1B5E4F' },
+    { label: 'Unsubscribed', value: sc.unsubscribed, color: DARK_SLATE },
+  ]
+
+  // ← changed: only the modules that exist (Testimonials and Events are removed)
+  const otherModulesTotal = stats.totalUsers + mc.total + sc.total
   const otherModulesSlices = [
     { label: 'Users', value: stats.totalUsers, color: '#4F46E5' },
-    { label: 'Testimonials', value: stats.totalTestimonials, color: '#DB2777' },
     { label: 'Messages', value: mc.total, color: '#0891B2' },
-    { label: 'Events', value: stats.totalEvents, color: '#EA580C' },
+    { label: 'Subscribers', value: sc.total, color: '#2F9678' },
   ]
   const otherModuleItems = [
     { label: 'Total Modules', value: otherModulesTotal, icon: IconDashboardGrid, color: LIGHT_GREY },
     { label: 'Users', value: stats.totalUsers, icon: IconUsers, to: '/admin/users', color: '#4F46E5' },
-    { label: 'Testimonials', value: stats.totalTestimonials, icon: IconQuote, to: '/admin/testimonials', color: '#DB2777' },
     { label: 'Messages', value: mc.total, icon: IconMail, to: '/admin/messages', color: '#0891B2' },
-    { label: 'Events', value: stats.totalEvents, icon: IconCalendar, to: '/admin/events', color: '#EA580C' },
+    { label: 'Subscribers', value: sc.total, icon: IconBell, to: '/admin/subscribers', color: '#2F9678' },
   ]
 
   // red alert bars, only for things that need attention right now
@@ -390,10 +412,17 @@ export default function AdminDashboard() {
     },
     {
       key: 'requests',
-      count: unreadRequests, // ← changed: requests not opened yet
+      count: unreadRequests,
       to: '/admin/service-requests?status=new',
       text: (n) => `${n} new service ${n === 1 ? 'request' : 'requests'}`,
       action: 'Review now →',
+    },
+    {
+      key: 'subscribers',
+      count: newSubscribers,
+      to: '/admin/subscribers',
+      text: (n) => `${n} new ${n === 1 ? 'subscriber' : 'subscribers'}`,
+      action: 'View now →',
     },
     {
       key: 'users',
@@ -462,6 +491,7 @@ export default function AdminDashboard() {
           <PieBreakdownCard title="Requested Services Breakdown" total={stats.totalServiceRequests} slices={serviceRequestsData} items={serviceRequestsItems} />
           <PieBreakdownCard title="Messages Breakdown" total={mc.total} slices={messagesSlices} items={messagesItems} />
 
+          <PieBreakdownCard title="Subscribers Breakdown" total={sc.total} slices={subscribersSlices} items={subscribersItems} />
           <PieBreakdownCard title="Other Modules Breakdown" total={otherModulesTotal} slices={otherModulesSlices} items={otherModuleItems} />
         </div>
       </section>
@@ -537,6 +567,23 @@ function IconReply(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+    </svg>
+  )
+}
+function IconBell(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </svg>
+  )
+}
+function IconUserOff(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="m17 8 5 5m0-5-5 5" />
     </svg>
   )
 }
