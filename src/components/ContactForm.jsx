@@ -1,9 +1,14 @@
 // src/components/ContactForm.jsx
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { createContactMessage } from '../services/contactService'
 import { COUNTRIES, DEFAULT_COUNTRY_CODE } from '../constants/countries'
 
 const MAX_MESSAGE = 2000
+
+// ← added: the line the message starts with when someone clicks "Become a partner"
+const PARTNERSHIP_TEXT =
+  'Hello Peakstar, I would like to explore a partnership with you. '
 
 const dialOf = (c) => (String(c.dial).startsWith('+') ? String(c.dial) : `+${c.dial}`)
 
@@ -268,6 +273,54 @@ export default function ContactForm() {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [failure, setFailure] = useState('')
+  const [glow, setGlow] = useState(false) // ← added: short glow when we arrive here
+
+  // ← added: used to scroll to the form and put the cursor in the message box
+  const cardRef = useRef(null)
+  const messageRef = useRef(null)
+  const location = useLocation()
+
+  // ← added: runs when someone arrives with "#send-message" in the address
+  // (the "Become a partner" button). "location.key" changes on every click,
+  // so it also works when you are already on the Home page.
+  useEffect(() => {
+    if (location.hash !== '#send-message') return
+
+    const topic = new URLSearchParams(location.search).get('topic')
+
+    // show the empty form again if it was still saying "Message sent"
+    setSent(false)
+
+    // the partnership line is only added when the box is still empty
+    if (topic === 'partnership') {
+      setForm((f) => (f.message.trim() ? f : { ...f, message: PARTNERSHIP_TEXT }))
+    }
+
+    // a short wait, so the page has finished drawing (and any "scroll to top"
+    // on page change has finished) before we scroll
+    const scrollTimer = setTimeout(() => {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setGlow(true)
+    }, 350)
+
+    // after the scroll, put the cursor at the end of the message
+    const focusTimer = setTimeout(() => {
+      const box = messageRef.current
+      if (box) {
+        box.focus({ preventScroll: true })
+        const end = box.value.length
+        box.setSelectionRange(end, end)
+      }
+    }, 1000)
+
+    const glowTimer = setTimeout(() => setGlow(false), 2600)
+
+    return () => {
+      clearTimeout(scrollTimer)
+      clearTimeout(focusTimer)
+      clearTimeout(glowTimer)
+    }
+  }, [location.key, location.hash, location.search])
 
   const change = (key) => (value) => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -310,7 +363,13 @@ export default function ContactForm() {
   }
 
   return (
-    <div className="relative rounded-3xl bg-[#0A2E27]/55 p-6 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.7)] ring-1 ring-white/20 backdrop-blur-xl sm:p-8">
+    <div
+      id="send-message"
+      ref={cardRef}
+      className={`relative scroll-mt-28 rounded-3xl bg-[#0A2E27]/55 p-6 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-shadow duration-500 sm:p-8 ${
+        glow ? 'ring-2 ring-[#9FD8C9] shadow-[0_0_0_6px_rgba(159,216,201,0.18),0_30px_60px_-24px_rgba(0,0,0,0.7)]' : 'ring-1 ring-white/20'
+      }`}
+    >
       <style>{`
         @keyframes cf-pop { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
         @keyframes cf-ring { 0% { transform: scale(0.8); opacity: 0.6; } 100% { transform: scale(2); opacity: 0; } }
@@ -423,6 +482,7 @@ export default function ContactForm() {
                   <Icons.Chat size={17} className="mt-3.5 shrink-0 text-[#9FD8C9]" />
                   <textarea
                     id="cf-message"
+                    ref={messageRef}
                     rows={4}
                     value={form.message}
                     onChange={(e) => change('message')(e.target.value.slice(0, MAX_MESSAGE))}

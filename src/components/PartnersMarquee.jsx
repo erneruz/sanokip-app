@@ -133,9 +133,7 @@ export default function PartnersMarquee() {
         </div>
 
         {/* ---------- scrolling logos ---------- */}
-        {/* ← changed: gap between logos raised from "px-6 sm:px-7" to
-            "px-8 sm:px-9". To change it again, edit those two numbers
-            (bigger number = more space between logos). */}
+        {/* Gap between logos: "px-8 sm:px-9". Bigger number = more space. */}
         <div className="partners-viewport mt-12 overflow-hidden py-4">
           <div className="partners-track flex w-max items-center">
             {track.map((partner, i) => (
@@ -162,8 +160,11 @@ export default function PartnersMarquee() {
         {/* ---------- call to action ---------- */}
         <div className="mt-10 text-center">
           <p className="text-sm text-gray-500">Want to collaborate with Peakstar?</p>
+          {/* ← changed: goes to the HOME page, to the "Send us a message"
+              section. "topic=partnership" makes the message start with a
+              partnership line, and "#send-message" is the spot to scroll to. */}
           <Link
-            to="/about"
+            to="/?topic=partnership#send-message"
             className="group mt-3 inline-flex items-center gap-2 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition duration-200 hover:bg-[#154A3E] hover:shadow-md active:scale-95"
           >
             Become a partner
