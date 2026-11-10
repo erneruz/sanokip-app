@@ -1,10 +1,11 @@
 // src/components/Footer.jsx
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import peakstarLogo from '../assets/images/peakstar-logo-white.png'
 
 const navigate = [
-  { label: 'Home', to: '/' }, // ← changed: Home now has its own page (it used to go to /blog)
+  { label: 'Home', to: '/' }, // Home has its own page (it used to go to /blog)
   { label: 'About', to: '/about' },
   { label: 'Services', to: '/services' },
   { label: 'Projects', to: '/projects' },
@@ -12,17 +13,52 @@ const navigate = [
   { label: 'Publications', to: '/publications' },
 ]
 
+// ── true once the element has scrolled into view (and stays true) ─────────
+function useInView(threshold = 0.12) {
+  const ref = useRef(null)
+  const [inView, setInView] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (!('IntersectionObserver' in window)) {
+      setInView(true)
+      return
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.disconnect()
+        }
+      },
+      { threshold }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return [ref, inView]
+}
+
+// small column title with a green line that grows when the footer appears
+function FooterHeading({ children }) {
+  return (
+    <div className="mb-4">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-white">{children}</h3>
+      <span className="footer-title-line mt-2 block h-[3px] rounded-full bg-gradient-to-r from-[#4FB28E] to-[#9FD8C9]" />
+    </div>
+  )
+}
+
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">{title}</h3>
+      <FooterHeading>{title}</FooterHeading>
       <ul className="space-y-3">
         {links.map((item) => (
           <li key={item.label}>
-            <Link
-              to={item.to}
-              className="footer-link text-sm text-gray-300 transition-colors duration-200 hover:text-white"
-            >
+            <Link to={item.to} className="footer-link text-sm text-gray-300">
               {item.label}
             </Link>
           </li>
@@ -32,10 +68,73 @@ function FooterColumn({ title, links }) {
   )
 }
 
+// ── Fixed "back to top" button ─────────────────────────────────────────────
+// Hidden on the hero, appears right after you scroll past it. The ring around
+// it fills up as you scroll down the page.
+function BackToTop() {
+  const [visible, setVisible] = useState(false)
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    function onScroll() {
+      const y = window.scrollY
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      // 0.75 = the button shows once you are 75% of a screen below the top (past the hero)
+      setVisible(y > window.innerHeight * 0.75)
+      setProgress(max > 0 ? Math.min(1, y / max) : 0)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [])
+
+  function goTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const circumference = 2 * Math.PI * 21
+
+  return createPortal(
+    <button
+      type="button"
+      onClick={goTop}
+      aria-label="Back to top"
+      title="Back to top"
+      tabIndex={visible ? 0 : -1}
+      className={
+        'footer-top-btn group fixed bottom-5 right-5 z-50 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#0F3D32] to-[#1B5E4F] text-white shadow-xl shadow-black/30 ring-1 ring-white/20 transition-all duration-500 hover:scale-110 hover:from-[#1B5E4F] hover:to-[#2F9678] sm:bottom-7 sm:right-7 ' +
+        (visible ? 'translate-y-0 scale-100 opacity-100' : 'pointer-events-none translate-y-6 scale-75 opacity-0')
+      }
+    >
+      <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="21" stroke="white" strokeOpacity="0.15" strokeWidth="2.5" />
+        <circle
+          cx="24"
+          cy="24"
+          r="21"
+          stroke="#9FD8C9"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - progress)}
+          style={{ transition: 'stroke-dashoffset 0.15s linear' }}
+        />
+      </svg>
+      <IconArrowUp className="footer-top-arrow relative h-5 w-5" />
+    </button>,
+    document.body
+  )
+}
+
 export default function Footer() {
   const year = new Date().getFullYear()
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+  const [footerRef, inView] = useInView(0.1)
 
   function handleSubscribe(e) {
     e.preventDefault()
@@ -45,20 +144,90 @@ export default function Footer() {
   }
 
   return (
-    <footer className="relative overflow-hidden text-white">
+    <footer ref={footerRef} className={'relative overflow-hidden text-white ' + (inView ? 'footer-in' : '')}>
       <style>{`
-        @keyframes footer-shake {
-          0%, 100% { transform: translateX(0) rotate(0deg); }
-          15% { transform: translateX(-3px) rotate(-2deg); }
-          30% { transform: translateX(3px) rotate(2deg); }
-          45% { transform: translateX(-2px) rotate(-1deg); }
-          60% { transform: translateX(2px) rotate(1deg); }
-          80% { transform: translateX(-1px) rotate(0deg); }
+        /* ── hover on links: a green line slides in and pushes the text right ── */
+        .footer-link {
+          display: inline-flex;
+          align-items: center;
+          transition: color 0.2s ease, transform 0.25s ease;
         }
-        .footer-link { display: inline-block; }
-        .footer-link:hover { animation: footer-shake 0.45s ease; font-weight: 600; }
+        .footer-link::before {
+          content: '';
+          height: 2px;
+          width: 0;
+          margin-right: 0;
+          border-radius: 2px;
+          background: linear-gradient(90deg, #4FB28E, #9FD8C9);
+          transition: width 0.25s ease, margin-right 0.25s ease;
+        }
+        .footer-link:hover { color: #fff; transform: translateX(2px); }
+        .footer-link:hover::before { width: 14px; margin-right: 8px; }
 
-        /* ← added: shine sweep across the Entertainment button on hover */
+        /* bottom links: a gradient underline draws itself from the left */
+        .footer-underline { position: relative; display: inline-block; }
+        .footer-underline::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          bottom: -4px;
+          height: 2px;
+          width: 100%;
+          background: linear-gradient(90deg, #4FB28E, #9FD8C9);
+          transform: scaleX(0);
+          transform-origin: right;
+          transition: transform 0.3s ease;
+        }
+        .footer-underline:hover::after { transform: scaleX(1); transform-origin: left; }
+
+        /* ── scroll motion: blocks rise into place when the footer appears ── */
+        .footer-reveal {
+          opacity: 0;
+          transform: translate(var(--fx, 0px), var(--fy, 32px));
+          transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+          transition-delay: var(--d, 0s);
+        }
+        .footer-in .footer-reveal { opacity: 1; transform: none; }
+
+        .footer-title-line { width: 0; transition: width 0.8s ease 0.5s; }
+        .footer-in .footer-title-line { width: 28px; }
+
+        /* shimmering top bar */
+        @keyframes footer-bar-shimmer {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+        .footer-bar { background-size: 200% 100%; animation: footer-bar-shimmer 6s linear infinite; }
+
+        /* slowly drifting map lines */
+        @keyframes footer-drift {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(-26px, 10px); }
+        }
+        .footer-drift { animation: footer-drift 16s ease-in-out infinite; }
+
+        /* social icons lift and turn green */
+        .footer-social { transition: transform 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease; }
+        .footer-social:hover {
+          transform: translateY(-4px);
+          background-color: #2F9678;
+          box-shadow: 0 8px 18px -6px rgba(0, 0, 0, 0.45);
+        }
+
+        /* back-to-top arrow bounces on hover */
+        @keyframes footer-top-bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        .footer-top-btn:hover .footer-top-arrow { animation: footer-top-bounce 0.7s ease infinite; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .footer-reveal { opacity: 1; transform: none; transition: none; }
+          .footer-title-line { width: 28px; transition: none; }
+          .footer-bar, .footer-drift { animation: none; }
+        }
+
+        /* shine sweep across the Entertainment button on hover */
         @keyframes footer-cta-shine {
           0% { transform: translateX(-120%) skewX(-20deg); opacity: 0; }
           15% { opacity: 1; }
@@ -67,8 +236,7 @@ export default function Footer() {
         .footer-cta-shine { transform: translateX(-120%) skewX(-20deg); }
         .footer-cta:hover .footer-cta-shine { animation: footer-cta-shine 0.85s ease; }
 
-        /* ← added: stars + balloons that blow outward from the Entertainment
-           button on hover */
+        /* stars + balloons that blow outward from the Entertainment button on hover */
         .footer-cta-particle {
           position: absolute;
           opacity: 0;
@@ -107,7 +275,7 @@ export default function Footer() {
         }
       `}</style>
 
-      <div className="h-1 bg-gradient-to-r from-[#0F3D32] via-[#1B5E4F] to-[#2F9678]" />
+      <div className="footer-bar h-1 bg-gradient-to-r from-[#0F3D32] via-[#2F9678] to-[#0F3D32]" />
 
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -118,9 +286,25 @@ export default function Footer() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0F3D32]/93 via-[#1B5E4F]/85 to-[#0F3D32]/95" />
 
+      {/* soft lights and survey-map lines behind the content */}
+      <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 animate-pulse rounded-full bg-[#2F9678]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 bottom-10 h-80 w-80 animate-pulse rounded-full bg-[#9FD8C9]/10 blur-3xl" />
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        viewBox="0 0 1200 600"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <g className="footer-drift" fill="none" stroke="#9FD8C9" strokeWidth="1.2">
+          <path strokeOpacity="0.12" d="M -60 120 C 200 40, 420 200, 640 110 S 1040 60, 1260 150" />
+          <path strokeOpacity="0.09" d="M -60 175 C 190 100, 410 250, 630 165 S 1030 115, 1260 205" />
+          <path strokeOpacity="0.07" d="M -60 230 C 180 160, 400 300, 620 220 S 1020 170, 1260 260" />
+        </g>
+      </svg>
+
       <div className="relative mx-auto max-w-6xl px-6 py-16">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-          <div>
+          <div className="footer-reveal" style={{ '--fx': '-28px', '--fy': '0px', '--d': '0.05s' }}>
             <div className="mb-5">
               <img src={peakstarLogo} alt="Peakstar" className="h-14 w-auto" />
             </div>
@@ -142,10 +326,12 @@ export default function Footer() {
             </p>
           </div>
 
-          <FooterColumn title="Navigate" links={navigate} />
+          <div className="footer-reveal" style={{ '--d': '0.2s' }}>
+            <FooterColumn title="Navigate" links={navigate} />
+          </div>
 
-          <div>
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">Subscribe</h3>
+          <div className="footer-reveal" style={{ '--d': '0.35s' }}>
+            <FooterHeading>Subscribe</FooterHeading>
             <p className="text-sm leading-relaxed text-gray-300">
               Occasional updates on new projects, publications, and insights | no spam.
             </p>
@@ -177,8 +363,8 @@ export default function Footer() {
             </form>
           </div>
 
-          <div>
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">Beyond Engineering</h3>
+          <div className="footer-reveal" style={{ '--fx': '28px', '--fy': '0px', '--d': '0.5s' }}>
+            <FooterHeading>Beyond Engineering</FooterHeading>
             <p className="text-sm leading-relaxed text-gray-300">
               Peakstar Engineering is only one side of who we are. Curious what
               else we're building? Explore Peakstar Entertainment.
@@ -208,18 +394,23 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="relative border-t border-white/10 bg-[#0C3229]/70 backdrop-blur-sm">
+      <div
+        className="footer-reveal relative border-t border-white/10 bg-[#0C3229]/70 backdrop-blur-sm"
+        style={{ '--fy': '16px', '--d': '0.65s' }}
+      >
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-gray-300 md:flex-row">
           <p>© {year} Peakstar Ltd· A Registered Private Company in Rwanda</p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            <Link to="/privacy" className="footer-link transition-colors hover:text-white">Privacy Policy</Link>
-            <Link to="/terms" className="footer-link transition-colors hover:text-white">Terms & Conditions</Link>
-            <Link to="/faqs" className="footer-link transition-colors hover:text-white">FAQs</Link>
-            <Link to="/sitemap" className="footer-link transition-colors hover:text-white">Sitemap</Link>
-            <Link to="/accessibility" className="footer-link transition-colors hover:text-white">Accessibility Statement</Link>
+            <Link to="/privacy" className="footer-underline transition-colors hover:text-white">Privacy Policy</Link>
+            <Link to="/terms" className="footer-underline transition-colors hover:text-white">Terms & Conditions</Link>
+            <Link to="/faqs" className="footer-underline transition-colors hover:text-white">FAQs</Link>
+            <Link to="/sitemap" className="footer-underline transition-colors hover:text-white">Sitemap</Link>
+            <Link to="/accessibility" className="footer-underline transition-colors hover:text-white">Accessibility Statement</Link>
           </div>
         </div>
       </div>
+
+      <BackToTop />
     </footer>
   )
 }
@@ -231,7 +422,7 @@ function SocialIcon({ href, label, children }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-gray-200 ring-1 ring-white/20 backdrop-blur-sm transition duration-200 hover:bg-white/20 hover:text-white hover:ring-white/40"
+      className="footer-social flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-gray-200 ring-1 ring-white/20 backdrop-blur-sm hover:text-white hover:ring-white/40"
     >
       {children}
     </a>
@@ -258,6 +449,13 @@ function IconArrowRight(props) {
   return (
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+    </svg>
+  )
+}
+function IconArrowUp(props) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
     </svg>
   )
 }
