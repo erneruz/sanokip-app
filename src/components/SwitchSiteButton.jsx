@@ -3,9 +3,6 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import logo from '../assets/images/logo.png'
 
-// pages where the button must NOT show
-const HIDDEN_ON = ['/entertainment', '/admin', '/login', '/register']
-
 function ArrowLeftIcon() {
   return (
     <svg
@@ -29,12 +26,12 @@ export default function SwitchSiteButton() {
   const [ready, setReady] = useState(false) // slid in
   const [open, setOpen] = useState(false) // label showing
 
-  const hidden =
-    pathname === '/' || HIDDEN_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  // ← changed: shows only on the Engineering site (/engineering and everything under it)
+  const visible = pathname === '/engineering' || pathname.startsWith('/engineering/')
 
   // slide in after a moment, show the label for a few seconds, then fold into a round button
   useEffect(() => {
-    if (hidden) {
+    if (!visible) {
       setReady(false)
       setOpen(false)
       return
@@ -48,9 +45,9 @@ export default function SwitchSiteButton() {
       clearTimeout(showTimer)
       clearTimeout(foldTimer)
     }
-  }, [hidden])
+  }, [visible])
 
-  if (hidden) return null
+  if (!visible) return null
 
   return (
     <>
