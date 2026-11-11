@@ -1,6 +1,6 @@
 // src/App.jsx
 import {
-  BrowserRouter, Routes, Route, Navigate, Link, useLocation, useParams,
+  BrowserRouter, Routes, Route, Navigate, useLocation, useParams,
 } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
@@ -39,6 +39,7 @@ import Register from './pages/Register'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminUserProfile from './pages/admin/AdminUserProfile'
 import UserProfile from './pages/UserProfile'
+import { entertainmentRoutes } from './routes/entertainmentRoutes' // ← all Entertainment pages live there
 
 // The page at "/".
 // Normal visitors see the Gateway. But links that were made for the Engineering
@@ -55,41 +56,18 @@ function RootRoute() {
   return <Gateway />
 }
 
-// ← added: sends an OLD address to its NEW address under /engineering.
+// Sends an OLD address to its NEW address under /engineering.
 // Example: /posts/my-post  ->  /engineering/posts/my-post
 // It keeps the ?query and the #section, so nothing is lost.
 function LegacyRedirect({ to }) {
   const params = useParams()
   const { search, hash } = useLocation()
 
-  // fills in :slug, :authorId ... with the real values
   const target = Object.entries(params).reduce(
     (path, [key, value]) => path.replace(`:${key}`, encodeURIComponent(value)),
     to
   )
   return <Navigate to={`${target}${search}${hash}`} replace />
-}
-
-// TEMPORARY page for /entertainment (and anything under it) until the real
-// Entertainment site is built.
-function EntertainmentSoon() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#F1F6F4] px-6 text-center">
-      <span className="rounded-full bg-[#E6F1EE] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#1B5E4F] ring-1 ring-[#1B5E4F]/15">
-        Peakstar Entertainment
-      </span>
-      <h1 className="mt-5 text-3xl font-bold text-[#0D3A31]">Coming very soon</h1>
-      <p className="mt-3 max-w-md text-sm text-gray-600">
-        We are building a home for talents in music, football, basketball, volleyball and more.
-      </p>
-      <Link
-        to="/"
-        className="mt-6 rounded-lg bg-[#1B5E4F] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#154A3E]"
-      >
-        Back to the choice page
-      </Link>
-    </main>
-  )
 }
 
 function App() {
@@ -103,11 +81,10 @@ function App() {
           <Route path="/" element={<RootRoute />} />
 
           {/* ── Peak Star Entertainment: everything starts with /entertainment ── */}
-          {/* (temporary page for now: /entertainment, /entertainment/about, ...) */}
-          <Route path="/entertainment/*" element={<EntertainmentSoon />} />
+          {/* the pages are listed in src/routes/entertainmentRoutes.jsx */}
+          {entertainmentRoutes}
 
           {/* ── Peak Star Engineering: everything starts with /engineering ── */}
-          {/* ← changed: all the public pages now live under /engineering */}
           <Route path="/engineering" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="blog" element={<Blog />} />
@@ -127,7 +104,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/profile" element={<RequireAuth><UserProfile /></RequireAuth>} />
 
-            {/* ← added: OLD Engineering addresses are sent to the new ones */}
+            {/* OLD Engineering addresses are sent to the new ones */}
             <Route path="/blog" element={<LegacyRedirect to="/engineering/blog" />} />
             <Route path="/posts/:slug" element={<LegacyRedirect to="/engineering/posts/:slug" />} />
             <Route path="/publications" element={<LegacyRedirect to="/engineering/publications" />} />
