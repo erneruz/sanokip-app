@@ -4,7 +4,6 @@ import {
 } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
-import SwitchSiteButton from './components/SwitchSiteButton'
 import RequireAdmin from './components/RequireAdmin'
 import RequireAuth from './components/RequireAuth'
 import MainLayout from './layouts/MainLayout'
@@ -75,7 +74,6 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <SwitchSiteButton />
         <Routes>
           {/* "/" is the Gateway, with no navbar or footer around it */}
           <Route path="/" element={<RootRoute />} />

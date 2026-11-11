@@ -709,19 +709,29 @@ export default function EntertainmentNavbar() {
           )}
         </div>
 
-        {/* ── menu button (phone, tablet and small laptops) ── */}
-        <button
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Toggle menu"
-          aria-expanded={mobileOpen}
-          className="relative grid size-11 cursor-pointer place-items-center rounded-full bg-white/[0.08] ring-1 ring-white/15 transition hover:bg-white/15 lg:hidden"
-        >
-          <span className="relative block h-3.5 w-5">
-            <span className={`absolute left-0 h-0.5 w-full rounded-full bg-white transition-all duration-300 ${mobileOpen ? 'top-1.5 rotate-45 bg-[#9FD8C9]' : 'top-0'}`} />
-            <span className={`absolute left-0 top-1.5 h-0.5 w-full rounded-full bg-white transition-all duration-300 ${mobileOpen ? 'opacity-0' : 'opacity-100'}`} />
-            <span className={`absolute left-0 h-0.5 w-full rounded-full bg-white transition-all duration-300 ${mobileOpen ? 'top-1.5 -rotate-45 bg-[#9FD8C9]' : 'top-3'}`} />
-          </span>
-        </button>
+        {/* ── phone, tablet and small laptops: switch-site button + menu button ── */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link
+            to="/"
+            title="Back to Peak Star Group"
+            aria-label="Switch site: Back to Peak Star Group"
+            className="grid size-11 place-items-center rounded-full bg-white/[0.08] text-[#9FD8C9] ring-1 ring-white/15 transition hover:bg-white/15 hover:text-white active:scale-95"
+          >
+            <GridIcon size={18} />
+          </Link>
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+            className="relative grid size-11 cursor-pointer place-items-center rounded-full bg-white/[0.08] ring-1 ring-white/15 transition hover:bg-white/15"
+          >
+            <span className="relative block h-3.5 w-5">
+              <span className={`absolute left-0 h-0.5 w-full rounded-full bg-white transition-all duration-300 ${mobileOpen ? 'top-1.5 rotate-45 bg-[#9FD8C9]' : 'top-0'}`} />
+              <span className={`absolute left-0 top-1.5 h-0.5 w-full rounded-full bg-white transition-all duration-300 ${mobileOpen ? 'opacity-0' : 'opacity-100'}`} />
+              <span className={`absolute left-0 h-0.5 w-full rounded-full bg-white transition-all duration-300 ${mobileOpen ? 'top-1.5 -rotate-45 bg-[#9FD8C9]' : 'top-3'}`} />
+            </span>
+          </button>
+        </div>
       </nav>
 
       {/* ── mobile menu ── */}
@@ -814,10 +824,11 @@ export default function EntertainmentNavbar() {
 
             <Link
               to="/"
-              className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-white/60 transition hover:text-white"
+              className="mt-4 flex items-center justify-center gap-2.5 rounded-full px-5 py-3 text-sm font-semibold text-[#CDEBE2] ring-1 ring-white/20 transition hover:bg-white/10 hover:text-white active:scale-[0.98]"
             >
-              <ArrowLeftIcon size={14} />
-              Back to Peak Star Group
+              <GridIcon size={16} />
+              Switch site: Peak Star Group
+              <ArrowLeftIcon size={14} className="rotate-180" />
             </Link>
           </div>
         </div>
