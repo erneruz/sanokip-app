@@ -316,7 +316,13 @@ function LoginButton({ full = false, onClick }) {
 
 /* ---------- the navbar ---------- */
 export default function EntertainmentNavbar() {
-  const { user, signOut, entProfile, can } = useAuth()
+  const { user: authUser, signOut, entProfile, can, loading } = useAuth()
+
+  // Only people who belong to Peak Star Entertainment show as "signed in" here:
+  // an Entertainment member, or an Entertainment staff member / Super Admin.
+  // Someone logged in only to Peak Star Engineering, or nobody, sees Sign in / Join.
+  const isEntPerson = !!authUser && (!!entProfile || can.entertainmentUsers || can.entertainmentContent)
+  const user = isEntPerson ? authUser : null
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -342,13 +348,14 @@ export default function EntertainmentNavbar() {
     setPanel(null)
   }
 
-  // where the admin link goes: Engineering admins and the Super Admin open the Admin Portal,
-  // Entertainment staff open the Entertainment admin
-  const adminLink = can.engineering
-    ? '/admin'
-    : can.entertainmentUsers || can.entertainmentContent
+  // where the admin link goes: Entertainment staff and the Super Admin open the
+  // Entertainment admin; Engineering-only admins open the Engineering admin
+  const adminLink =
+    can.entertainmentUsers || can.entertainmentContent
       ? '/admin/entertainment'
-      : null
+      : can.engineering
+        ? '/admin'
+        : null
 
   // the bar becomes more solid once you scroll, and the line follows your scroll
   useEffect(() => {
@@ -643,7 +650,9 @@ export default function EntertainmentNavbar() {
             Submit a talent
           </Link>
 
-          {user ? (
+          {loading ? (
+            <div aria-hidden="true" className="h-11 w-11" />
+          ) : user ? (
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
@@ -787,7 +796,9 @@ export default function EntertainmentNavbar() {
             </Link>
 
             <div className="mt-3">
-              {user ? (
+              {loading ? (
+                <div aria-hidden="true" className="h-11" />
+              ) : user ? (
                 <div className="rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10">
                   <div className="flex items-center gap-3 px-1 pb-2">
                     {avatar('size-10')}

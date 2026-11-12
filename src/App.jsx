@@ -1,6 +1,6 @@
 // src/App.jsx
 import {
-  BrowserRouter, Routes, Route, Navigate, useLocation, useParams,
+  BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useParams,
 } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
@@ -39,6 +39,7 @@ import AdminUsers from './pages/admin/AdminUsers'
 import AdminUserProfile from './pages/admin/AdminUserProfile'
 import UserProfile from './pages/UserProfile'
 import { entertainmentRoutes } from './routes/entertainmentRoutes' // ← all Entertainment pages live there
+import { entertainmentAdminRoutes } from './routes/entertainmentAdminRoutes' // ← Entertainment admin pages live there
 
 // The page at "/".
 // Normal visitors see the Gateway. But links that were made for the Engineering
@@ -67,6 +68,16 @@ function LegacyRedirect({ to }) {
     to
   )
   return <Navigate to={`${target}${search}${hash}`} replace />
+}
+
+// Wraps the Peak Star Engineering admin pages: only Engineering admins and the
+// Super Admin get in. Entertainment staff are sent to their own admin area.
+function EngineeringOnly() {
+  return (
+    <RequireAdmin access="engineering">
+      <Outlet />
+    </RequireAdmin>
+  )
 }
 
 function App() {
@@ -116,28 +127,36 @@ function App() {
 
           <Route path="/admin/login" element={<Login />} />
 
-          <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-            <Route index element={<AdminDashboard />} />
+          {/* the admin area is shared: each person only gets what they control */}
+          <Route path="/admin" element={<RequireAdmin access="any"><AdminLayout /></RequireAdmin>}>
+            {/* your own admin profile: every staff member */}
             <Route path="adminprofile" element={<AdminProfile />} />
-            <Route path="posts" element={<AdminPosts />} />
-            <Route path="posts/new" element={<PostEditor />} />
-            <Route path="posts/:id/edit" element={<PostEditor />} />
-            <Route path="publications" element={<AdminPublications />} />
-            <Route path="publications/new" element={<PublicationEditor />} />
-            <Route path="publications/:id/edit" element={<PublicationEditor />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
-            <Route path="events" element={<ComingSoon title="Events" />} />
-            <Route path="services" element={<AdminServices />} />
-            <Route path="service-requests" element={<AdminServiceRequests />} />
-            <Route path="messages" element={<AdminMessages />} />
-            <Route path="subscribers" element={<AdminSubscribers />} />
-            <Route path="projects" element={<AdminProjects />} />
-            <Route path="projects/new" element={<ProjectEditor />} />
-            <Route path="projects/:id/edit" element={<ProjectEditor />} />
 
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="users/:userId" element={<AdminUserProfile />} />
+            {/* ── Peak Star Engineering admin ── */}
+            <Route element={<EngineeringOnly />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="posts" element={<AdminPosts />} />
+              <Route path="posts/new" element={<PostEditor />} />
+              <Route path="posts/:id/edit" element={<PostEditor />} />
+              <Route path="publications" element={<AdminPublications />} />
+              <Route path="publications/new" element={<PublicationEditor />} />
+              <Route path="publications/:id/edit" element={<PublicationEditor />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="users/:userId" element={<AdminUserProfile />} />
+              <Route path="testimonials" element={<ComingSoon title="Testimonials" />} />
+              <Route path="events" element={<ComingSoon title="Events" />} />
+              <Route path="services" element={<AdminServices />} />
+              <Route path="service-requests" element={<AdminServiceRequests />} />
+              <Route path="messages" element={<AdminMessages />} />
+              <Route path="subscribers" element={<AdminSubscribers />} />
+              <Route path="projects" element={<AdminProjects />} />
+              <Route path="projects/new" element={<ProjectEditor />} />
+              <Route path="projects/:id/edit" element={<ProjectEditor />} />
+            </Route>
+
+            {/* ── Peak Star Entertainment admin and Staff & roles ── */}
+            {/* the pages are listed in src/routes/entertainmentAdminRoutes.jsx */}
+            {entertainmentAdminRoutes}
           </Route>
         </Routes>
       </BrowserRouter>

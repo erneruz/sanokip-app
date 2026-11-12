@@ -1,12 +1,25 @@
 // src/layouts/AdminLayout.jsx
+// The admin area for the whole platform. What you see in the menu depends on
+// what you are allowed to control:
+//   Peakstar Engineering   -> Engineering admins and the Super Admin
+//   Peakstar Entertainment -> Entertainment staff and the Super Admin
+//   Platform               -> the Super Admin only
 import { useState, useEffect } from 'react'
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
 import { getUnreadMessageCount, MESSAGES_CHANGED_EVENT } from '../services/contactMessagesService'
 import { getNewServiceRequestCount, SERVICE_REQUESTS_CHANGED_EVENT } from '../services/serviceRequestsService'
 import { getNewUserCount, USERS_SEEN_EVENT } from '../services/usersService'
 import { getNewSubscriberCount, SUBSCRIBERS_CHANGED_EVENT } from '../services/subscribersService'
+import { getPendingEntCount, ENT_USERS_CHANGED_EVENT, entRoleLabel } from '../services/entertainmentUsersService'
+import {
+  ENT_ADMIN,
+  ENT_CONTENT_KINDS,
+  ENT_ROLE_PLURAL,
+  manageableEntRoles,
+} from '../constants/entertainmentAdmin'
+import { KIND_ICONS, IconShield } from '../components/admin/EntAdminIcons'
 import ProfileMenu from '../components/ProfileMenu'
 import logo from '../assets/images/logo.png'
 import {
@@ -38,29 +51,70 @@ const MESSAGES_PATH = '/admin/messages'
 const REQUESTS_PATH = '/admin/service-requests'
 const USERS_PATH = '/admin/users'
 const SUBSCRIBERS_PATH = '/admin/subscribers'
+const MEMBERS_PATH = `${ENT_ADMIN}/members`
+const STAFF_PATH = '/admin/staff'
 
-// ← changed: the "Coming soon" group (Testimonials, Events) is removed
-const navSections = [
-  {
-    label: 'Peakstar Engineering',
-    items: [
-      { label: 'Dashboard', to: '/admin', end: true, icon: IconGrid },
-      { label: 'Posts', to: '/admin/posts', icon: IconDocument },
-      { label: 'Publications', to: '/admin/publications', icon: IconBook },
-      { label: 'Projects', to: '/admin/projects', icon: IconFolder },
-      { label: 'Services', to: '/admin/services', icon: IconWrench },
-      { label: 'Service Requests', to: REQUESTS_PATH, icon: IconMail },
-      { label: 'Messages', to: MESSAGES_PATH, icon: IconChat },
-      { label: 'Subscribers', to: SUBSCRIBERS_PATH, icon: IconBellNav },
-      { label: 'Users', to: USERS_PATH, icon: IconUsers },
-    ],
-  },
-]
+// the menu, built from what this person may control
+function buildSections(can, staffRoles) {
+  const sections = []
 
-// placeholder for now, no routes exist yet for these
-const entertainmentSection = {
-  label: 'Peakstar Entertainment',
-  note: 'More modules coming soon',
+  if (can.engineering) {
+    sections.push({
+      label: 'Peakstar Engineering',
+      items: [
+        { label: 'Dashboard', to: '/admin', end: true, icon: IconGrid },
+        { label: 'Posts', to: '/admin/posts', icon: IconDocument },
+        { label: 'Publications', to: '/admin/publications', icon: IconBook },
+        { label: 'Projects', to: '/admin/projects', icon: IconFolder },
+        { label: 'Services', to: '/admin/services', icon: IconWrench },
+        { label: 'Service Requests', to: REQUESTS_PATH, icon: IconMail },
+        { label: 'Messages', to: MESSAGES_PATH, icon: IconChat },
+        { label: 'Subscribers', to: SUBSCRIBERS_PATH, icon: IconBellNav },
+        { label: 'Users', to: USERS_PATH, icon: IconUsers },
+      ],
+    })
+  }
+
+  if (can.entertainmentUsers || can.entertainmentContent) {
+    const items = [{ label: 'Dashboard', to: ENT_ADMIN, end: true, icon: IconGrid }]
+    if (can.entertainmentUsers) {
+      items.push({
+        label: 'Members',
+        to: MEMBERS_PATH,
+        icon: IconUsers,
+        // one link per kind of member, only the ones this person may manage
+        children: [
+          { label: 'All members', to: MEMBERS_PATH, role: null },
+          ...manageableEntRoles(staffRoles).map((r) => ({
+            label: ENT_ROLE_PLURAL[r] ?? entRoleLabel(r),
+            to: `${MEMBERS_PATH}?role=${r}`,
+            role: r,
+          })),
+        ],
+      })
+    }
+    sections.push({ label: 'Peakstar Entertainment', items })
+  }
+
+  if (can.entertainmentContent) {
+    sections.push({
+      label: 'Entertainment content',
+      items: ENT_CONTENT_KINDS.map((k) => ({
+        label: k.label,
+        to: `${ENT_ADMIN}/${k.path}`,
+        icon: KIND_ICONS[k.kind],
+      })),
+    })
+  }
+
+  if (can.staff) {
+    sections.push({
+      label: 'Platform',
+      items: [{ label: 'Staff & roles', to: STAFF_PATH, icon: IconShield }],
+    })
+  }
+
+  return sections
 }
 
 function IconMenu(props) {
@@ -105,7 +159,8 @@ function IconLogOut(props) {
 }
 
 export default function AdminLayout() {
-  const { signOut, user } = useAuth()
+  const { signOut, user, can, staffRoles } = useAuth()
+  const { pathname, search } = useLocation()
 
   const [profile, setProfile] = useState(null)
   useEffect(() => {
@@ -115,28 +170,33 @@ export default function AdminLayout() {
       .catch((err) => console.error('Failed to load profile:', err))
   }, [user?.id])
 
-  // red counts for new messages, new service requests, new registered users and
-  // new subscribers. They refresh when something changes, every 30 seconds, and
-  // when you come back to the tab.
+  // red counts. They refresh when something changes, every 30 seconds, and when
+  // you come back to the tab. Each count is only loaded for the people who may see it.
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [newRequests, setNewRequests] = useState(0)
   const [newUsers, setNewUsers] = useState(0)
   const [newSubscribers, setNewSubscribers] = useState(0)
+  const [pendingMembers, setPendingMembers] = useState(0)
+
+  const canEngineering = can.engineering
+  const canMembers = can.entertainmentUsers
 
   useEffect(() => {
     let cancelled = false
     const refresh = () => {
       Promise.allSettled([
-        getUnreadMessageCount(),
-        getNewServiceRequestCount(),
-        user?.id ? getNewUserCount(user.id) : Promise.resolve(0),
-        getNewSubscriberCount(),
-      ]).then(([m, r, u, s]) => {
+        canEngineering ? getUnreadMessageCount() : Promise.resolve(0),
+        canEngineering ? getNewServiceRequestCount() : Promise.resolve(0),
+        canEngineering && user?.id ? getNewUserCount(user.id) : Promise.resolve(0),
+        canEngineering ? getNewSubscriberCount() : Promise.resolve(0),
+        canMembers ? getPendingEntCount() : Promise.resolve(0),
+      ]).then(([m, r, u, s, p]) => {
         if (cancelled) return
         if (m.status === 'fulfilled') setUnreadMessages(m.value)
         if (r.status === 'fulfilled') setNewRequests(r.value)
         if (u.status === 'fulfilled') setNewUsers(u.value)
         if (s.status === 'fulfilled') setNewSubscribers(s.value)
+        if (p.status === 'fulfilled') setPendingMembers(p.value)
       })
     }
     refresh()
@@ -145,6 +205,7 @@ export default function AdminLayout() {
     window.addEventListener(SERVICE_REQUESTS_CHANGED_EVENT, refresh)
     window.addEventListener(USERS_SEEN_EVENT, refresh)
     window.addEventListener(SUBSCRIBERS_CHANGED_EVENT, refresh)
+    window.addEventListener(ENT_USERS_CHANGED_EVENT, refresh)
     window.addEventListener('focus', refresh)
     return () => {
       cancelled = true
@@ -153,11 +214,14 @@ export default function AdminLayout() {
       window.removeEventListener(SERVICE_REQUESTS_CHANGED_EVENT, refresh)
       window.removeEventListener(USERS_SEEN_EVENT, refresh)
       window.removeEventListener(SUBSCRIBERS_CHANGED_EVENT, refresh)
+      window.removeEventListener(ENT_USERS_CHANGED_EVENT, refresh)
       window.removeEventListener('focus', refresh)
     }
-  }, [user?.id])
+  }, [user?.id, canEngineering, canMembers])
 
-  const totalAlerts = unreadMessages + newRequests + newUsers + newSubscribers
+  const totalAlerts = unreadMessages + newRequests + newUsers + newSubscribers + pendingMembers
+
+  const navSections = buildSections(can, staffRoles)
 
   // desktop icon-only collapse, persisted so it stays how you left it
   const [collapsed, setCollapsed] = useState(() => {
@@ -186,6 +250,65 @@ export default function AdminLayout() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('') || 'A'
+
+  // the red count that belongs to a menu link, and where the link opens
+  function badgeFor(item) {
+    let badge = 0
+    let target = item.to
+    if (item.to === MESSAGES_PATH) {
+      badge = unreadMessages
+      if (badge > 0) target = `${MESSAGES_PATH}?status=new`
+    } else if (item.to === REQUESTS_PATH) {
+      badge = newRequests
+      if (badge > 0) target = `${REQUESTS_PATH}?status=new`
+    } else if (item.to === USERS_PATH) {
+      badge = newUsers
+    } else if (item.to === SUBSCRIBERS_PATH) {
+      badge = newSubscribers
+    } else if (item.to === MEMBERS_PATH) {
+      badge = pendingMembers
+      if (badge > 0) target = `${MEMBERS_PATH}?status=pending`
+    }
+    return { badge, target }
+  }
+
+  // which "Members" sub-link is open now
+  const onMembers = pathname === MEMBERS_PATH
+  const currentRole = new URLSearchParams(search).get('role')
+
+  const linkClass = (isActive) =>
+    'relative ' +
+    (isActive
+      ? 'flex items-center gap-3 rounded-lg bg-white/15 px-3 py-2 text-sm font-medium text-white '
+      : 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white ') +
+    (collapsed ? 'md:justify-center' : '')
+
+  function renderBadge(badge) {
+    const badgeText = badge > 99 ? '99+' : String(badge)
+    return (
+      <>
+        {badge > 0 && (
+          <span
+            aria-label={`${badge} new`}
+            className={
+              'ml-auto inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white shadow ' +
+              (collapsed ? 'md:hidden' : '')
+            }
+          >
+            {badgeText}
+          </span>
+        )}
+        {badge > 0 && collapsed && (
+          <span
+            aria-hidden="true"
+            className="absolute right-1 top-0.5 hidden h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow md:flex"
+          >
+            {badgeText}
+          </span>
+        )}
+      </>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -249,82 +372,57 @@ export default function AdminLayout() {
               </p>
               <div className="mt-2 space-y-1">
                 {section.items.map((item) => {
-                  // red count on Messages, Service Requests, Subscribers and Users.
-                  // Messages and Service Requests open straight on their "New" tab.
-                  let badge = 0
-                  let target = item.to
-                  if (item.to === MESSAGES_PATH) {
-                    badge = unreadMessages
-                    if (badge > 0) target = `${MESSAGES_PATH}?status=new`
-                  } else if (item.to === REQUESTS_PATH) {
-                    badge = newRequests
-                    if (badge > 0) target = `${REQUESTS_PATH}?status=new`
-                  } else if (item.to === USERS_PATH) {
-                    badge = newUsers
-                  } else if (item.to === SUBSCRIBERS_PATH) {
-                    badge = newSubscribers
-                  }
-                  const badgeText = badge > 99 ? '99+' : String(badge)
+                  const { badge, target } = badgeFor(item)
 
                   return (
-                    <NavLink
-                      key={item.to}
-                      to={target}
-                      end={item.end}
-                      onClick={() => setMobileOpen(false)}
-                      title={
-                        badge > 0
-                          ? `${item.label}: ${badge} new`
-                          : collapsed
-                            ? item.label
-                            : undefined
-                      }
-                      className={({ isActive }) =>
-                        'relative ' +
-                        (isActive
-                          ? 'flex items-center gap-3 rounded-lg bg-white/15 px-3 py-2 text-sm font-medium text-white '
-                          : 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white ') +
-                        (collapsed ? 'md:justify-center' : '')
-                      }
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className={collapsed ? 'md:hidden' : ''}>{item.label}</span>
+                    <div key={item.to}>
+                      <NavLink
+                        to={target}
+                        end={item.end || !!item.children}
+                        onClick={() => setMobileOpen(false)}
+                        title={
+                          badge > 0
+                            ? `${item.label}: ${badge} new`
+                            : collapsed
+                              ? item.label
+                              : undefined
+                        }
+                        className={({ isActive }) => linkClass(isActive)}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className={collapsed ? 'md:hidden' : ''}>{item.label}</span>
+                        {renderBadge(badge)}
+                      </NavLink>
 
-                      {badge > 0 && (
-                        <span
-                          aria-label={`${badge} new`}
-                          className={
-                            'ml-auto inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white shadow ' +
-                            (collapsed ? 'md:hidden' : '')
-                          }
-                        >
-                          {badgeText}
-                        </span>
+                      {/* the kinds of members, listed under "Members" */}
+                      {item.children && (
+                        <div className={'mt-1 space-y-0.5 border-l border-white/10 pl-3 ml-5 ' + (collapsed ? 'md:hidden' : '')}>
+                          {item.children.map((child) => {
+                            const active = onMembers && (child.role ?? null) === (currentRole ?? null)
+                            return (
+                              <Link
+                                key={child.to}
+                                to={child.to}
+                                onClick={() => setMobileOpen(false)}
+                                className={
+                                  'block truncate rounded-md px-2.5 py-1.5 text-xs font-medium transition ' +
+                                  (active
+                                    ? 'bg-white/10 text-white'
+                                    : 'text-white/50 hover:bg-white/5 hover:text-white')
+                                }
+                              >
+                                {child.label}
+                              </Link>
+                            )
+                          })}
+                        </div>
                       )}
-                      {badge > 0 && collapsed && (
-                        <span
-                          aria-hidden="true"
-                          className="absolute right-1 top-0.5 hidden h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow md:flex"
-                        >
-                          {badgeText}
-                        </span>
-                      )}
-                    </NavLink>
+                    </div>
                   )
                 })}
               </div>
             </div>
           ))}
-
-          {/* Peakstar Entertainment section */}
-          <div className="mb-2">
-            <p className={'truncate px-3 text-xs font-semibold uppercase tracking-wider text-white/40 ' + (collapsed ? 'md:hidden' : '')}>
-              {entertainmentSection.label}
-            </p>
-            <p className={'mt-2 px-3 text-xs italic text-white/30 ' + (collapsed ? 'md:hidden' : '')}>
-              {entertainmentSection.note}
-            </p>
-          </div>
         </nav>
 
         <div className="shrink-0 border-t border-white/10 px-3 py-3">
