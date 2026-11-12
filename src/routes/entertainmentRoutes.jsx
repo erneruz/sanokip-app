@@ -5,6 +5,9 @@
 import { Route } from 'react-router-dom'
 import EntertainmentLayout from '../layouts/EntertainmentLayout'
 import EntertainmentPlaceholder from '../pages/entertainment/EntertainmentPlaceholder'
+import EntertainmentLogin from '../pages/entertainment/EntertainmentLogin'
+import EntertainmentRegister from '../pages/entertainment/EntertainmentRegister'
+import EntertainmentAccount from '../pages/entertainment/EntertainmentAccount'
 import NotFound from '../pages/NotFound'
 
 // Pages that are still "coming soon". Each line is one page.
@@ -91,6 +94,11 @@ export const entertainmentRoutes = (
         />
       }
     />
+
+    {/* accounts of Peak Star Entertainment (separate from Engineering) */}
+    <Route path="login" element={<EntertainmentLogin />} />
+    <Route path="register" element={<EntertainmentRegister />} />
+    <Route path="account" element={<EntertainmentAccount />} />
 
     {placeholderPages.map((page) => (
       <Route

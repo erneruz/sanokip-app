@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { getProfile } from '../../services/profileService'
+import { entRoleLabel } from '../../services/entertainmentUsersService'
 import { TALENT_CATEGORIES } from '../../constants/talentCategories'
 import logoWhite from '../../assets/images/peakstar-logo-white-small.png'
 
@@ -290,7 +290,7 @@ function isItemActive(item, pathname) {
 function LoginButton({ full = false, onClick }) {
   return (
     <Link
-      to="/login"
+      to={`${ENT}/login`}
       onClick={onClick}
       aria-label="Log in"
       className={`ent-login group relative rounded-full p-[1.5px] shadow-[0_10px_28px_-10px_rgba(159,216,201,0.45)] transition-shadow duration-300 hover:shadow-[0_14px_34px_-8px_rgba(159,216,201,0.75)] ${
@@ -316,11 +316,10 @@ function LoginButton({ full = false, onClick }) {
 
 /* ---------- the navbar ---------- */
 export default function EntertainmentNavbar() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, entProfile, can } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const [profile, setProfile] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false) // avatar dropdown (desktop)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -343,17 +342,13 @@ export default function EntertainmentNavbar() {
     setPanel(null)
   }
 
-  const isAdmin = profile?.role === 'admin' // adjust if your admin flag differs
-
-  useEffect(() => {
-    if (!user?.id) {
-      setProfile(null)
-      return
-    }
-    getProfile(user.id)
-      .then(setProfile)
-      .catch((err) => console.error('Failed to load profile:', err))
-  }, [user?.id])
+  // where the admin link goes: Engineering admins and the Super Admin open the Admin Portal,
+  // Entertainment staff open the Entertainment admin
+  const adminLink = can.engineering
+    ? '/admin'
+    : can.entertainmentUsers || can.entertainmentContent
+      ? '/admin/entertainment'
+      : null
 
   // the bar becomes more solid once you scroll, and the line follows your scroll
   useEffect(() => {
@@ -412,19 +407,18 @@ export default function EntertainmentNavbar() {
     navigate(ENT)
   }
 
-  const displayName = profile?.first_name
-    ? `${profile.first_name} ${profile.last_name ?? ''}`.trim()
-    : (user?.email ?? 'Account')
+  // the name and the kind of user come from the Entertainment profile
+  // (not from the Peak Star Engineering profile)
+  const displayName = entProfile?.full_name || user?.email || 'Account'
+  const roleText = entProfile
+    ? `${entRoleLabel(entProfile.role)}${entProfile.status === 'pending' ? ' · Waiting for approval' : ''}`
+    : 'Join Entertainment'
 
   const avatar = (size) => (
     <span className={`${size} shrink-0 overflow-hidden rounded-full bg-[#9FD8C9]/20 ring-2 ring-[#9FD8C9]/70`}>
-      {profile?.avatar_url ? (
-        <img src={profile.avatar_url} alt={displayName} className="h-full w-full object-cover" />
-      ) : (
-        <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#9FD8C9]">
-          {displayName?.[0]?.toUpperCase() ?? '?'}
-        </span>
-      )}
+      <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#9FD8C9]">
+        {displayName?.[0]?.toUpperCase() ?? '?'}
+      </span>
     </span>
   )
 
@@ -672,17 +666,22 @@ export default function EntertainmentNavbar() {
                   role="menu"
                   className="ent-drop absolute right-0 top-full z-20 mt-3 w-56 overflow-hidden rounded-2xl bg-[#0D3A31] p-1.5 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.7)] ring-1 ring-white/15"
                 >
+                  <div className="px-3 pb-2 pt-2">
+                    <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+                    <p className="mt-0.5 truncate text-xs text-[#9FD8C9]">{roleText}</p>
+                  </div>
+                  <div className="mb-1 h-px bg-white/10" />
                   <Link
-                    to="/profile"
+                    to={`${ENT}/account`}
                     role="menuitem"
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 transition hover:bg-white/10 hover:text-white"
                   >
                     <UserIcon size={16} className="text-[#9FD8C9]" />
-                    Profile
+                    My account
                   </Link>
-                  {isAdmin && (
+                  {adminLink && (
                     <Link
-                      to="/admin"
+                      to={adminLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       role="menuitem"
@@ -792,15 +791,18 @@ export default function EntertainmentNavbar() {
                 <div className="rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10">
                   <div className="flex items-center gap-3 px-1 pb-2">
                     {avatar('size-10')}
-                    <span className="truncate text-sm font-medium text-white">{displayName}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-white">{displayName}</span>
+                      <span className="block truncate text-xs text-[#9FD8C9]">{roleText}</span>
+                    </span>
                   </div>
-                  <Link to="/profile" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 hover:bg-white/10">
+                  <Link to={`${ENT}/account`} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 hover:bg-white/10">
                     <UserIcon size={16} className="text-[#9FD8C9]" />
-                    Profile
+                    My account
                   </Link>
-                  {isAdmin && (
+                  {adminLink && (
                     <Link
-                      to="/admin"
+                      to={adminLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 hover:bg-white/10"
