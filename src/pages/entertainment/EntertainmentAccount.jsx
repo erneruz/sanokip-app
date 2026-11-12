@@ -2,13 +2,19 @@
 // "My account" on Peak Star Entertainment.
 // - People with an Entertainment profile can edit their details.
 // - People who only have a login (for example from the Engineering site)
-//   can join Entertainment here by choosing how they join.
-import { useState } from 'react'
+//   can join Entertainment here by choosing how they join. Their details are
+//   filled in from the Peak Star account they already have; the Entertainment
+//   profile is a separate copy, so editing it never changes the Engineering one.
+// - Except for visitors, each kind of member also answers the questions of
+//   that kind (talent category, scouting areas, organisation type...).
+import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import { supabase } from '../../supabase'
 import { useAuth } from '../../context/AuthContext'
 import EntRolePicker from '../../components/entertainment/EntRolePicker'
 import CountryPhoneInput from '../../components/entertainment/CountryPhoneInput'
 import LocationFields from '../../components/entertainment/LocationFields'
+import RoleDetailsFields from '../../components/entertainment/RoleDetailsFields'
 import {
   ENT_ROLES,
   entRoleLabel,
@@ -17,6 +23,7 @@ import {
 } from '../../services/entertainmentUsersService'
 import { staffRoleLabel } from '../../services/staffService'
 import { phoneProblem } from '../../constants/countries'
+import { roleHasDetails, detailsProblem } from '../../constants/entRoleDetails'
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#2F9678] focus:ring-2 focus:ring-[#9FD8C9]/50'
@@ -28,6 +35,18 @@ function Field({ label, children }) {
       {children}
     </label>
   )
+}
+
+// a saved phone number written in any way -> "+250788123456"
+function toInternational(raw) {
+  const text = String(raw ?? '').trim()
+  const digits = text.replace(/[^\d]/g, '')
+  if (!digits) return ''
+  if (text.startsWith('+')) return `+${digits}`
+  if (digits.startsWith('0')) return `+250${digits.slice(1)}`
+  if (digits.startsWith('250') && digits.length === 12) return `+${digits}`
+  if (digits.length === 9) return `+250${digits}`
+  return `+${digits}`
 }
 
 function StatusChip({ status }) {
@@ -51,21 +70,58 @@ export default function EntertainmentAccount() {
   return <AccountBody />
 }
 
+// A person who is not in Entertainment yet: first read what their Peak Star
+// (Engineering) account already knows, so the join form comes filled in.
 function AccountBody() {
+  const { user, entProfile } = useAuth()
+  const [known, setKnown] = useState(entProfile ? {} : undefined) // undefined = still loading
+
+  useEffect(() => {
+    if (entProfile) return
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setKnown(data ?? {})
+      })
+      .catch(() => {
+        if (!cancelled) setKnown({})
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user.id, entProfile])
+
+  if (known === undefined) {
+    return <p className="px-4 py-16 text-center text-sm text-gray-500">Loading your details…</p>
+  }
+  return <AccountForm known={known} />
+}
+
+function AccountForm({ known }) {
   const { user, profile, entProfile, staffRoles, can, refreshAccount } = useAuth()
 
   const joining = !entProfile
 
-  // the form starts from what is already saved (this component only shows once the account is loaded)
+  // What we already know about this person from their Peak Star account
+  // (Engineering profile, then the details saved when the login was created).
+  const meta = user.user_metadata ?? {}
+  const knownFirst = known.first_name ?? profile?.first_name ?? meta.first_name ?? ''
+  const knownLast = known.last_name ?? profile?.last_name ?? meta.last_name ?? ''
+
+  // the form starts from what is already saved
   const [form, setForm] = useState(() => ({
-    full_name:
-      entProfile?.full_name ?? `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim(),
-    phone: entProfile?.phone ?? '',
-    country: entProfile?.country ?? 'Rwanda',
-    province: entProfile?.province ?? '',
-    district: entProfile?.district ?? '',
-    organization: entProfile?.organization ?? '',
+    full_name: entProfile?.full_name ?? `${knownFirst} ${knownLast}`.trim(),
+    phone: entProfile?.phone ?? toInternational(known.phone ?? known.phone_number ?? meta.phone ?? user.phone),
+    country: entProfile?.country ?? known.country ?? meta.country ?? 'Rwanda',
+    province: entProfile?.province ?? known.province ?? meta.province ?? '',
+    district: entProfile?.district ?? known.district ?? meta.district ?? '',
+    organization: entProfile?.organization ?? meta.organization ?? '',
     bio: entProfile?.bio ?? '',
+    details: entProfile?.details ?? {}, // answers specific to the kind of member
   }))
   const [joinRole, setJoinRole] = useState('visitor')
   const [saving, setSaving] = useState(false)
@@ -86,6 +142,12 @@ function AccountBody() {
       return
     }
 
+    const detailsError = detailsProblem(activeRole, form.details)
+    if (detailsError) {
+      setMessage({ type: 'error', text: detailsError })
+      return
+    }
+
     setSaving(true)
     try {
       if (joining) {
@@ -97,9 +159,10 @@ function AccountBody() {
           province: form.province.trim(),
           district: form.district.trim(),
           organization: form.organization.trim(),
+          details: form.details,
         })
       } else {
-        await updateMyEntProfile(user.id, form)
+        await updateMyEntProfile(user.id, form, entProfile.role)
         setMessage({ type: 'ok', text: 'Your details are saved.' })
       }
       await refreshAccount()
@@ -165,8 +228,11 @@ function AccountBody() {
                 {staffRoleLabel(r)}
               </span>
             ))}
-            {can.engineering && (
-              <Link to="/admin" className="ml-auto text-sm font-semibold text-[#1B5E4F] hover:underline">
+            {(can.entertainmentUsers || can.entertainmentContent || can.engineering) && (
+              <Link
+                to={can.entertainmentUsers || can.entertainmentContent ? '/admin/entertainment' : '/admin'}
+                className="ml-auto text-sm font-semibold text-[#1B5E4F] hover:underline"
+              >
                 Open admin portal
               </Link>
             )}
@@ -180,10 +246,21 @@ function AccountBody() {
               <div>
                 <h2 className="text-lg font-semibold text-[#0F3D32]">Join Peak Star Entertainment</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  You already have a login. Choose how you want to join; it takes a minute.
+                  You already have a Peak Star login. Choose how you want to join.
                 </p>
               </div>
-              <EntRolePicker value={joinRole} onChange={setJoinRole} />
+              <p className="rounded-lg bg-[#F1F6F4] px-3 py-2 text-xs leading-relaxed text-[#154A3F]">
+                Signed in as <strong>{user.email}</strong>. We filled in your details from your Peak Star account, so you
+                can just join. Your Entertainment profile is separate: if you change anything below, it only changes
+                here, never on Peak Star Engineering.
+              </p>
+              <EntRolePicker
+                value={joinRole}
+                onChange={(r) => {
+                  setJoinRole(r)
+                  setForm((f) => ({ ...f, details: {} })) // each kind of member has its own questions
+                }}
+              />
               {ENT_ROLES.find((r) => r.value === joinRole)?.needsApproval && (
                 <p className="rounded-lg border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-2 text-xs text-[#154A3F]">
                   This account is reviewed by our team before it becomes active.
@@ -221,6 +298,16 @@ function AccountBody() {
                 required={orgRequired}
               />
             </Field>
+          )}
+
+          {/* the questions of this kind of member (none for visitors) */}
+          {roleHasDetails(activeRole) && (
+            <RoleDetailsFields
+              role={activeRole}
+              value={form.details}
+              onChange={(details) => setForm((f) => ({ ...f, details }))}
+              idPrefix="acc"
+            />
           )}
 
           {!joining && (

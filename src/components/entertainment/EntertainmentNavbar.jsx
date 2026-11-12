@@ -236,6 +236,14 @@ function CategoryIcon({ slug, size = 18 }) {
           <path d="M12 14v-4M9 2h6M12 2v3M18.5 6.5 20 5" />
         </Svg>
       )
+    case 'comedy':
+      return (
+        <Svg size={size}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M8 14.5c1 1.8 2.3 2.5 4 2.5s3-.7 4-2.5" />
+          <path d="M9 9.5h.01M15 9.5h.01" strokeWidth={3} />
+        </Svg>
+      )
     default:
       return (
         <Svg size={size}>
@@ -287,26 +295,27 @@ function isItemActive(item, pathname) {
 /* ---------- the Log in button ---------- */
 // flowing green border, a light-green user badge that tilts, a shine that
 // sweeps across on hover, and an arrow that slides.
-function LoginButton({ full = false, onClick }) {
+// It also serves as the "Join Entertainment" button (other link and label).
+function LoginButton({ full = false, onClick, to = `${ENT}/login`, label = 'Log in' }) {
   return (
     <Link
-      to={`${ENT}/login`}
+      to={to}
       onClick={onClick}
-      aria-label="Log in"
+      aria-label={label}
       className={`ent-login group relative rounded-full p-[1.5px] shadow-[0_10px_28px_-10px_rgba(159,216,201,0.45)] transition-shadow duration-300 hover:shadow-[0_14px_34px_-8px_rgba(159,216,201,0.75)] ${
         full ? 'flex w-full' : 'inline-flex'
       }`}
     >
       <span aria-hidden="true" className="ent-flow absolute inset-0 rounded-full" />
       <span
-        className={`relative flex items-center gap-2.5 overflow-hidden rounded-full bg-[#0A2E27] py-1.5 pl-1.5 pr-4 text-sm font-semibold text-white transition-colors duration-300 group-hover:bg-[#0F3D32] ${
+        className={`relative flex items-center gap-2.5 overflow-hidden whitespace-nowrap rounded-full bg-[#0A2E27] py-1.5 pl-1.5 pr-4 text-sm font-semibold text-white transition-colors duration-300 group-hover:bg-[#0F3D32] ${
           full ? 'w-full justify-center py-2.5 text-base' : ''
         }`}
       >
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#9FD8C9] to-[#2F9678] text-[#0A2E27] shadow-inner transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
           <UserIcon size={16} strokeWidth={2.4} />
         </span>
-        Log in
+        {label}
         <ArrowRightIcon size={15} className="transition-transform duration-300 group-hover:translate-x-1" />
         <span aria-hidden="true" className="ent-sheen pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-white/25" />
       </span>
@@ -323,6 +332,9 @@ export default function EntertainmentNavbar() {
   // Someone logged in only to Peak Star Engineering, or nobody, sees Sign in / Join.
   const isEntPerson = !!authUser && (!!entProfile || can.entertainmentUsers || can.entertainmentContent)
   const user = isEntPerson ? authUser : null
+  // logged in (for example with a Peak Star Engineering login) but not in Entertainment yet:
+  // no name is shown, only a button to join
+  const canJoin = !loading && !!authUser && !isEntPerson
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -712,6 +724,18 @@ export default function EntertainmentNavbar() {
                 </div>
               )}
             </div>
+          ) : canJoin ? (
+            <div className="flex items-center gap-2">
+              <LoginButton to={`${ENT}/account`} label="Join Entertainment" />
+              <button
+                onClick={handleSignOut}
+                title="Sign out"
+                aria-label="Sign out"
+                className="grid size-10 cursor-pointer place-items-center rounded-full text-white/70 ring-1 ring-white/15 transition hover:bg-white/10 hover:text-white hover:ring-white/30"
+              >
+                <LogoutIcon size={16} />
+              </button>
+            </div>
           ) : (
             <LoginButton />
           )}
@@ -830,6 +854,17 @@ export default function EntertainmentNavbar() {
                     Sign out
                   </button>
                 </div>
+              ) : canJoin ? (
+                <div className="space-y-2">
+                  <LoginButton full to={`${ENT}/account`} label="Join Entertainment" />
+                  <button
+                    onClick={handleSignOut}
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-white/70 ring-1 ring-white/15 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <LogoutIcon size={16} />
+                    Sign out
+                  </button>
+                </div>
               ) : (
                 <LoginButton full />
               )}
@@ -846,6 +881,56 @@ export default function EntertainmentNavbar() {
           </div>
         </div>
       )}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
 
       {/* line that grows as you scroll down the page */}
       <div aria-hidden="true" className="absolute bottom-0 left-0 h-[2px] w-full bg-white/5">

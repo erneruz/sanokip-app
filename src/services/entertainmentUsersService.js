@@ -2,8 +2,9 @@
 // Everything about the people of Peak Star Entertainment (table ent_profiles).
 // These are separate from the Peak Star Engineering users (table profiles).
 import { supabase } from '../supabase'
+import { cleanDetails } from '../constants/entRoleDetails'
 
-// The six kinds of Entertainment users.
+// The four kinds of Entertainment users.
 // needsApproval = starts as "pending" until an admin approves.
 export const ENT_ROLES = [
   {
@@ -52,7 +53,7 @@ export function entRoleLabel(value) {
 
 // the logged-in person creates their own Entertainment profile
 // (used when someone who already has a login joins Entertainment)
-export async function createMyEntProfile(userId, { role, fullName, phone, country, province, district, organization }) {
+export async function createMyEntProfile(userId, { role, fullName, phone, country, province, district, organization, details }) {
   const approval = ENT_ROLES.find((r) => r.value === role)?.needsApproval
   const { data, error } = await supabase
     .from('ent_profiles')
@@ -67,6 +68,7 @@ export async function createMyEntProfile(userId, { role, fullName, phone, countr
       district: district || null,
       region: [province, district].filter(Boolean).join(' / ') || null,
       organization: organization || null,
+      details: cleanDetails(role, details),
     })
     .select()
     .single()
@@ -75,7 +77,7 @@ export async function createMyEntProfile(userId, { role, fullName, phone, countr
 }
 
 // edit my own details (role and status can never be changed here)
-export async function updateMyEntProfile(userId, fields) {
+export async function updateMyEntProfile(userId, fields, role) {
   const clean = {
     full_name: fields.full_name?.trim() || null,
     phone: fields.phone?.trim() || null,
@@ -86,6 +88,8 @@ export async function updateMyEntProfile(userId, fields) {
     organization: fields.organization?.trim() || null,
     bio: fields.bio?.trim() || null,
   }
+  // the role-specific answers (talent category, scouting areas, ...)
+  if (role && fields.details) clean.details = cleanDetails(role, fields.details)
   const { data, error } = await supabase
     .from('ent_profiles')
     .update(clean)

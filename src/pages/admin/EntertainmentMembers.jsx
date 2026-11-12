@@ -15,6 +15,7 @@ import {
 import { ENT_ROLE_PLURAL, manageableEntRoles, canRemoveEntMembers } from '../../constants/entertainmentAdmin'
 import { IconSearch, IconCheck, IconBan, IconTrash, IconClock } from '../../components/admin/EntAdminIcons'
 import { Avatar, RolePill, StatusPill, formatDate } from '../../components/admin/entAdminUi'
+import { describeDetails } from '../../constants/entRoleDetails'
 
 const ROLE_INFO = {
   visitor: 'People who explore talents, news and videos.',
@@ -307,6 +308,28 @@ export default function EntertainmentMembers() {
               <Detail label="Organisation">{selected.organization}</Detail>
               <Detail label="Joined">{formatDate(selected.created_at)}</Detail>
             </dl>
+
+            {/* what the person answered for their kind of member (talent category, scouting areas...) */}
+            {describeDetails(selected.role, selected.details).length > 0 && (
+              <div className="mx-5 mb-5 rounded-xl border border-[#CDEBE2] bg-[#F1F6F4]/70 p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#154A3F]">
+                  {entRoleLabel(selected.role)} information
+                </p>
+                <dl className="grid grid-cols-1 gap-3">
+                  {describeDetails(selected.role, selected.details).map((row) => (
+                    <Detail key={row.key} label={row.label}>
+                      {row.link ? (
+                        <a href={row.value} target="_blank" rel="noopener noreferrer" className="break-all text-[#1B5E4F] hover:underline">
+                          {row.value}
+                        </a>
+                      ) : (
+                        row.value
+                      )}
+                    </Detail>
+                  ))}
+                </dl>
+              </div>
+            )}
 
             <div className="mt-auto space-y-4 border-t border-gray-200 p-5">
               {selected.status === 'pending' && (

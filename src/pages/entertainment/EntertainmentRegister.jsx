@@ -1,6 +1,7 @@
 // src/pages/entertainment/EntertainmentRegister.jsx
 // Sign-up for Peak Star Entertainment. The person chooses how they join
-// (visitor, talent, parent/guardian, scout, talent manager, partner).
+// (visitor, talent, parent/guardian, scout, talent manager, partner) and,
+// except for visitors, answers the questions of that kind of member.
 // Scouts, talent managers and partners wait for approval.
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -19,8 +20,10 @@ import EntAuthFrame from '../../components/entertainment/EntAuthFrame'
 import EntRolePicker from '../../components/entertainment/EntRolePicker'
 import CountryPhoneInput from '../../components/entertainment/CountryPhoneInput'
 import LocationFields from '../../components/entertainment/LocationFields'
+import RoleDetailsFields from '../../components/entertainment/RoleDetailsFields'
 import { ENT_ROLES } from '../../services/entertainmentUsersService'
 import { phoneProblem } from '../../constants/countries'
+import { cleanDetails, detailsProblem } from '../../constants/entRoleDetails'
 
 export default function EntertainmentRegister() {
   const { signUp } = useAuth()
@@ -32,11 +35,13 @@ export default function EntertainmentRegister() {
   const [phone, setPhone] = useState('') // full number, for example +250788123456
   const [place, setPlace] = useState({ country: 'Rwanda', province: '', district: '' })
   const [organization, setOrganization] = useState('')
+  const [details, setDetails] = useState({}) // the questions that depend on the chosen role
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [existing, setExisting] = useState(false) // this email already has a Peak Star login
 
   const chosen = ENT_ROLES.find((r) => r.value === role)
   const showOrg = role === 'scout' || role === 'partner' || role === 'manager'
@@ -47,6 +52,7 @@ export default function EntertainmentRegister() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
+    setExisting(false)
 
     const problem = phoneProblem(phone)
     if (problem) {
@@ -54,8 +60,14 @@ export default function EntertainmentRegister() {
       return
     }
 
+    const detailsError = detailsProblem(role, details)
+    if (detailsError) {
+      setError(detailsError)
+      return
+    }
+
     setSubmitting(true)
-    const { error } = await signUp(
+    const { data, error } = await signUp(
       email,
       password,
       firstName,
@@ -68,12 +80,27 @@ export default function EntertainmentRegister() {
         province: place.province.trim(),
         district: place.district.trim(),
         organization: organization.trim(),
+        ent_details: cleanDetails(role, details),
       },
       '/entertainment/login',
     )
 
     if (error) {
+      if (/already|registered|exists/i.test(error.message || '')) {
+        setExisting(true)
+        setSubmitting(false)
+        return
+      }
       setError(error.message || 'Could not create your account.')
+      setSubmitting(false)
+      return
+    }
+
+    // The email already has a Peak Star login (for example from Peak Star Engineering).
+    // The login service answers "ok" but creates nothing, so we point the person
+    // to sign in and join, where their details are filled in for them.
+    if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      setExisting(true)
       setSubmitting(false)
       return
     }
@@ -119,7 +146,13 @@ export default function EntertainmentRegister() {
           <p className="mt-1 text-sm text-gray-500">First, tell us how you will join.</p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-            <EntRolePicker value={role} onChange={setRole} />
+            <EntRolePicker
+              value={role}
+              onChange={(r) => {
+                setRole(r)
+                setDetails({}) // each kind of member has its own questions
+              }}
+            />
 
             {chosen?.needsApproval && (
               <p className="rounded-lg border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-2 text-xs text-[#154A3F]">
@@ -179,6 +212,9 @@ export default function EntertainmentRegister() {
               />
             )}
 
+            {/* the questions of the chosen kind of member (none for visitors) */}
+            <RoleDetailsFields role={role} value={details} onChange={setDetails} idPrefix="ent" />
+
             <AuthField
               id="ent-password"
               label="Password"
@@ -192,6 +228,22 @@ export default function EntertainmentRegister() {
               placeholder="At least 6 characters"
               right={<PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />}
             />
+
+            {existing && (
+              <div className="rounded-lg border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-3 text-sm text-[#154A3F]">
+                <p className="font-semibold">This email already has a Peak Star login.</p>
+                <p className="mt-1 text-xs leading-relaxed">
+                  Sign in with it, and you can join Peak Star Entertainment in one step: your details are filled in
+                  for you, and you only choose how you want to join.
+                </p>
+                <Link
+                  to="/entertainment/login"
+                  className="mt-2 inline-block font-semibold text-[#1B5E4F] underline underline-offset-2 hover:text-[#0F3D32]"
+                >
+                  Sign in and join
+                </Link>
+              </div>
+            )}
 
             {error && (
               <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
