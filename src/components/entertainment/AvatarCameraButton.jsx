@@ -154,7 +154,7 @@ export default function AvatarCameraButton() {
       {open && (
         <div
           role="menu"
-          className="acc-pop absolute left-1/2 top-full z-30 mt-3 w-52 -translate-x-1/2 overflow-hidden rounded-2xl bg-white p-1.5 shadow-xl ring-1 ring-[#CDEBE2] sm:left-auto sm:right-0 sm:translate-x-0"
+          className="acc-pop absolute left-0 top-full z-30 mt-3 w-52 overflow-hidden rounded-2xl bg-white p-1.5 shadow-xl ring-1 ring-[#CDEBE2]"
         >
           <button
             type="button"
@@ -186,7 +186,7 @@ export default function AvatarCameraButton() {
       {message && (
         <p
           role="status"
-          className={`acc-pop absolute left-1/2 top-full z-30 mt-3 w-56 -translate-x-1/2 rounded-lg px-3 py-2 text-center text-xs font-medium shadow-lg sm:left-0 sm:translate-x-0 ${
+          className={`acc-pop absolute left-0 top-full z-30 mt-3 w-56 rounded-lg px-3 py-2 text-center text-xs font-medium shadow-lg ${
             message.type === 'ok' ? 'bg-[#1B5E4F] text-white' : 'border border-red-200 bg-red-50 text-red-600'
           }`}
         >

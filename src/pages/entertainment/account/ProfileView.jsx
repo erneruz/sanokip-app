@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import CategoryIcon from '../../../components/entertainment/CategoryIcon'
+import { CHOOSE_AVATAR_EVENT } from '../../../components/entertainment/AvatarCameraButton'
 import SocialIcon from '../../../components/entertainment/SocialIcon'
 import { socialList } from '../../../constants/socialLinks'
 import { entRoleLabel } from '../../../services/entertainmentUsersService'
@@ -240,17 +241,32 @@ export default function ProfileView() {
                   {doneCount} of {checks.length} steps done. Finish these to reach 100%:
                 </p>
                 <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-                  {missing.map((m) => (
-                    <Link
-                      key={m.key}
-                      to={EDIT}
-                      className="group inline-flex items-center gap-2 rounded-full border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-1.5 text-xs font-medium text-[#154A3F] transition hover:bg-[#E6F1EE] active:scale-95"
-                    >
-                      <Icon name={m.icon} size={14} className="text-[#2F9678]" />
-                      {m.text}
-                      <Icon name="arrow" size={12} className="transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  ))}
+                  {missing.map((m) => {
+                    const chipClass =
+                      'group inline-flex cursor-pointer items-center gap-2 rounded-full border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-1.5 text-xs font-medium text-[#154A3F] transition hover:bg-[#E6F1EE] active:scale-95'
+                    const inner = (
+                      <>
+                        <Icon name={m.icon} size={14} className="text-[#2F9678]" />
+                        {m.text}
+                        <Icon name="arrow" size={12} className="transition-transform group-hover:translate-x-0.5" />
+                      </>
+                    )
+                    // the photo is chosen with the camera button on the photo in the header
+                    return m.key === 'photo' ? (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => window.dispatchEvent(new Event(CHOOSE_AVATAR_EVENT))}
+                        className={chipClass}
+                      >
+                        {inner}
+                      </button>
+                    ) : (
+                      <Link key={m.key} to={EDIT} className={chipClass}>
+                        {inner}
+                      </Link>
+                    )
+                  })}
                 </div>
               </>
             )}

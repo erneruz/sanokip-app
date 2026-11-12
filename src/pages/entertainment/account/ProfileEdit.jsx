@@ -1,10 +1,9 @@
 // src/pages/entertainment/account/ProfileEdit.jsx
-// Page 2 of "My profile": change the photo and the details.
-// The photo is saved as soon as it is chosen; the rest is saved with "Save changes".
+// Page 2 of "My profile": change the details and save them with "Save changes".
+// (The profile photo is changed with the camera button on the photo in the header.)
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
-import AvatarUploader from '../../../components/entertainment/AvatarUploader'
 import CountryPhoneInput from '../../../components/entertainment/CountryPhoneInput'
 import LocationFields from '../../../components/entertainment/LocationFields'
 import RoleDetailsFields from '../../../components/entertainment/RoleDetailsFields'
@@ -61,7 +60,6 @@ export default function ProfileEdit() {
       setError(detailsError)
       return
     }
-
     const socialError = socialsProblem(form.socials)
     if (socialError) {
       setError(socialError)
@@ -81,112 +79,102 @@ export default function ProfileEdit() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 items-start gap-5 pb-24 lg:grid-cols-3">
-      {/* left: the photo stays in view while you scroll */}
-      <div className="lg:sticky lg:top-24">
-        <Card icon="camera" title="Profile photo" text="Saved as soon as you choose it." delay={40} className="text-center">
-          <AvatarUploader stacked />
-        </Card>
-      </div>
-
-      {/* right: the details */}
-      <div className="space-y-5 lg:col-span-2">
-        <Card icon="user" title="Personal details" text="This is how scouts, partners and our team see you." delay={90}>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Full name" htmlFor="edit-name">
-              <input
-                id="edit-name"
-                className={inputClass}
-                value={form.full_name}
-                onChange={set('full_name')}
-                placeholder="Example: Aline Uwase"
-                autoComplete="name"
-                required
-              />
-            </Field>
-            <CountryPhoneInput
-              id="edit-phone"
-              value={form.phone}
-              onChange={(phone) => setForm((f) => ({ ...f, phone }))}
+    <form onSubmit={handleSubmit} className="space-y-5 pb-24">
+      <Card icon="user" title="Personal details" text="This is how scouts, partners and our team see you." delay={50}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Full name" htmlFor="edit-name">
+            <input
+              id="edit-name"
+              className={inputClass}
+              value={form.full_name}
+              onChange={set('full_name')}
+              placeholder="Example: Aline Uwase"
+              autoComplete="name"
               required
             />
-          </div>
+          </Field>
+          <CountryPhoneInput
+            id="edit-phone"
+            value={form.phone}
+            onChange={(phone) => setForm((f) => ({ ...f, phone }))}
+            required
+          />
+        </div>
 
+        <div className="mt-4">
+          <Field
+            label="About you"
+            optional
+            htmlFor="edit-bio"
+            hint={`${form.bio.length} / ${BIO_MAX}. Two or three sentences are enough.`}
+          >
+            <textarea
+              id="edit-bio"
+              className={inputClass + ' min-h-[120px] resize-y'}
+              value={form.bio}
+              onChange={set('bio')}
+              maxLength={BIO_MAX}
+              placeholder="Who are you, what do you do, and what do you want to achieve? Example: I am a 17-year-old midfielder from Huye. I want a place in a national academy."
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card icon="pin" title="Where you are" text="Choose your country, then your province and district." delay={100}>
+        <LocationFields
+          idPrefix="edit"
+          value={{ country: form.country, province: form.province, district: form.district }}
+          onChange={(place) => setForm((f) => ({ ...f, ...place }))}
+        />
+        {showOrg && (
           <div className="mt-4">
             <Field
-              label="About you"
-              optional
-              htmlFor="edit-bio"
-              hint={`${form.bio.length} / ${BIO_MAX}. Two or three sentences are enough.`}
+              label={orgRequired ? (role === 'partner' ? 'Organisation name' : 'Team, club or organisation') : 'Agency or company'}
+              optional={!orgRequired}
+              htmlFor="edit-org"
             >
-              <textarea
-                id="edit-bio"
-                className={inputClass + ' min-h-[120px] resize-y'}
-                value={form.bio}
-                onChange={set('bio')}
-                maxLength={BIO_MAX}
-                placeholder="Who are you, what do you do, and what do you want to achieve? Example: I am a 17-year-old midfielder from Huye. I want a place in a national academy."
+              <input
+                id="edit-org"
+                className={inputClass}
+                value={form.organization}
+                onChange={set('organization')}
+                placeholder={orgPlaceholder}
+                required={orgRequired}
               />
             </Field>
           </div>
-        </Card>
-
-        <Card icon="pin" title="Where you are" text="Choose your country, then your province and district." delay={140}>
-          <LocationFields
-            idPrefix="edit"
-            value={{ country: form.country, province: form.province, district: form.district }}
-            onChange={(place) => setForm((f) => ({ ...f, ...place }))}
-          />
-          {showOrg && (
-            <div className="mt-4">
-              <Field
-                label={orgRequired ? (role === 'partner' ? 'Organisation name' : 'Team, club or organisation') : 'Agency or company'}
-                optional={!orgRequired}
-                htmlFor="edit-org"
-              >
-                <input
-                  id="edit-org"
-                  className={inputClass}
-                  value={form.organization}
-                  onChange={set('organization')}
-                  placeholder={orgPlaceholder}
-                  required={orgRequired}
-                />
-              </Field>
-            </div>
-          )}
-        </Card>
-
-        <Card
-          icon="link"
-          title="Social media"
-          text="Add the places where people can follow your work. Paste a link or type your @name."
-          delay={170}
-        >
-          <SocialLinksFields
-            idPrefix="edit-soc"
-            value={form.socials}
-            onChange={(socials) => setForm((f) => ({ ...f, socials }))}
-          />
-        </Card>
-
-        {roleHasDetails(role) && (
-          <div className="acc-rise" style={{ animationDelay: '190ms' }}>
-            <RoleDetailsFields
-              role={role}
-              value={form.details}
-              onChange={(details) => setForm((f) => ({ ...f, details }))}
-              idPrefix="edit"
-            />
-          </div>
         )}
+      </Card>
 
-        <p className="flex items-start gap-2 rounded-xl bg-white px-4 py-3 text-xs leading-relaxed text-gray-500 ring-1 ring-[#CDEBE2]">
-          <Icon name={ROLE_ICON[role] ?? 'user'} size={14} className="mt-0.5 shrink-0 text-[#2F9678]" />
-          You joined as <strong className="text-[#0F3D32]">{entRoleLabel(role)}</strong>. The kind of member can only be
-          changed by our team. Changes here only affect Peak Star Entertainment.
-        </p>
-      </div>
+      <Card
+        icon="link"
+        title="Social media"
+        text="Add the places where people can follow your work. Paste a link or type your @name."
+        delay={150}
+      >
+        <SocialLinksFields
+          idPrefix="edit-soc"
+          value={form.socials}
+          onChange={(socials) => setForm((f) => ({ ...f, socials }))}
+        />
+      </Card>
+
+      {roleHasDetails(role) && (
+        <div className="acc-rise" style={{ animationDelay: '200ms' }}>
+          <RoleDetailsFields
+            role={role}
+            value={form.details}
+            onChange={(details) => setForm((f) => ({ ...f, details }))}
+            idPrefix="edit"
+          />
+        </div>
+      )}
+
+      <p className="flex items-start gap-2 rounded-xl bg-white px-4 py-3 text-xs leading-relaxed text-gray-500 ring-1 ring-[#CDEBE2]">
+        <Icon name={ROLE_ICON[role] ?? 'user'} size={14} className="mt-0.5 shrink-0 text-[#2F9678]" />
+        You joined as <strong className="text-[#0F3D32]">{entRoleLabel(role)}</strong>. The kind of member can only be
+        changed by our team. Changes here only affect Peak Star Entertainment.
+      </p>
 
       {/* save bar */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#CDEBE2] bg-white/95 backdrop-blur">

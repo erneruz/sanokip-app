@@ -4,9 +4,10 @@
 //     Profile (review), Edit profile, Security.
 // The pages themselves are in the folder ./account
 // Someone who is logged in but not in Entertainment yet sees the Join page instead.
-import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import EntAvatar from '../../components/entertainment/EntAvatar'
+import AvatarCameraButton from '../../components/entertainment/AvatarCameraButton'
 import SocialIcon from '../../components/entertainment/SocialIcon'
 import { socialList } from '../../constants/socialLinks'
 import { entRoleLabel } from '../../services/entertainmentUsersService'
@@ -32,8 +33,6 @@ export default function EntertainmentAccount() {
 function AccountFrame() {
   const { user, entProfile } = useAuth()
   const name = entProfile.full_name || user.email
-  const { pathname } = useLocation()
-  const onEdit = pathname.endsWith('/edit')
   const socials = socialList(entProfile.socials)
   const place = [entProfile.district, entProfile.province, entProfile.country].filter(Boolean).join(', ')
 
@@ -42,9 +41,10 @@ function AccountFrame() {
       <AccountStyles />
 
       <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 sm:pt-10">
-        <div className="acc-rise overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-[#CDEBE2]">
+        {/* no overflow-hidden here, so the camera menu can open over the card */}
+        <div className="acc-rise rounded-3xl bg-white shadow-sm ring-1 ring-[#CDEBE2]">
           {/* cover: green gradient with two slow moving shapes and a fine dot pattern */}
-          <div className="relative h-32 overflow-hidden bg-gradient-to-br from-[#0A2E27] via-[#0F3D32] to-[#1B5E4F] sm:h-44">
+          <div className="relative h-32 overflow-hidden rounded-t-3xl bg-gradient-to-br from-[#0A2E27] via-[#0F3D32] to-[#1B5E4F] sm:h-44">
             <span className="acc-blob-a absolute -left-10 -top-16 size-64 rounded-full bg-[#2F9678]/40 blur-3xl" />
             <span className="acc-blob-b absolute -bottom-24 right-0 size-72 rounded-full bg-[#9FD8C9]/25 blur-3xl" />
             <span className="acc-dots absolute inset-0" />
@@ -52,7 +52,7 @@ function AccountFrame() {
 
           <div className="px-5 pb-0 sm:px-8">
             <div className="-mt-12 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-start">
-              {/* photo, with a small camera button that opens the edit page */}
+              {/* photo, with a small camera button: the only place where the photo is changed */}
               <div className="relative w-fit">
                 <EntAvatar
                   name={name}
@@ -61,14 +61,7 @@ function AccountFrame() {
                   textClass="text-3xl sm:text-4xl"
                   className="ring-4! ring-white! shadow-lg"
                 />
-                <Link
-                  to={`${BASE}/edit`}
-                  title="Change your photo"
-                  aria-label="Change your photo"
-                  className="absolute bottom-0 right-0 flex size-9 items-center justify-center rounded-full bg-[#1B5E4F] text-white shadow-md ring-2 ring-white transition hover:scale-110 hover:bg-[#0F3D32] active:scale-95"
-                >
-                  <Icon name="camera" size={16} />
-                </Link>
+                <AvatarCameraButton />
               </div>
 
               {/* name starts below the cover on wide screens */}
@@ -112,18 +105,6 @@ function AccountFrame() {
                   </div>
                 )}
               </div>
-
-              {!onEdit && (
-                <div className="sm:pt-[4.75rem]">
-                  <Link
-                    to={`${BASE}/edit`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#1B5E4F]/25 transition hover:from-[#0D3A31] hover:to-[#2F9678] active:scale-[0.98]"
-                  >
-                    <Icon name="pencil" size={15} />
-                    Edit profile
-                  </Link>
-                </div>
-              )}
             </div>
 
             {/* tabs */}
