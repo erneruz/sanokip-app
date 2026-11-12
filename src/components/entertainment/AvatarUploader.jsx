@@ -42,7 +42,8 @@ async function squareJpeg(file, side = 512) {
   )
 }
 
-export default function AvatarUploader() {
+// stacked = photo above the text (for a narrow column)
+export default function AvatarUploader({ stacked = false }) {
   const { user, entProfile, refreshAccount } = useAuth()
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
@@ -94,7 +95,7 @@ export default function AvatarUploader() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
+    <div className={'flex flex-col items-center gap-5 ' + (stacked ? '' : 'sm:flex-row sm:items-center')}>
       <div
         onDragOver={(e) => {
           e.preventDefault()
@@ -116,14 +117,14 @@ export default function AvatarUploader() {
         )}
       </div>
 
-      <div className="min-w-0 text-center sm:text-left">
+      <div className={'min-w-0 text-center ' + (stacked ? '' : 'sm:text-left')}>
         <p className="text-sm font-semibold text-[#0F3D32]">{hasPhoto ? 'Your profile photo' : 'Add a profile photo'}</p>
-        <p className="mt-1 max-w-sm text-xs leading-relaxed text-gray-500">
+        <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-gray-500">
           A clear photo of your face helps scouts and partners trust your profile. JPG, PNG or WebP. We crop it to a
           square for you.
         </p>
 
-        <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+        <div className={'mt-3 flex flex-wrap justify-center gap-2 ' + (stacked ? '' : 'sm:justify-start')}>
           <button
             type="button"
             disabled={busy}

@@ -4,9 +4,11 @@
 //     Profile (review), Edit profile, Security.
 // The pages themselves are in the folder ./account
 // Someone who is logged in but not in Entertainment yet sees the Join page instead.
-import { Link, NavLink, Navigate, Outlet } from 'react-router-dom'
+import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import EntAvatar from '../../components/entertainment/EntAvatar'
+import SocialIcon from '../../components/entertainment/SocialIcon'
+import { socialList } from '../../constants/socialLinks'
 import { entRoleLabel } from '../../services/entertainmentUsersService'
 import JoinEntertainment from './account/JoinEntertainment'
 import { AccountStyles, Icon, ROLE_ICON, StatusChip, formatMonthYear } from './account/accountUi'
@@ -30,6 +32,9 @@ export default function EntertainmentAccount() {
 function AccountFrame() {
   const { user, entProfile } = useAuth()
   const name = entProfile.full_name || user.email
+  const { pathname } = useLocation()
+  const onEdit = pathname.endsWith('/edit')
+  const socials = socialList(entProfile.socials)
   const place = [entProfile.district, entProfile.province, entProfile.country].filter(Boolean).join(', ')
 
   return (
@@ -46,7 +51,7 @@ function AccountFrame() {
           </div>
 
           <div className="px-5 pb-0 sm:px-8">
-            <div className="-mt-12 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-end">
+            <div className="-mt-12 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-start">
               {/* photo, with a small camera button that opens the edit page */}
               <div className="relative w-fit">
                 <EntAvatar
@@ -66,8 +71,9 @@ function AccountFrame() {
                 </Link>
               </div>
 
-              <div className="min-w-0 flex-1 sm:pb-3">
-                <h1 className="truncate text-2xl font-bold tracking-tight text-[#0F3D32] sm:text-3xl">{name}</h1>
+              {/* name starts below the cover on wide screens */}
+              <div className="min-w-0 flex-1 sm:pt-[4.75rem]">
+                <h1 className="text-2xl font-bold tracking-tight text-[#0F3D32] sm:text-3xl">{name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-500">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F1EE] px-2.5 py-0.5 text-xs font-semibold text-[#0F3D32]">
                     <Icon name={ROLE_ICON[entProfile.role] ?? 'user'} size={13} />
@@ -87,7 +93,37 @@ function AccountFrame() {
                     </span>
                   )}
                 </div>
+
+                {socials.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {socials.map((s) => (
+                      <a
+                        key={s.key}
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={s.label}
+                        aria-label={s.label}
+                        className="flex size-9 items-center justify-center rounded-full bg-[#E6F1EE] text-[#1B5E4F] transition hover:-translate-y-0.5 hover:bg-[#1B5E4F] hover:text-white hover:shadow-md active:scale-95"
+                      >
+                        <SocialIcon name={s.key} size={17} />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {!onEdit && (
+                <div className="sm:pt-[4.75rem]">
+                  <Link
+                    to={`${BASE}/edit`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#1B5E4F]/25 transition hover:from-[#0D3A31] hover:to-[#2F9678] active:scale-[0.98]"
+                  >
+                    <Icon name="pencil" size={15} />
+                    Edit profile
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* tabs */}

@@ -3,6 +3,7 @@
 // These are separate from the Peak Star Engineering users (table profiles).
 import { supabase } from '../supabase'
 import { cleanDetails } from '../constants/entRoleDetails'
+import { cleanSocials } from '../constants/socialLinks'
 
 // The four kinds of Entertainment users.
 // needsApproval = starts as "pending" until an admin approves.
@@ -87,6 +88,7 @@ export async function updateMyEntProfile(userId, fields, role) {
     region: [fields.province, fields.district].filter(Boolean).join(' / ') || null,
     organization: fields.organization?.trim() || null,
     bio: fields.bio?.trim() || null,
+    socials: cleanSocials(fields.socials),
   }
   // the role-specific answers (talent category, scouting areas, ...)
   if (role && fields.details) clean.details = cleanDetails(role, fields.details)
