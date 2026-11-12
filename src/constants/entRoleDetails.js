@@ -38,11 +38,11 @@ export const ROLE_DETAILS = {
       { key: 'level', label: 'Your level', kind: 'select', required: true, placeholder: 'Choose your level', options: opts(['Beginner', 'Amateur', 'Semi-professional', 'Professional']) },
       { key: 'experience', label: 'Experience', kind: 'select', required: false, placeholder: 'How long have you been doing this?', options: YEARS },
       { key: 'ageGroup', label: 'Your age group', kind: 'select', required: true, placeholder: 'Choose your age group', options: opts([...UNDER_18, '18 or older']) },
-      { key: 'guardianName', label: "Parent or guardian's full name", kind: 'text', required: true, showIf: (d) => UNDER_18.includes(d.ageGroup), hint: 'Talents under 18 need a parent or guardian.' },
+      { key: 'guardianName', label: "Parent or guardian's full name", kind: 'text', required: true, showIf: (d) => UNDER_18.includes(d.ageGroup), placeholder: 'Example: Marie Mukamana', hint: 'Talents under 18 need a parent or guardian.' },
       { key: 'guardianPhone', label: "Parent or guardian's phone", kind: 'tel', required: true, showIf: (d) => UNDER_18.includes(d.ageGroup), placeholder: '+250788123456' },
-      { key: 'club', label: 'Current team, club, school or group', kind: 'text', required: false },
-      { key: 'link', label: 'Link to your best work', kind: 'url', required: false, placeholder: 'YouTube, Instagram, TikTok…' },
-      { key: 'achievements', label: 'Achievements', kind: 'textarea', required: false, placeholder: 'Prizes, matches, albums, shows…' },
+      { key: 'club', label: 'Current team, club, school or group', kind: 'text', required: false, placeholder: 'Example: APR FC Academy, or the name of your school team' },
+      { key: 'link', label: 'Link to your best work', kind: 'url', required: false, placeholder: 'Paste a YouTube, Instagram or TikTok link where scouts can watch you' },
+      { key: 'achievements', label: 'Achievements', kind: 'textarea', required: false, placeholder: 'Prizes, matches, albums, shows. Example: top scorer of the 2025 school league.' },
     ],
   },
 
@@ -51,7 +51,7 @@ export const ROLE_DETAILS = {
     text: 'Tell us about the child in your care.',
     fields: [
       { key: 'relationship', label: 'Your relationship', kind: 'select', required: true, placeholder: 'Choose', options: opts(['Parent', 'Legal guardian', 'Coach or teacher', 'Other family member']) },
-      { key: 'childName', label: "Child's full name", kind: 'text', required: true },
+      { key: 'childName', label: "Child's full name", kind: 'text', required: true, placeholder: 'Example: Eric Mugisha' },
       { key: 'childAge', label: "Child's age", kind: 'select', required: true, placeholder: 'Choose age group', options: opts(['Under 10', '10 to 12', '13 to 15', '16 to 17']) },
       { key: 'childCategory', label: "Child's talent category", kind: 'select', required: true, options: categoryOptions, placeholder: 'Choose category' },
       {
@@ -64,7 +64,7 @@ export const ROLE_DETAILS = {
         showIf: (d) => !!d.childCategory,
         optionsFor: (d) => opts(getSubcategories(d.childCategory)),
       },
-      { key: 'link', label: 'Link to the child\'s work', kind: 'url', required: false, placeholder: 'YouTube, Instagram, TikTok…' },
+      { key: 'link', label: 'Link to the child\'s work', kind: 'url', required: false, placeholder: 'Paste a YouTube, Instagram or TikTok link' },
     ],
   },
 
@@ -73,11 +73,11 @@ export const ROLE_DETAILS = {
     text: 'Our team checks this before your scout account is approved.',
     fields: [
       { key: 'categories', label: 'Talents you scout', kind: 'multi', required: true, options: categoryOptions },
-      { key: 'position', label: 'Your position', kind: 'text', required: true, placeholder: 'For example: head scout, academy recruiter' },
+      { key: 'position', label: 'Your position', kind: 'text', required: true, placeholder: 'Example: head scout, academy recruiter' },
       { key: 'experience', label: 'Experience as a scout', kind: 'select', required: true, placeholder: 'Choose', options: YEARS },
-      { key: 'coverage', label: 'Areas you cover', kind: 'text', required: false, placeholder: 'Districts, provinces or countries' },
-      { key: 'accreditation', label: 'Licence or accreditation number', kind: 'text', required: false },
-      { key: 'link', label: 'Website or professional profile', kind: 'url', required: false, placeholder: 'https://' },
+      { key: 'coverage', label: 'Areas you cover', kind: 'text', required: false, placeholder: 'Example: Kigali, Huye and Rubavu' },
+      { key: 'accreditation', label: 'Licence or accreditation number', kind: 'text', required: false, placeholder: 'If you have one, for example a federation licence number' },
+      { key: 'link', label: 'Website or professional profile', kind: 'url', required: false, placeholder: 'Example: https://www.linkedin.com/in/your-name' },
     ],
   },
 
@@ -88,9 +88,9 @@ export const ROLE_DETAILS = {
       { key: 'categories', label: 'Talents you represent', kind: 'multi', required: true, options: categoryOptions },
       { key: 'talentsCount', label: 'Talents you manage now', kind: 'select', required: true, placeholder: 'Choose', options: opts(['None yet', '1 to 5', '6 to 15', 'More than 15']) },
       { key: 'experience', label: 'Experience as a manager', kind: 'select', required: true, placeholder: 'Choose', options: YEARS },
-      { key: 'licence', label: 'Licence or registration number', kind: 'text', required: false },
-      { key: 'link', label: 'Website or professional profile', kind: 'url', required: false, placeholder: 'https://' },
-      { key: 'clients', label: 'Notable talents or results', kind: 'textarea', required: false },
+      { key: 'licence', label: 'Licence or registration number', kind: 'text', required: false, placeholder: 'If you have one, for example an agent licence number' },
+      { key: 'link', label: 'Website or professional profile', kind: 'url', required: false, placeholder: 'Example: https://www.linkedin.com/in/your-name' },
+      { key: 'clients', label: 'Notable talents or results', kind: 'textarea', required: false, placeholder: 'Talents you represent or deals you closed. Example: signed 3 players to Rwandan Premier League clubs.' },
     ],
   },
 
@@ -99,10 +99,10 @@ export const ROLE_DETAILS = {
     text: 'Our team checks this before your partner account is approved.',
     fields: [
       { key: 'orgType', label: 'Type of organisation', kind: 'select', required: true, placeholder: 'Choose', options: opts(['Club or team', 'Academy or school', 'Record label or studio', 'Brand or sponsor', 'Media house', 'NGO or foundation', 'Other']) },
-      { key: 'contactRole', label: 'Your position there', kind: 'text', required: true, placeholder: 'For example: sporting director, A&R manager' },
+      { key: 'contactRole', label: 'Your position there', kind: 'text', required: true, placeholder: 'Example: sporting director, A&R manager' },
       { key: 'categories', label: 'Talents you look for', kind: 'multi', required: true, options: categoryOptions },
       { key: 'offers', label: 'What you can offer', kind: 'multi', required: true, options: opts(['Trials', 'Scholarships', 'Contracts', 'Sponsorship', 'Training', 'Media coverage', 'Other']) },
-      { key: 'link', label: 'Website', kind: 'url', required: false, placeholder: 'https://' },
+      { key: 'link', label: 'Website', kind: 'url', required: false, placeholder: 'Example: https://www.your-organisation.com' },
     ],
   },
 }

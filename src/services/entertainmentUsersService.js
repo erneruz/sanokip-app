@@ -100,6 +100,51 @@ export async function updateMyEntProfile(userId, fields, role) {
   return data
 }
 
+// ── Profile picture ──────────────────────────────────────────
+// Pictures live in the public bucket "ent-avatars", in a folder named with the user id.
+const AVATAR_BUCKET = 'ent-avatars'
+
+// "https://.../storage/v1/object/public/ent-avatars/<user>/avatar-123.jpg" -> "<user>/avatar-123.jpg"
+function avatarPathFromUrl(url) {
+  const marker = `/${AVATAR_BUCKET}/`
+  const i = url ? url.indexOf(marker) : -1
+  if (i === -1) return null
+  return decodeURIComponent(url.slice(i + marker.length).split('?')[0])
+}
+
+// remove an old picture file (never blocks the person if it fails)
+async function deleteStoredAvatar(url) {
+  const path = avatarPathFromUrl(url)
+  if (!path) return
+  try {
+    await supabase.storage.from(AVATAR_BUCKET).remove([path])
+  } catch (err) {
+    console.warn('Could not delete the old photo:', err)
+  }
+}
+
+// save a new picture (already cropped and made smaller) and point the profile to it
+export async function uploadMyAvatar(userId, blob, oldUrl) {
+  const path = `${userId}/avatar-${Date.now()}.jpg`
+  const { error: uploadError } = await supabase.storage
+    .from(AVATAR_BUCKET)
+    .upload(path, blob, { contentType: 'image/jpeg', cacheControl: '3600', upsert: false })
+  if (uploadError) throw uploadError
+
+  const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+  const { error } = await supabase.from('ent_profiles').update({ avatar_url: data.publicUrl }).eq('user_id', userId)
+  if (error) throw error
+
+  await deleteStoredAvatar(oldUrl)
+  return data.publicUrl
+}
+
+export async function removeMyAvatar(userId, oldUrl) {
+  const { error } = await supabase.from('ent_profiles').update({ avatar_url: null }).eq('user_id', userId)
+  if (error) throw error
+  await deleteStoredAvatar(oldUrl)
+}
+
 // ── For admins ───────────────────────────────────────────────
 
 // list with emails; the database only returns the roles YOU may manage

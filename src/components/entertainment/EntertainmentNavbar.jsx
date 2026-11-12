@@ -4,6 +4,8 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { entRoleLabel } from '../../services/entertainmentUsersService'
 import { TALENT_CATEGORIES } from '../../constants/talentCategories'
+import CategoryIcon from './CategoryIcon'
+import EntAvatar from './EntAvatar'
 import logoWhite from '../../assets/images/peakstar-logo-white-small.png'
 
 // every Entertainment address starts with this
@@ -174,84 +176,20 @@ function LogoutIcon(p) {
     </Svg>
   )
 }
+function PencilIcon(p) {
+  return (
+    <Svg {...p}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </Svg>
+  )
+}
 function ChevronIcon(p) {
   return (
     <Svg {...p}>
       <path d="m6 9 6 6 6-6" />
     </Svg>
   )
-}
-
-// one small icon for each talent category
-function CategoryIcon({ slug, size = 18 }) {
-  switch (slug) {
-    case 'music':
-      return (
-        <Svg size={size}>
-          <path d="M9 18V5l11-2v13" />
-          <circle cx="6" cy="18" r="3" />
-          <circle cx="17" cy="16" r="3" />
-        </Svg>
-      )
-    case 'movie':
-      return (
-        <Svg size={size}>
-          <rect x="3" y="8" width="18" height="13" rx="2" />
-          <path d="m3 8 3.5-5 3.5 5M10 8l3.5-5L17 8M13.5 8l3.5-5 4 5" />
-        </Svg>
-      )
-    case 'dance':
-      return (
-        <Svg size={size}>
-          <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z" />
-          <path d="M19 16v4M17 18h4" />
-        </Svg>
-      )
-    case 'football':
-      return (
-        <Svg size={size}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="m12 8 3.5 2.5-1.3 4.2H9.8L8.5 10.5 12 8Z" />
-          <path d="M12 3v5M20.5 9.5l-5 1M17.5 19l-3.3-4.3M6.5 19l3.3-4.3M3.5 9.5l5 1" />
-        </Svg>
-      )
-    case 'basketball':
-      return (
-        <Svg size={size}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M3 12h18M12 3v18M5.5 5.5c3 3 3 10 0 13M18.5 5.5c-3 3-3 10 0 13" />
-        </Svg>
-      )
-    case 'volleyball':
-      return (
-        <Svg size={size}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 3c0 6-3 9-9 9M12 3c2 3 5 5 8.5 5M20.5 15.5C15 15 11 17 9 21M5 18.5c3-4.5 8-6 15.5-3" />
-        </Svg>
-      )
-    case 'athletics':
-      return (
-        <Svg size={size}>
-          <circle cx="12" cy="14" r="7" />
-          <path d="M12 14v-4M9 2h6M12 2v3M18.5 6.5 20 5" />
-        </Svg>
-      )
-    case 'comedy':
-      return (
-        <Svg size={size}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M8 14.5c1 1.8 2.3 2.5 4 2.5s3-.7 4-2.5" />
-          <path d="M9 9.5h.01M15 9.5h.01" strokeWidth={3} />
-        </Svg>
-      )
-    default:
-      return (
-        <Svg size={size}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 8v8M8 12h8" />
-        </Svg>
-      )
-  }
 }
 
 /* ---------- the links ---------- */
@@ -433,12 +371,9 @@ export default function EntertainmentNavbar() {
     ? `${entRoleLabel(entProfile.role)}${entProfile.status === 'pending' ? ' · Waiting for approval' : ''}`
     : 'Join Entertainment'
 
+  // the profile picture (or the first letters of the name when there is no photo)
   const avatar = (size) => (
-    <span className={`${size} shrink-0 overflow-hidden rounded-full bg-[#9FD8C9]/20 ring-2 ring-[#9FD8C9]/70`}>
-      <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#9FD8C9]">
-        {displayName?.[0]?.toUpperCase() ?? '?'}
-      </span>
-    </span>
+    <EntAvatar name={displayName} src={entProfile?.avatar_url} size={size} textClass="text-xs" />
   )
 
   return (
@@ -698,7 +633,15 @@ export default function EntertainmentNavbar() {
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 transition hover:bg-white/10 hover:text-white"
                   >
                     <UserIcon size={16} className="text-[#9FD8C9]" />
-                    My account
+                    My profile
+                  </Link>
+                  <Link
+                    to={`${ENT}/account/edit`}
+                    role="menuitem"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <PencilIcon size={16} className="text-[#9FD8C9]" />
+                    Edit profile
                   </Link>
                   {adminLink && (
                     <Link
@@ -833,7 +776,11 @@ export default function EntertainmentNavbar() {
                   </div>
                   <Link to={`${ENT}/account`} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 hover:bg-white/10">
                     <UserIcon size={16} className="text-[#9FD8C9]" />
-                    My account
+                    My profile
+                  </Link>
+                  <Link to={`${ENT}/account/edit`} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/85 hover:bg-white/10">
+                    <PencilIcon size={16} className="text-[#9FD8C9]" />
+                    Edit profile
                   </Link>
                   {adminLink && (
                     <Link
@@ -881,61 +828,6 @@ export default function EntertainmentNavbar() {
           </div>
         </div>
       )}
-
-
-
-
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
       {/* line that grows as you scroll down the page */}
       <div aria-hidden="true" className="absolute bottom-0 left-0 h-[2px] w-full bg-white/5">

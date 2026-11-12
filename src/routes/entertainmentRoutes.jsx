@@ -8,6 +8,9 @@ import EntertainmentPlaceholder from '../pages/entertainment/EntertainmentPlaceh
 import EntertainmentLogin from '../pages/entertainment/EntertainmentLogin'
 import EntertainmentRegister from '../pages/entertainment/EntertainmentRegister'
 import EntertainmentAccount from '../pages/entertainment/EntertainmentAccount'
+import ProfileView from '../pages/entertainment/account/ProfileView'
+import ProfileEdit from '../pages/entertainment/account/ProfileEdit'
+import AccountSecurity from '../pages/entertainment/account/AccountSecurity'
 import NotFound from '../pages/NotFound'
 
 // Pages that are still "coming soon". Each line is one page.
@@ -98,7 +101,13 @@ export const entertainmentRoutes = (
     {/* accounts of Peak Star Entertainment (separate from Engineering) */}
     <Route path="login" element={<EntertainmentLogin />} />
     <Route path="register" element={<EntertainmentRegister />} />
-    <Route path="account" element={<EntertainmentAccount />} />
+
+    {/* My profile: three pages (review, edit, security) inside one frame */}
+    <Route path="account" element={<EntertainmentAccount />}>
+      <Route index element={<ProfileView />} />
+      <Route path="edit" element={<ProfileEdit />} />
+      <Route path="security" element={<AccountSecurity />} />
+    </Route>
 
     {placeholderPages.map((page) => (
       <Route

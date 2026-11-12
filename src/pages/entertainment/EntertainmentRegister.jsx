@@ -1,11 +1,13 @@
 // src/pages/entertainment/EntertainmentRegister.jsx
 // Sign-up for Peak Star Entertainment. The person chooses how they join
-// (visitor, talent, parent/guardian, scout, talent manager, partner) and,
-// except for visitors, answers the questions of that kind of member.
+// (visitor, talent, parent/guardian, scout, talent manager, partner).
 // Scouts, talent managers and partners wait for approval.
-import { useState } from 'react'
+// After "Create Account" the person is asked to confirm the email, then goes
+// to the Login page. Nobody is signed in by the sign-up itself.
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../supabase'
 import {
   AuthField,
   AuthButton,
@@ -14,19 +16,18 @@ import {
   IconLock,
   IconUser,
   IconTag,
-  IconCheck,
 } from '../../components/AuthShell'
 import EntAuthFrame from '../../components/entertainment/EntAuthFrame'
 import EntRolePicker from '../../components/entertainment/EntRolePicker'
 import CountryPhoneInput from '../../components/entertainment/CountryPhoneInput'
 import LocationFields from '../../components/entertainment/LocationFields'
 import RoleDetailsFields from '../../components/entertainment/RoleDetailsFields'
+import { cleanDetails, detailsProblem } from '../../constants/entRoleDetails'
 import { ENT_ROLES } from '../../services/entertainmentUsersService'
 import { phoneProblem } from '../../constants/countries'
-import { cleanDetails, detailsProblem } from '../../constants/entRoleDetails'
 
 export default function EntertainmentRegister() {
-  const { signUp } = useAuth()
+  const { signUp, signOut } = useAuth()
 
   const [role, setRole] = useState('talent')
   const [firstName, setFirstName] = useState('')
@@ -42,12 +43,42 @@ export default function EntertainmentRegister() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [existing, setExisting] = useState(false) // this email already has a Peak Star login
+  const [cooldown, setCooldown] = useState(0) // seconds before the confirmation email can be sent again
+  const [resendNote, setResendNote] = useState(null) // { type: 'ok' | 'error', text }
 
   const chosen = ENT_ROLES.find((r) => r.value === role)
   const showOrg = role === 'scout' || role === 'partner' || role === 'manager'
   const orgRequired = role === 'scout' || role === 'partner'
   const orgLabel =
     role === 'partner' ? 'Organisation name' : role === 'manager' ? 'Agency or company (optional)' : 'Team, club or organisation'
+  const orgPlaceholder =
+    role === 'partner'
+      ? 'Example: Kigali Football Academy'
+      : role === 'manager'
+        ? 'Example: Kigali Talent Agency'
+        : 'Example: APR FC Youth Team'
+
+  // count down the "send again" button
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [cooldown])
+
+  async function resendEmail() {
+    setResendNote(null)
+    setCooldown(45)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/entertainment/login` },
+    })
+    setResendNote(
+      error
+        ? { type: 'error', text: 'We could not send it again. Please wait a minute and try again.' }
+        : { type: 'ok', text: `We sent a new link to ${email}.` },
+    )
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -105,6 +136,11 @@ export default function EntertainmentRegister() {
       return
     }
 
+    // If the project does not ask for email confirmation, the sign-up logs the person in.
+    // Everybody must pass through the Login page, so we close that session here.
+    if (data?.session) await signOut()
+
+    setCooldown(45)
     setDone(true)
     setSubmitting(false)
   }
@@ -119,26 +155,72 @@ export default function EntertainmentRegister() {
       {done ? (
         <div className="mx-auto max-w-md text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E6F1EE] text-[#1B5E4F] ring-8 ring-[#E6F1EE]/60">
-            <IconCheck />
+            <IconMail />
           </div>
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-[#0F3D32]">Check your email</h2>
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-[#0F3D32]">Confirm your email</h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-500">
-            We've sent a confirmation link to <strong className="text-gray-800">{email}</strong>. Confirm it, then sign in.
+            We sent a confirmation link to <strong className="text-gray-800">{email}</strong>. Open your email and tap the
+            link to confirm that it is yours.
           </p>
+
+          {/* the three steps */}
+          <ol className="mt-6 space-y-2 text-left">
+            {[
+              { n: 1, title: 'Confirm your email', text: 'Open the message we sent you and tap the link.', now: true },
+              { n: 2, title: 'Sign in', text: 'Use your email and password on the Sign in page.' },
+              { n: 3, title: 'Your profile', text: 'You will land on your profile, ready to use.' },
+            ].map((step) => (
+              <li
+                key={step.n}
+                className={
+                  'flex items-start gap-3 rounded-xl px-3 py-2.5 ' +
+                  (step.now ? 'bg-[#E6F1EE] ring-1 ring-[#9FD8C9]' : 'bg-[#F1F6F4]')
+                }
+              >
+                <span
+                  className={
+                    'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ' +
+                    (step.now ? 'bg-[#1B5E4F] text-white' : 'bg-white text-[#1B5E4F] ring-1 ring-[#9FD8C9]')
+                  }
+                >
+                  {step.n}
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-[#0F3D32]">{step.title}</span>
+                  <span className="block text-xs text-gray-500">{step.text}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+
           {chosen?.needsApproval && (
-            <p className="mt-3 rounded-lg border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-2 text-xs text-[#154A3F]">
+            <p className="mt-4 rounded-lg border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-2 text-xs text-[#154A3F]">
               As a {chosen.label.toLowerCase()}, your account is reviewed by our team before it becomes active. We will let you know.
             </p>
           )}
-          <p className="mt-3 rounded-lg bg-[#F1F6F4] px-3 py-2 text-xs text-gray-500">
-            Can't see it? Look in your spam or junk folder.
-          </p>
+
           <Link
             to="/entertainment/login"
-            className="mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] py-3 text-sm font-semibold text-white shadow-md shadow-[#1B5E4F]/25 transition hover:from-[#0D3A31] hover:to-[#2F9678]"
+            state={{ registered: true }}
+            className="mt-6 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#0F3D32] to-[#1B5E4F] py-3 text-sm font-semibold text-white shadow-md shadow-[#1B5E4F]/25 transition hover:from-[#0D3A31] hover:to-[#2F9678]"
           >
-            Go to Sign In
+            I confirmed my email, go to Sign in
           </Link>
+
+          <div className="mt-4 rounded-lg bg-[#F1F6F4] px-3 py-3 text-xs text-gray-500">
+            <p>Can't see it? Look in your spam or junk folder.</p>
+            <button
+              type="button"
+              onClick={resendEmail}
+              disabled={cooldown > 0}
+              className="mt-1.5 cursor-pointer font-semibold text-[#1B5E4F] underline underline-offset-2 hover:text-[#0F3D32] disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline"
+            >
+              {cooldown > 0 ? `Send the email again (wait ${cooldown}s)` : 'Send the email again'}
+            </button>
+            {resendNote && (
+              <p className={'mt-1.5 ' + (resendNote.type === 'ok' ? 'text-[#154A3F]' : 'text-red-600')}>{resendNote.text}</p>
+            )}
+          </div>
         </div>
       ) : (
         <>
@@ -167,6 +249,7 @@ export default function EntertainmentRegister() {
                 icon={<IconUser />}
                 type="text"
                 required
+                placeholder="Example: Aline"
                 autoComplete="given-name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -177,6 +260,7 @@ export default function EntertainmentRegister() {
                 icon={<IconUser />}
                 type="text"
                 required
+                placeholder="Example: Uwase"
                 autoComplete="family-name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -193,7 +277,7 @@ export default function EntertainmentRegister() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="Example: aline@gmail.com"
               />
               <CountryPhoneInput id="ent-phone" value={phone} onChange={setPhone} required />
             </div>
@@ -207,6 +291,7 @@ export default function EntertainmentRegister() {
                 icon={<IconTag />}
                 type="text"
                 required={orgRequired}
+                placeholder={orgPlaceholder}
                 value={organization}
                 onChange={(e) => setOrganization(e.target.value)}
               />
@@ -225,7 +310,7 @@ export default function EntertainmentRegister() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="Choose a password of at least 6 characters"
               right={<PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />}
             />
 

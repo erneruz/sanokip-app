@@ -53,18 +53,18 @@ export default function LocationFields({ value, onChange, idPrefix = 'loc', requ
         <Label htmlFor={`${idPrefix}-country`}>Country</Label>
         <SelectBox>
           <select
-            id={`${idPrefix}-country`}
-            required={required}
-            value={country}
-            onChange={(e) => set({ country: e.target.value, province: '', district: '' })}
-            className={fieldClass}
-          >
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          id={`${idPrefix}-country`}
+          required={required}
+          value={country}
+          onChange={(e) => set({ country: e.target.value, province: '', district: '' })}
+          className={fieldClass}
+        >
+          {COUNTRIES.map((c) => (
+            <option key={c.code} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
         </SelectBox>
       </div>
 
@@ -75,19 +75,19 @@ export default function LocationFields({ value, onChange, idPrefix = 'loc', requ
         {isRwanda ? (
           <SelectBox>
             <select
-              id={`${idPrefix}-province`}
-              required={required}
-              value={province}
-              onChange={(e) => set({ province: e.target.value, district: '' })}
-              className={fieldClass}
-            >
-              <option value="">Choose province</option>
-              {RWANDA_PROVINCES.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
+            id={`${idPrefix}-province`}
+            required={required}
+            value={province}
+            onChange={(e) => set({ province: e.target.value, district: '' })}
+            className={fieldClass}
+          >
+            <option value="">Choose your province</option>
+            {RWANDA_PROVINCES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
           </SelectBox>
         ) : (
           <input
@@ -95,6 +95,7 @@ export default function LocationFields({ value, onChange, idPrefix = 'loc', requ
             required={required}
             value={province}
             onChange={(e) => set({ province: e.target.value })}
+            placeholder="Example: Nairobi County"
             className={fieldClass}
           />
         )}
@@ -107,20 +108,20 @@ export default function LocationFields({ value, onChange, idPrefix = 'loc', requ
         {isRwanda ? (
           <SelectBox>
             <select
-              id={`${idPrefix}-district`}
-              required={required}
-              value={district}
-              disabled={!province}
-              onChange={(e) => set({ district: e.target.value })}
-              className={fieldClass}
-            >
-              <option value="">{province ? 'Choose district' : 'Choose province first'}</option>
-              {districts.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
+            id={`${idPrefix}-district`}
+            required={required}
+            value={district}
+            disabled={!province}
+            onChange={(e) => set({ district: e.target.value })}
+            className={fieldClass}
+          >
+            <option value="">{province ? 'Choose your district' : 'Choose a province first'}</option>
+            {districts.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
           </SelectBox>
         ) : (
           <input
@@ -128,6 +129,7 @@ export default function LocationFields({ value, onChange, idPrefix = 'loc', requ
             required={required}
             value={district}
             onChange={(e) => set({ district: e.target.value })}
+            placeholder="Example: Westlands"
             className={fieldClass}
           />
         )}

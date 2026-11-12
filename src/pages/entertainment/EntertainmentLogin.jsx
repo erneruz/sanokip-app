@@ -1,7 +1,7 @@
 // src/pages/entertainment/EntertainmentLogin.jsx
 // Sign-in for Peak Star Entertainment (all kinds of users and staff).
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { AuthField, AuthButton, PasswordToggle, IconMail, IconLock } from '../../components/AuthShell'
 import EntAuthFrame from '../../components/entertainment/EntAuthFrame'
@@ -9,6 +9,8 @@ import EntAuthFrame from '../../components/entertainment/EntAuthFrame'
 export default function EntertainmentLogin() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const justRegistered = !!location.state?.registered // coming from the sign-up page
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,6 +44,15 @@ export default function EntertainmentLogin() {
       <h2 className="text-2xl font-bold tracking-tight text-[#0F3D32]">Sign in</h2>
       <p className="mt-1 text-sm text-gray-500">Enter your details to continue.</p>
 
+      {justRegistered && (
+        <p className="mt-4 flex items-start gap-2 rounded-lg border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-2.5 text-sm text-[#154A3F]">
+          <span aria-hidden="true">✓</span>
+          <span>
+            Account created. Confirm your email first, then sign in below with the email and password you just chose.
+          </span>
+        </p>
+      )}
+
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <AuthField
           id="entlogin-email"
@@ -52,7 +63,7 @@ export default function EntertainmentLogin() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder="The email you registered with"
         />
 
         <AuthField
@@ -64,7 +75,7 @@ export default function EntertainmentLogin() {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
+          placeholder="Your password"
           right={<PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />}
         />
 
