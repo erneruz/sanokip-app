@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
+import BioEditor from '../../../components/entertainment/BioEditor'
 import CountryPhoneInput from '../../../components/entertainment/CountryPhoneInput'
 import LocationFields from '../../../components/entertainment/LocationFields'
 import RoleDetailsFields from '../../../components/entertainment/RoleDetailsFields'
@@ -13,8 +14,6 @@ import { entRoleLabel, updateMyEntProfile } from '../../../services/entertainmen
 import { phoneProblem } from '../../../constants/countries'
 import { roleHasDetails, detailsProblem } from '../../../constants/entRoleDetails'
 import { Card, Field, Icon, ROLE_ICON, inputClass } from './accountUi'
-
-const BIO_MAX = 500
 
 export default function ProfileEdit() {
   const { user, entProfile, refreshAccount } = useAuth()
@@ -60,6 +59,7 @@ export default function ProfileEdit() {
       setError(detailsError)
       return
     }
+
     const socialError = socialsProblem(form.socials)
     if (socialError) {
       setError(socialError)
@@ -80,7 +80,8 @@ export default function ProfileEdit() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 pb-24">
-      <Card icon="user" title="Personal details" text="This is how scouts, partners and our team see you." delay={50}>
+      <div className="space-y-5">
+      <Card icon="user" title="Personal details" text="This is how scouts, partners and our team see you." delay={90}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Full name" htmlFor="edit-name">
             <input
@@ -106,21 +107,19 @@ export default function ProfileEdit() {
             label="About you"
             optional
             htmlFor="edit-bio"
-            hint={`${form.bio.length} / ${BIO_MAX}. Two or three sentences are enough.`}
+            hint="Write as much as you like. Press Enter twice for a new paragraph. Select a word and press Bold to make it stand out."
           >
-            <textarea
+            <BioEditor
               id="edit-bio"
-              className={inputClass + ' min-h-[120px] resize-y'}
               value={form.bio}
-              onChange={set('bio')}
-              maxLength={BIO_MAX}
+              onChange={(bio) => setForm((f) => ({ ...f, bio }))}
               placeholder="Who are you, what do you do, and what do you want to achieve? Example: I am a 17-year-old midfielder from Huye. I want a place in a national academy."
             />
           </Field>
         </div>
       </Card>
 
-      <Card icon="pin" title="Where you are" text="Choose your country, then your province and district." delay={100}>
+      <Card icon="pin" title="Where you are" text="Choose your country, then your province and district." delay={140}>
         <LocationFields
           idPrefix="edit"
           value={{ country: form.country, province: form.province, district: form.district }}
@@ -146,12 +145,7 @@ export default function ProfileEdit() {
         )}
       </Card>
 
-      <Card
-        icon="link"
-        title="Social media"
-        text="Add the places where people can follow your work. Paste a link or type your @name."
-        delay={150}
-      >
+      <Card icon="link" title="Social media" text="Add the places where people can follow your work. Paste a link or type your @name." delay={170}>
         <SocialLinksFields
           idPrefix="edit-soc"
           value={form.socials}
@@ -160,7 +154,7 @@ export default function ProfileEdit() {
       </Card>
 
       {roleHasDetails(role) && (
-        <div className="acc-rise" style={{ animationDelay: '200ms' }}>
+        <div className="acc-rise" style={{ animationDelay: '190ms' }}>
           <RoleDetailsFields
             role={role}
             value={form.details}
@@ -175,6 +169,8 @@ export default function ProfileEdit() {
         You joined as <strong className="text-[#0F3D32]">{entRoleLabel(role)}</strong>. The kind of member can only be
         changed by our team. Changes here only affect Peak Star Entertainment.
       </p>
+
+      </div>
 
       {/* save bar */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#CDEBE2] bg-white/95 backdrop-blur">

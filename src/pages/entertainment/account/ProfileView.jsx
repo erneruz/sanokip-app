@@ -4,8 +4,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
-import CategoryIcon from '../../../components/entertainment/CategoryIcon'
 import { CHOOSE_AVATAR_EVENT } from '../../../components/entertainment/AvatarCameraButton'
+import RichText from '../../../components/entertainment/RichText'
 import SocialIcon from '../../../components/entertainment/SocialIcon'
 import { socialList } from '../../../constants/socialLinks'
 import { entRoleLabel } from '../../../services/entertainmentUsersService'
@@ -50,46 +50,25 @@ const DETAIL_ICON = {
   offers: 'check',
 }
 
-// the short "at a glance" chips under the title of the information card
-function highlights(role, d = {}) {
-  const out = []
-  const cat = (slug) => getTalentCategory(slug)
-  const push = (slug) => {
-    const c = cat(slug)
-    if (c) out.push({ slug, text: c.label })
-  }
-  if (role === 'talent') {
-    push(d.category)
-    if (d.specialty) out.push({ icon: 'star', text: d.specialty })
-    if (d.level) out.push({ icon: 'trophy', text: d.level })
-  } else if (role === 'guardian') {
-    push(d.childCategory)
-    if (d.childSpecialty) out.push({ icon: 'star', text: d.childSpecialty })
-  } else if (role === 'scout' || role === 'manager' || role === 'partner') {
-    if (d.orgType) out.push({ icon: 'building', text: d.orgType })
-    ;(d.categories ?? []).forEach(push)
-  }
-  return out
-}
-
 // the "at a glance" tiles under the header
 function glance(role, d = {}, profile) {
   const cat = (slug) => getTalentCategory(slug)?.label
-  const tiles = [{ icon: ROLE_ICON[role] ?? 'user', label: 'Member', value: entRoleLabel(role) }]
+  // `keys` = the detail lines a tile already shows, so they are not repeated lower on the page
+  const tiles = [{ icon: ROLE_ICON[role] ?? 'user', label: 'Member', value: entRoleLabel(role), keys: [] }]
   if (role === 'talent') {
-    if (d.category) tiles.push({ icon: 'sparkle', label: 'Category', value: cat(d.category) })
-    if (d.specialty) tiles.push({ icon: 'star', label: 'Position', value: d.specialty })
-    if (d.level) tiles.push({ icon: 'trophy', label: 'Level', value: d.level })
+    if (d.category) tiles.push({ icon: 'sparkle', label: 'Category', value: cat(d.category), keys: ['category'] })
+    if (d.specialty) tiles.push({ icon: 'star', label: 'Position', value: d.specialty, keys: ['specialty'] })
+    if (d.level) tiles.push({ icon: 'trophy', label: 'Level', value: d.level, keys: ['level'] })
   } else if (role === 'guardian') {
-    if (d.childCategory) tiles.push({ icon: 'sparkle', label: 'Child follows', value: cat(d.childCategory) })
-    if (d.childSpecialty) tiles.push({ icon: 'star', label: 'Position', value: d.childSpecialty })
+    if (d.childCategory) tiles.push({ icon: 'sparkle', label: 'Child follows', value: cat(d.childCategory), keys: ['childCategory'] })
+    if (d.childSpecialty) tiles.push({ icon: 'star', label: 'Position', value: d.childSpecialty, keys: ['childSpecialty'] })
   } else if (role !== 'visitor') {
-    if (d.orgType) tiles.push({ icon: 'building', label: 'Organisation', value: d.orgType })
+    if (d.orgType) tiles.push({ icon: 'building', label: 'Organisation', value: d.orgType, keys: ['orgType'] })
     const names = (d.categories ?? []).map(cat).filter(Boolean)
-    if (names.length) tiles.push({ icon: 'sparkle', label: 'Focus', value: names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ') })
-    if (d.experience) tiles.push({ icon: 'clock', label: 'Experience', value: d.experience })
+    if (names.length) tiles.push({ icon: 'sparkle', label: 'Focus', value: names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', '), keys: ['categories'] })
+    if (d.experience) tiles.push({ icon: 'clock', label: 'Experience', value: d.experience, keys: ['experience'] })
   }
-  if (tiles.length < 4 && profile.district) tiles.push({ icon: 'pin', label: 'Based in', value: profile.district })
+  if (tiles.length < 4 && profile.district) tiles.push({ icon: 'pin', label: 'Based in', value: profile.district, keys: [] })
   return tiles.slice(0, 4)
 }
 
@@ -121,6 +100,14 @@ export default function ProfileView() {
   const role = entProfile.role
   const details = entProfile.details ?? {}
   const bio = (entProfile.bio ?? '').trim()
+  const firstName = (entProfile.full_name ?? '').trim().split(/\s+/)[0]
+  const aboutTitle = firstName ? (
+    <>
+      <span className="font-medium">About</span> <span className="font-extrabold">{firstName.toUpperCase()}</span>
+    </>
+  ) : (
+    'About'
+  )
   const socials = socialList(entProfile.socials)
 
   // profile strength
@@ -143,9 +130,11 @@ export default function ProfileView() {
   const percent = Math.round((doneCount / checks.length) * 100)
   const missing = checks.filter((c) => !c.done)
 
-  const chips = highlights(role, details)
+  const tiles = glance(role, details, entProfile)
+  const shownKeys = new Set(tiles.flatMap((t) => t.keys))
   const rows = describeDetails(role, details)
-  const place = [entProfile.country, entProfile.province, entProfile.district].filter(Boolean).join(' · ')
+  const moreRows = rows.filter((r) => !shownKeys.has(r.key)) // only what the tiles above do not show
+  const place = [entProfile.district, entProfile.province, entProfile.country].filter(Boolean).join(', ')
 
   return (
     <div className="space-y-5">
@@ -184,7 +173,7 @@ export default function ProfileView() {
 
       {/* at a glance */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {glance(role, details, entProfile).map((t, i) => (
+        {tiles.map((t, i) => (
           <div
             key={t.label}
             className="acc-rise flex items-center gap-3 rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-[#CDEBE2]"
@@ -201,85 +190,85 @@ export default function ProfileView() {
         ))}
       </div>
 
-      {/* profile strength */}
-      <Card icon="sparkle" title="Profile strength" text="A complete profile gets noticed faster." delay={90}>
-        <div className="flex flex-col items-center gap-5 sm:flex-row">
-          <div className="relative size-24 shrink-0">
-            <svg viewBox="0 0 100 100" className="size-24 -rotate-90">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#E6F1EE" strokeWidth="10" />
-              <circle
-                cx="50"
-                cy="50"
-                r="42"
-                fill="none"
-                stroke="url(#acc-ring)"
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 42}
-                strokeDashoffset={2 * Math.PI * 42 * (1 - (grown ? percent : 0) / 100)}
-                style={{ transition: 'stroke-dashoffset 1s ease-out' }}
-              />
-              <defs>
-                <linearGradient id="acc-ring" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#1B5E4F" />
-                  <stop offset="100%" stopColor="#9FD8C9" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-[#0F3D32]">{percent}%</span>
-          </div>
-
-          <div className="min-w-0 flex-1 text-center sm:text-left">
-            {missing.length === 0 ? (
-              <p className="inline-flex items-center gap-2 text-sm font-medium text-[#1B5E4F]">
-                <Icon name="check" size={16} strokeWidth={2.8} />
-                Your profile is complete. Well done!
-              </p>
-            ) : (
-              <>
-                <p className="text-sm text-gray-600">
-                  {doneCount} of {checks.length} steps done. Finish these to reach 100%:
-                </p>
-                <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-                  {missing.map((m) => {
-                    const chipClass =
-                      'group inline-flex cursor-pointer items-center gap-2 rounded-full border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-1.5 text-xs font-medium text-[#154A3F] transition hover:bg-[#E6F1EE] active:scale-95'
-                    const inner = (
-                      <>
-                        <Icon name={m.icon} size={14} className="text-[#2F9678]" />
-                        {m.text}
-                        <Icon name="arrow" size={12} className="transition-transform group-hover:translate-x-0.5" />
-                      </>
-                    )
-                    // the photo is chosen with the camera button on the photo in the header
-                    return m.key === 'photo' ? (
-                      <button
-                        key={m.key}
-                        type="button"
-                        onClick={() => window.dispatchEvent(new Event(CHOOSE_AVATAR_EVENT))}
-                        className={chipClass}
-                      >
-                        {inner}
-                      </button>
-                    ) : (
-                      <Link key={m.key} to={EDIT} className={chipClass}>
-                        {inner}
-                      </Link>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+      {/* profile strength: a slim line when complete, the full meter while something is missing */}
+      {missing.length === 0 ? (
+        <div
+          className="acc-rise flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-[#CDEBE2]"
+          style={{ animationDelay: '90ms' }}
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#1B5E4F] text-white">
+            <Icon name="check" size={16} strokeWidth={2.8} />
+          </span>
+          <p className="text-sm text-gray-500">
+            <span className="font-semibold text-[#0F3D32]">Profile strength 100%.</span> Your profile is complete. Well done!
+          </p>
         </div>
-      </Card>
+      ) : (
+        <Card icon="sparkle" title="Profile strength" text="A complete profile gets noticed faster." delay={90}>
+          <div className="flex flex-col items-center gap-5 sm:flex-row">
+            <div className="relative size-24 shrink-0">
+              <svg viewBox="0 0 100 100" className="size-24 -rotate-90">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#E6F1EE" strokeWidth="10" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  fill="none"
+                  stroke="url(#acc-ring)"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 42}
+                  strokeDashoffset={2 * Math.PI * 42 * (1 - (grown ? percent : 0) / 100)}
+                  style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                />
+                <defs>
+                  <linearGradient id="acc-ring" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#1B5E4F" />
+                    <stop offset="100%" stopColor="#9FD8C9" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-[#0F3D32]">{percent}%</span>
+            </div>
+
+            <div className="min-w-0 flex-1 text-center sm:text-left">
+              <p className="text-sm text-gray-600">
+                {doneCount} of {checks.length} steps done. Finish these to reach 100%:
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                {missing.map((m) => {
+                  const chipClass =
+                    'group inline-flex cursor-pointer items-center gap-2 rounded-full border border-dashed border-[#2F9678] bg-[#F1F6F4] px-3 py-1.5 text-xs font-medium text-[#154A3F] transition hover:bg-[#E6F1EE] active:scale-95'
+                  const inner = (
+                    <>
+                      <Icon name={m.icon} size={14} className="text-[#2F9678]" />
+                      {m.text}
+                      <Icon name="arrow" size={12} className="transition-transform group-hover:translate-x-0.5" />
+                    </>
+                  )
+                  // the photo is chosen with the camera button on the photo in the header
+                  return m.key === 'photo' ? (
+                    <button key={m.key} type="button" onClick={() => window.dispatchEvent(new Event(CHOOSE_AVATAR_EVENT))} className={chipClass}>
+                      {inner}
+                    </button>
+                  ) : (
+                    <Link key={m.key} to={EDIT} className={chipClass}>
+                      {inner}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* left: about + information */}
         <div className="space-y-5 lg:col-span-2">
-          <Card icon="text" title="About" delay={110}>
+          <Card icon="text" title={aboutTitle} delay={110}>
             {bio ? (
-              <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">{bio}</p>
+              <RichText text={bio} collapsible />
             ) : (
               <div className="rounded-xl border border-dashed border-gray-300 bg-[#F8FBFA] p-4 text-center">
                 <p className="text-sm text-gray-500">You have not written anything about yourself yet.</p>
@@ -294,26 +283,13 @@ export default function ProfileView() {
             )}
           </Card>
 
-          {roleHasDetails(role) && (
+          {roleHasDetails(role) && (rows.length === 0 || moreRows.length > 0) && (
             <Card
               icon={role === 'talent' || role === 'guardian' ? 'star' : 'briefcase'}
               title={`${entRoleLabel(role)} information`}
+              text="More about you. Your main details are shown at the top."
               delay={160}
             >
-              {chips.length > 0 && (
-                <div className="mb-5 flex flex-wrap gap-2">
-                  {chips.map((c, i) => (
-                    <span
-                      key={`${c.text}-${i}`}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#E6F1EE] to-[#CDEBE2] px-3 py-1.5 text-xs font-semibold text-[#0F3D32]"
-                    >
-                      {c.slug ? <CategoryIcon slug={c.slug} size={14} /> : <Icon name={c.icon} size={14} />}
-                      {c.text}
-                    </span>
-                  ))}
-                </div>
-              )}
-
               {rows.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-300 bg-[#F8FBFA] p-4 text-center">
                   <p className="text-sm text-gray-500">No information added yet.</p>
@@ -324,7 +300,7 @@ export default function ProfileView() {
                 </div>
               ) : (
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                  {rows.map((r) => (
+                  {moreRows.map((r) => (
                     <Row key={r.key} icon={DETAIL_ICON[r.key] ?? 'info'} label={r.label}>
                       {r.link ? (
                         <a href={r.value} target="_blank" rel="noopener noreferrer" className="break-all text-[#1B5E4F] hover:underline">
@@ -341,7 +317,7 @@ export default function ProfileView() {
           )}
         </div>
 
-        {/* right: contact + social + membership + staff */}
+        {/* right: contact + social + staff */}
         <div className="space-y-5">
           <Card icon="mail" title="Contact" delay={130}>
             <div className="space-y-4">
@@ -404,19 +380,6 @@ export default function ProfileView() {
             )}
           </Card>
 
-          <Card icon="shield" title="Membership" delay={180}>
-            <div className="space-y-4">
-              <Row icon={role === 'visitor' ? 'eye' : 'user'} label="Kind of member">
-                {entRoleLabel(role)}
-              </Row>
-              <Row icon="calendar" label="Joined">
-                {entProfile.created_at
-                  ? new Date(entProfile.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-                  : '—'}
-              </Row>
-            </div>
-          </Card>
-
           {staffRoles.length > 0 && (
             <Card icon="key" title="Your staff roles" delay={220}>
               <div className="flex flex-wrap gap-2">
@@ -439,6 +402,7 @@ export default function ProfileView() {
           )}
         </div>
       </div>
+
     </div>
   )
 }
