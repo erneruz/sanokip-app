@@ -1,6 +1,6 @@
 // src/utils/cropImage.js
-// Cut the middle of a picture to a given shape and size, and save it as a
-// smaller JPEG (done in the browser, before the upload).
+// Cut a part of a picture to a given size and save it as a smaller JPEG
+// (done in the browser, before the upload).
 
 function loadImage(file) {
   return new Promise((resolve, reject) => {
@@ -18,20 +18,31 @@ function loadImage(file) {
   })
 }
 
-// width x height in pixels, for example 1920 x 640 for a cover
-export async function cropToJpeg(file, width, height, quality = 0.82) {
-  const img = await loadImage(file)
-  const scale = Math.max(width / img.width, height / img.height)
-  const sw = width / scale // the part of the picture that is kept
-  const sh = height / scale
+function toJpeg(canvas, quality) {
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not prepare the picture.'))), 'image/jpeg', quality),
+  )
+}
+
+// Cut the part you choose: (sx, sy, sw, sh) are in pixels of the ORIGINAL picture.
+// `img` is a loaded <img> element. The result is width x height pixels.
+export async function cropRegionToJpeg(img, sx, sy, sw, sh, width, height, quality = 0.82) {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')
   ctx.fillStyle = '#0F3D32'
   ctx.fillRect(0, 0, width, height)
-  ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, width, height)
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not prepare the picture.'))), 'image/jpeg', quality),
-  )
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height)
+  return toJpeg(canvas, quality)
+}
+
+// Cut the middle of a picture (no choosing), width x height in pixels.
+export async function cropToJpeg(file, width, height, quality = 0.82) {
+  const img = await loadImage(file)
+  const scale = Math.max(width / img.width, height / img.height)
+  const sw = width / scale
+  const sh = height / scale
+  return cropRegionToJpeg(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, width, height, quality)
 }

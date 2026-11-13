@@ -1,12 +1,11 @@
 // src/components/entertainment/CoverCameraButton.jsx
-// The "Cover" button in the corner of the profile cover. Choose a picture and it
-// becomes the background of the green cover. The picture is cut to the cover
-// shape and made smaller in the browser, then saved at once.
+// The "Cover" button in the corner of the profile cover. Choose a picture, then drag it
+// to the position you like (see CoverEditor.jsx); it is saved as the cover background.
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { uploadMyCover, removeMyCover } from '../../services/entertainmentUsersService'
-import { cropToJpeg } from '../../utils/cropImage'
 import { Icon } from '../../pages/entertainment/account/accountUi'
+import CoverEditor from './CoverEditor'
 
 const MAX_FILE = 15 * 1024 * 1024 // 15 MB before it is made smaller
 
@@ -16,6 +15,8 @@ export default function CoverCameraButton() {
   const wrapRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [picked, setPicked] = useState(null) // the chosen file, while the person positions it
+  const [editorError, setEditorError] = useState('')
   const [message, setMessage] = useState(null) // { type: 'ok' | 'error', text }
 
   const hasCover = !!entProfile?.cover_url
@@ -41,7 +42,9 @@ export default function CoverCameraButton() {
     return () => clearTimeout(t)
   }, [message])
 
-  async function handleFile(file) {
+  // a file was chosen: check it, then open the positioning window
+  function handleFile(file) {
+    if (inputRef.current) inputRef.current.value = ''
     if (!file) return
     setMessage(null)
     if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
@@ -52,18 +55,24 @@ export default function CoverCameraButton() {
       setMessage({ type: 'error', text: 'This picture is too big. Please choose one under 15 MB.' })
       return
     }
+    setEditorError('')
+    setPicked(file)
+  }
+
+  // "Save cover" in the positioning window: the picture is already cut to the chosen place
+  async function saveCover(blob) {
     setBusy(true)
+    setEditorError('')
     try {
-      const blob = await cropToJpeg(file, 1920, 640)
       await uploadMyCover(user.id, blob, entProfile?.cover_url)
       await refreshAccount()
+      setPicked(null)
       setMessage({ type: 'ok', text: 'Your cover is saved.' })
     } catch (err) {
       console.error('Could not save the cover:', err)
-      setMessage({ type: 'error', text: 'Could not save the cover. Please try again.' })
+      setEditorError('Could not save the cover. Please try again.')
     } finally {
       setBusy(false)
-      if (inputRef.current) inputRef.current.value = ''
     }
   }
 
@@ -95,7 +104,7 @@ export default function CoverCameraButton() {
         aria-expanded={open}
         className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-black/35 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-black/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 sm:px-3.5"
       >
-        {busy ? (
+        {busy && !picked ? (
           <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
         ) : (
           <Icon name="camera" size={15} />
@@ -132,7 +141,7 @@ export default function CoverCameraButton() {
             </button>
           )}
           <p className="px-3 pb-1.5 pt-1 text-[11px] leading-snug text-gray-400">
-            A wide picture works best. JPG, PNG or WebP. We fit it to the cover for you.
+            A wide picture works best. JPG, PNG or WebP. You can drag it into place after you choose it.
           </p>
         </div>
       )}
@@ -155,6 +164,16 @@ export default function CoverCameraButton() {
         className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
+
+      {picked && (
+        <CoverEditor
+          file={picked}
+          busy={busy}
+          error={editorError}
+          onCancel={() => setPicked(null)}
+          onSave={saveCover}
+        />
+      )}
     </div>
   )
 }

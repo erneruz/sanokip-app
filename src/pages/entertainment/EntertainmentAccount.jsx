@@ -5,7 +5,7 @@
 // The pages themselves are in the folder ./account
 // Someone who is logged in but not in Entertainment yet sees the Join page instead.
 import { useEffect, useState } from 'react'
-import { NavLink, Navigate, Outlet } from 'react-router-dom'
+import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import EntAvatar from '../../components/entertainment/EntAvatar'
 import AvatarCameraButton from '../../components/entertainment/AvatarCameraButton'
@@ -35,6 +35,10 @@ export default function EntertainmentAccount() {
 function AccountFrame() {
   const { user, entProfile } = useAuth()
   const name = entProfile.full_name || user.email
+  // the camera buttons show only on the Edit profile page, or while that picture is still empty
+  const editing = useLocation().pathname.startsWith(`${BASE}/edit`)
+  const canChangeCover = editing || !entProfile.cover_url
+  const canChangePhoto = editing || !entProfile.avatar_url
   const [coverOk, setCoverOk] = useState(true) // false when the cover picture cannot be loaded
   useEffect(() => setCoverOk(true), [entProfile.cover_url]) // a new picture: try it again
   const socials = socialList(entProfile.socials)
@@ -73,12 +77,12 @@ function AccountFrame() {
                 </>
               )}
             </div>
-            <CoverCameraButton />
+            {canChangeCover && <CoverCameraButton />}
           </div>
 
           <div className="px-5 pb-0 sm:px-8">
             <div className="-mt-12 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-start">
-              {/* photo, with a small camera button: the only place where the photo is changed */}
+              {/* photo, with a small camera button (only on the Edit profile page, or while there is no photo) */}
               <div className="relative w-fit">
                 <EntAvatar
                   name={name}
@@ -87,7 +91,7 @@ function AccountFrame() {
                   textClass="text-3xl sm:text-4xl"
                   className="ring-4! ring-white! shadow-lg"
                 />
-                <AvatarCameraButton />
+                {canChangePhoto && <AvatarCameraButton />}
               </div>
 
               {/* name starts below the cover on wide screens */}
