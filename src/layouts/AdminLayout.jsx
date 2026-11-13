@@ -19,7 +19,13 @@ import {
   ENT_ROLE_PLURAL,
   manageableEntRoles,
 } from '../constants/entertainmentAdmin'
-import { KIND_ICONS, IconShield } from '../components/admin/EntAdminIcons'
+import {
+  getNewSubmissionCount,
+  getOpenTakedownCount,
+  TALENT_ADMIN_CHANGED_EVENT,
+} from '../services/entertainmentTalentAdminService'
+import { ENT_TALENT_PATHS } from '../constants/talentAdmin'
+import { KIND_ICONS, IconShield, IconVideo, IconStoryStar, IconBan } from '../components/admin/EntAdminIcons'
 import ProfileMenu from '../components/ProfileMenu'
 import logo from '../assets/images/logo.png'
 import {
@@ -94,6 +100,19 @@ function buildSections(can, staffRoles) {
       })
     }
     sections.push({ label: 'Peakstar Entertainment', items })
+  }
+
+  // the talent journey: clips to review, take-downs, talent cards, consents
+  if (can.entertainmentScouting) {
+    sections.push({
+      label: 'Talent journey',
+      items: [
+        { label: 'Submissions', to: ENT_TALENT_PATHS.submissions, icon: IconVideo },
+        { label: 'Take-downs', to: ENT_TALENT_PATHS.takedowns, icon: IconBan },
+        { label: 'Talent cards', to: ENT_TALENT_PATHS.talents, icon: IconStoryStar },
+        { label: 'Consents', to: ENT_TALENT_PATHS.consents, icon: IconShield },
+      ],
+    })
   }
 
   if (can.entertainmentContent) {
@@ -177,9 +196,12 @@ export default function AdminLayout() {
   const [newUsers, setNewUsers] = useState(0)
   const [newSubscribers, setNewSubscribers] = useState(0)
   const [pendingMembers, setPendingMembers] = useState(0)
+  const [newClips, setNewClips] = useState(0)
+  const [openTakedowns, setOpenTakedowns] = useState(0)
 
   const canEngineering = can.engineering
   const canMembers = can.entertainmentUsers
+  const canScouting = can.entertainmentScouting
 
   useEffect(() => {
     let cancelled = false
@@ -190,13 +212,17 @@ export default function AdminLayout() {
         canEngineering && user?.id ? getNewUserCount(user.id) : Promise.resolve(0),
         canEngineering ? getNewSubscriberCount() : Promise.resolve(0),
         canMembers ? getPendingEntCount() : Promise.resolve(0),
-      ]).then(([m, r, u, s, p]) => {
+        canScouting ? getNewSubmissionCount() : Promise.resolve(0),
+        canScouting ? getOpenTakedownCount() : Promise.resolve(0),
+      ]).then(([m, r, u, s, p, c, t]) => {
         if (cancelled) return
         if (m.status === 'fulfilled') setUnreadMessages(m.value)
         if (r.status === 'fulfilled') setNewRequests(r.value)
         if (u.status === 'fulfilled') setNewUsers(u.value)
         if (s.status === 'fulfilled') setNewSubscribers(s.value)
         if (p.status === 'fulfilled') setPendingMembers(p.value)
+        if (c.status === 'fulfilled') setNewClips(c.value)
+        if (t.status === 'fulfilled') setOpenTakedowns(t.value)
       })
     }
     refresh()
@@ -206,6 +232,7 @@ export default function AdminLayout() {
     window.addEventListener(USERS_SEEN_EVENT, refresh)
     window.addEventListener(SUBSCRIBERS_CHANGED_EVENT, refresh)
     window.addEventListener(ENT_USERS_CHANGED_EVENT, refresh)
+    window.addEventListener(TALENT_ADMIN_CHANGED_EVENT, refresh)
     window.addEventListener('focus', refresh)
     return () => {
       cancelled = true
@@ -215,11 +242,12 @@ export default function AdminLayout() {
       window.removeEventListener(USERS_SEEN_EVENT, refresh)
       window.removeEventListener(SUBSCRIBERS_CHANGED_EVENT, refresh)
       window.removeEventListener(ENT_USERS_CHANGED_EVENT, refresh)
+      window.removeEventListener(TALENT_ADMIN_CHANGED_EVENT, refresh)
       window.removeEventListener('focus', refresh)
     }
-  }, [user?.id, canEngineering, canMembers])
+  }, [user?.id, canEngineering, canMembers, canScouting])
 
-  const totalAlerts = unreadMessages + newRequests + newUsers + newSubscribers + pendingMembers
+  const totalAlerts = unreadMessages + newRequests + newUsers + newSubscribers + pendingMembers + newClips + openTakedowns
 
   const navSections = buildSections(can, staffRoles)
 
@@ -268,6 +296,11 @@ export default function AdminLayout() {
     } else if (item.to === MEMBERS_PATH) {
       badge = pendingMembers
       if (badge > 0) target = `${MEMBERS_PATH}?status=pending`
+    } else if (item.to === ENT_TALENT_PATHS.submissions) {
+      badge = newClips
+      if (badge > 0) target = `${ENT_TALENT_PATHS.submissions}?group=new`
+    } else if (item.to === ENT_TALENT_PATHS.takedowns) {
+      badge = openTakedowns
     }
     return { badge, target }
   }

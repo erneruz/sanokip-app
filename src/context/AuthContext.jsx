@@ -71,13 +71,16 @@ export function AuthProvider({ children }) {
     // Entertainment: approve / manage users
     entertainmentUsers:
       isSuperAdmin || has('entertainment_admin') || has('scouting_manager') || has('partner_manager'),
+    // Entertainment: review the clips, verify and publish talents, take-downs, consents
+    entertainmentScouting: isSuperAdmin || has('entertainment_admin') || has('scouting_manager'),
     // Entertainment: stories, news, videos, publications
     entertainmentContent: isSuperAdmin || has('entertainment_admin') || has('content_manager'),
     // staff roles screen
     staff: isSuperAdmin,
   }
   // any kind of admin / staff
-  const isStaff = can.engineering || can.entertainmentUsers || can.entertainmentContent || can.staff
+  const isStaff =
+    can.engineering || can.entertainmentUsers || can.entertainmentScouting || can.entertainmentContent || can.staff
 
   const value = {
     user,

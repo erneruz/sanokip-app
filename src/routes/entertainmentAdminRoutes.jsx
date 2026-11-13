@@ -6,6 +6,10 @@ import { Outlet, Route } from 'react-router-dom'
 import RequireAdmin from '../components/RequireAdmin'
 import EntertainmentDashboard from '../pages/admin/EntertainmentDashboard'
 import EntertainmentMembers from '../pages/admin/EntertainmentMembers'
+import EntertainmentSubmissions from '../pages/admin/EntertainmentSubmissions'
+import EntertainmentTakedowns from '../pages/admin/EntertainmentTakedowns'
+import EntertainmentTalentCards from '../pages/admin/EntertainmentTalentCards'
+import EntertainmentConsents from '../pages/admin/EntertainmentConsents'
 import ComingSoon from '../pages/admin/ComingSoon'
 import { ENT_CONTENT_KINDS } from '../constants/entertainmentAdmin'
 
@@ -32,6 +36,41 @@ export const entertainmentAdminRoutes = (
           </RequireAdmin>
         }
       />
+
+      {/* the talent journey: only the scouting team */}
+      <Route
+        path="submissions"
+        element={
+          <RequireAdmin access="entertainmentScouting">
+            <EntertainmentSubmissions />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="takedowns"
+        element={
+          <RequireAdmin access="entertainmentScouting">
+            <EntertainmentTakedowns />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="talents"
+        element={
+          <RequireAdmin access="entertainmentScouting">
+            <EntertainmentTalentCards />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="consents"
+        element={
+          <RequireAdmin access="entertainmentScouting">
+            <EntertainmentConsents />
+          </RequireAdmin>
+        }
+      />
+
       {contentPages.map((page) => (
         <Route
           key={page.path}

@@ -168,6 +168,18 @@ export default function SubmissionCard({ submission: s, onChanged, delay = 0 }) 
           <TIcon name="play" size={14} />
           Watch clip
         </button>
+        {s.reel_url && (
+          <a href={s.reel_url} target="_blank" rel="noopener noreferrer" className={btnSoft}>
+            <TIcon name="video" size={14} />
+            Showcase reel
+          </a>
+        )}
+        {s.documentary_url && (
+          <a href={s.documentary_url} target="_blank" rel="noopener noreferrer" className={btnSoft}>
+            <TIcon name="play" size={14} />
+            Documentary
+          </a>
+        )}
         <button type="button" onClick={() => setShowHistory((v) => !v)} className={btnGhost} aria-expanded={showHistory}>
           <TIcon name="history" size={15} />
           History
