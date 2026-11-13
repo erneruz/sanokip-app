@@ -11,6 +11,10 @@ import EntertainmentAccount from '../pages/entertainment/EntertainmentAccount'
 import ProfileView from '../pages/entertainment/account/ProfileView'
 import ProfileEdit from '../pages/entertainment/account/ProfileEdit'
 import AccountSecurity from '../pages/entertainment/account/AccountSecurity'
+import TalentCard from '../pages/entertainment/account/TalentCard'
+import Submissions from '../pages/entertainment/account/Submissions'
+import Consents from '../pages/entertainment/account/Consents'
+import Children from '../pages/entertainment/account/Children'
 import NotFound from '../pages/NotFound'
 
 // Pages that are still "coming soon". Each line is one page.
@@ -102,10 +106,14 @@ export const entertainmentRoutes = (
     <Route path="login" element={<EntertainmentLogin />} />
     <Route path="register" element={<EntertainmentRegister />} />
 
-    {/* My profile: three pages (review, edit, security) inside one frame */}
+    {/* My profile: pages inside one frame (the talent pages only open for talents, parents and guardians) */}
     <Route path="account" element={<EntertainmentAccount />}>
       <Route index element={<ProfileView />} />
       <Route path="edit" element={<ProfileEdit />} />
+      <Route path="card" element={<TalentCard />} />
+      <Route path="children" element={<Children />} />
+      <Route path="submissions" element={<Submissions />} />
+      <Route path="consents" element={<Consents />} />
       <Route path="security" element={<AccountSecurity />} />
     </Route>
 

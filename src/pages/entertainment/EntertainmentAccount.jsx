@@ -13,16 +13,28 @@ import CoverCameraButton from '../../components/entertainment/CoverCameraButton'
 import SocialIcon from '../../components/entertainment/SocialIcon'
 import { socialList } from '../../constants/socialLinks'
 import { entRoleLabel } from '../../services/entertainmentUsersService'
+import { SUBMISSIONS_CHANGED_EVENT, countNeedsInfo } from '../../services/entertainmentTalentService'
 import JoinEntertainment from './account/JoinEntertainment'
 import { AccountStyles, Icon, ROLE_ICON, StatusChip, formatMonthYear } from './account/accountUi'
+import { TIcon, TalentStyles } from './account/talentUi'
 
 const BASE = '/entertainment/account'
 
-const TABS = [
-  { to: BASE, end: true, label: 'Profile', icon: 'user' },
-  { to: `${BASE}/edit`, end: false, label: 'Edit profile', icon: 'pencil' },
-  { to: `${BASE}/security`, end: false, label: 'Security', icon: 'lock' },
-]
+// the pages of "My profile". Talents and parents or guardians get the talent pages too.
+function tabsFor(role) {
+  const tabs = [
+    { to: BASE, end: true, label: 'Profile', icon: 'user' },
+    { to: `${BASE}/edit`, end: false, label: 'Edit profile', icon: 'pencil' },
+  ]
+  if (role === 'talent') tabs.push({ to: `${BASE}/card`, end: false, label: 'Talent card', icon: 'star' })
+  if (role === 'guardian') tabs.push({ to: `${BASE}/children`, end: false, label: 'My children', icon: 'child' })
+  if (role === 'talent' || role === 'guardian') {
+    tabs.push({ to: `${BASE}/submissions`, end: false, label: 'Submissions', icon: 'video', badge: true })
+    tabs.push({ to: `${BASE}/consents`, end: false, label: 'Consents', icon: 'verified' })
+  }
+  tabs.push({ to: `${BASE}/security`, end: false, label: 'Security', icon: 'lock' })
+  return tabs
+}
 
 export default function EntertainmentAccount() {
   const { user, loading, entProfile } = useAuth()
@@ -40,6 +52,23 @@ function AccountFrame() {
   const canChangeCover = editing || !entProfile.cover_url
   const canChangePhoto = editing || !entProfile.avatar_url
   const [coverOk, setCoverOk] = useState(true) // false when the cover picture cannot be loaded
+  const tabs = tabsFor(entProfile.role)
+  const hasSubmissions = entProfile.role === 'talent' || entProfile.role === 'guardian'
+  const [needsMe, setNeedsMe] = useState(0) // clips where a scout is waiting for an answer
+  useEffect(() => {
+    if (!hasSubmissions) return undefined
+    let alive = true
+    const refresh = () =>
+      countNeedsInfo()
+        .then((n) => alive && setNeedsMe(n))
+        .catch(() => {})
+    refresh()
+    window.addEventListener(SUBMISSIONS_CHANGED_EVENT, refresh)
+    return () => {
+      alive = false
+      window.removeEventListener(SUBMISSIONS_CHANGED_EVENT, refresh)
+    }
+  }, [hasSubmissions])
   useEffect(() => setCoverOk(true), [entProfile.cover_url]) // a new picture: try it again
   const socials = socialList(entProfile.socials)
   const place = [entProfile.district, entProfile.province, entProfile.country].filter(Boolean).join(', ')
@@ -47,9 +76,9 @@ function AccountFrame() {
   return (
     <section className="min-h-[75vh] bg-[#F1F6F4] pb-16">
       <AccountStyles />
+      <TalentStyles />
 
       <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 sm:pt-10">
-        {/* no overflow-hidden here, so the camera menus can open over the card */}
         <div className="acc-rise rounded-3xl bg-white shadow-sm ring-1 ring-[#CDEBE2]">
           {/* cover: the green surface. A cover picture, when there is one, fills it and the
               green is laid over it, so the picture blends with the Peak Star colours. */}
@@ -82,7 +111,7 @@ function AccountFrame() {
 
           <div className="px-5 pb-0 sm:px-8">
             <div className="-mt-12 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-start">
-              {/* photo, with a small camera button (only on the Edit profile page, or while there is no photo) */}
+              {/* photo, with a small camera button: the only place where the photo is changed */}
               <div className="relative w-fit">
                 <EntAvatar
                   name={name}
@@ -94,7 +123,6 @@ function AccountFrame() {
                 {canChangePhoto && <AvatarCameraButton />}
               </div>
 
-              {/* name starts below the cover on wide screens */}
               <div className="min-w-0 flex-1 sm:pt-[4.75rem]">
                 <h1 className="text-2xl font-bold tracking-tight text-[#0F3D32] sm:text-3xl">{name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-500">
@@ -103,6 +131,12 @@ function AccountFrame() {
                     {entRoleLabel(entProfile.role)}
                   </span>
                   <StatusChip status={entProfile.status} />
+                  {entProfile.verified_at && (
+                    <span className="verified-shine inline-flex items-center gap-1.5 rounded-full bg-[#1B5E4F] px-2.5 py-0.5 text-xs font-semibold text-white">
+                      <TIcon name="verified" size={13} />
+                      Verified by Scout
+                    </span>
+                  )}
                   {place && (
                     <span className="inline-flex items-center gap-1">
                       <Icon name="pin" size={14} className="text-[#2F9678]" />
@@ -139,7 +173,7 @@ function AccountFrame() {
 
             {/* tabs */}
             <nav className="-mx-2 mt-5 flex gap-1 overflow-x-auto border-t border-gray-100 px-2 py-2" aria-label="Profile pages">
-              {TABS.map((tab) => (
+              {tabs.map((tab) => (
                 <NavLink
                   key={tab.to}
                   to={tab.to}
@@ -151,8 +185,11 @@ function AccountFrame() {
                       : 'text-gray-500 hover:bg-[#E6F1EE] hover:text-[#0F3D32]')
                   }
                 >
-                  <Icon name={tab.icon} size={16} />
+                  <TIcon name={tab.icon} size={16} />
                   {tab.label}
+                  {tab.badge && needsMe > 0 && (
+                    <span className="flex size-5 items-center justify-center rounded-full bg-amber-400 text-[11px] font-bold text-white">{needsMe}</span>
+                  )}
                 </NavLink>
               ))}
             </nav>
