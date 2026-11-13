@@ -207,26 +207,28 @@ function SubmissionsPage() {
         </div>
       )}
 
-      {/* how it works */}
-      <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#CDEBE2] sm:p-6">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">From raw clip to featured talent</h3>
-        <ol className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((st, i) => (
-            <li key={st.title} className="flex gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#E6F1EE] text-[#1B5E4F]">
-                <TIcon name={st.icon} size={16} />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-[#0F3D32]">
-                  <span className="mr-1.5 text-gray-300">0{i + 1}</span>
-                  {st.title}
-                </p>
-                <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{st.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
+      {/* how it works: only until a first clip is public */}
+      {counts.live === 0 && (
+        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#CDEBE2] sm:p-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">From raw clip to featured talent</h3>
+          <ol className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((st, i) => (
+              <li key={st.title} className="flex gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#E6F1EE] text-[#1B5E4F]">
+                  <TIcon name={st.icon} size={16} />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-[#0F3D32]">
+                    <span className="mr-1.5 text-gray-300">0{i + 1}</span>
+                    {st.title}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{st.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {formOpen && subs !== null && (
         <SubmitClipForm

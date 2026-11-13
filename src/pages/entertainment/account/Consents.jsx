@@ -287,6 +287,14 @@ function ConsentsPage() {
           <p className="rounded-xl bg-[#F8FBFA] px-4 py-3 text-sm leading-relaxed text-gray-700 ring-1 ring-[#E6F1EE]">
             {consentText(ask.kind, ask.subject.child)}
           </p>
+          {ask.action === 'withdraw' &&
+            ['profile', 'reel', 'documentary'].includes(ask.kind) &&
+            (ask.subject.child || entProfile.published_at) && (
+              <Notice tone="amber" icon="info" className="mt-3">
+                Withdrawing this consent does not remove anything that is already public. To take {ask.subject.child ? `${ask.subject.name}'s` : 'your'} profile
+                and videos down, close this window and use "Ask for a take-down" at the bottom of the page.
+              </Notice>
+            )}
           <p className="mt-3 text-xs text-gray-400">
             {ask.action === 'give'
               ? `Saved with today's date and your name. Wording version ${CONSENT_WORDING_VERSION}.`

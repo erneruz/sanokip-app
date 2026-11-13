@@ -2,6 +2,7 @@
 // One submission: who, where, the status, the progress line, and what the member can do
 // (watch the clip, answer a scout, see the history, withdraw).
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getTalentCategory } from '../../../constants/talentCategories'
 import { statusInfo } from '../../../constants/talentJourney'
 import { getClipUrl, replyToSubmission, withdrawSubmission } from '../../../services/entertainmentTalentService'
@@ -45,6 +46,19 @@ export default function SubmissionCard({ submission: s, onChanged, delay = 0 }) 
   const [player, setPlayer] = useState(null)
 
   const closed = s.status === 'withdrawn' || s.status === 'rejected'
+  // from the profile stage on, the clip is (or is about to be) public: it is removed with a take-down, not a withdrawal
+  const goingPublic = ['profile_draft', 'published', 'documentary_linked'].includes(s.status)
+  const meta = [
+    subjectLabel(s),
+    cat?.label,
+    s.location && (
+      <span className="inline-flex items-center gap-1">
+        <TIcon name="pin" size={12} />
+        {s.location}
+      </span>
+    ),
+    `Sent ${formatDate(s.created_at)}`,
+  ].filter(Boolean)
   // the last thing the scout wrote
   const scoutNote = s.status_note || [...s.events].reverse().find((e) => e.actor === 'team' && e.note)?.note || ''
 
@@ -95,16 +109,13 @@ export default function SubmissionCard({ submission: s, onChanged, delay = 0 }) 
             {s.person_name}
             {s.what_they_do ? <span className="font-normal text-gray-500"> · {s.what_they_do}</span> : null}
           </h3>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-            <span>{subjectLabel(s)}</span>
-            {cat && <span>{cat.label}</span>}
-            {s.location && (
-              <span className="inline-flex items-center gap-1">
-                <TIcon name="pin" size={12} />
-                {s.location}
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+            {meta.map((item, i) => (
+              <span key={i} className="inline-flex items-center gap-2">
+                {i > 0 && <span aria-hidden="true" className="text-gray-300">·</span>}
+                {item}
               </span>
-            )}
-            <span>Sent {formatDate(s.created_at)}</span>
+            ))}
           </p>
         </div>
         <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${TONES[tone]}`}>{info.label}</span>
@@ -186,7 +197,7 @@ export default function SubmissionCard({ submission: s, onChanged, delay = 0 }) 
           <TIcon name="chevron" size={14} className={'transition-transform ' + (showHistory ? 'rotate-180' : '')} />
         </button>
 
-        {!closed && !confirmWithdraw && (
+        {!closed && !goingPublic && !confirmWithdraw && (
           <button
             type="button"
             onClick={() => setConfirmWithdraw(true)}
@@ -195,7 +206,7 @@ export default function SubmissionCard({ submission: s, onChanged, delay = 0 }) 
             Withdraw
           </button>
         )}
-        {!closed && confirmWithdraw && (
+        {!closed && !goingPublic && confirmWithdraw && (
           <span className="acc-pop ml-auto flex flex-wrap items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
             Withdraw this clip?
             <button type="button" disabled={busy} onClick={() => run(() => withdrawSubmission(s.id))} className={btnDanger + ' px-3! py-1.5!'}>
@@ -205,6 +216,11 @@ export default function SubmissionCard({ submission: s, onChanged, delay = 0 }) 
               Keep it
             </button>
           </span>
+        )}
+        {goingPublic && (
+          <Link to="/entertainment/account/consents" className="ml-auto text-xs font-medium text-gray-400 underline-offset-2 transition hover:text-red-600 hover:underline">
+            Want it removed? Ask for a take-down
+          </Link>
         )}
       </footer>
 

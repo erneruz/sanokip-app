@@ -147,25 +147,34 @@ function TalentCardPage() {
               />
             </div>
 
-            {/* sharing unlocks when the card is public */}
+            {/* sharing: the public page is not open yet, so the buttons wait */}
             <div className="mx-auto mt-4 flex max-w-sm items-center gap-2">
-              <button type="button" disabled className={btnGhost + ' flex-1'} title="Available after your card is published">
+              <button type="button" disabled className={btnGhost + ' flex-1'} title="Your public page is coming soon">
                 <TIcon name="copy" size={15} />
                 Copy link
               </button>
-              <button type="button" disabled className={btnGhost + ' flex-1'} title="Available after your card is published">
+              <button type="button" disabled className={btnGhost + ' flex-1'} title="Your public page is coming soon">
                 <SocialIcon name="whatsapp" size={16} />
                 WhatsApp
               </button>
             </div>
             <p className="mx-auto mt-2 max-w-sm text-center text-xs text-gray-400">
-              Sharing unlocks when a scout publishes your card.
+              {published
+                ? 'Your card is public. Your personal page and share link are coming soon.'
+                : 'Sharing unlocks once your card is public.'}
             </p>
           </div>
         </div>
 
         {/* right: settings */}
         <div className="space-y-5 lg:col-span-3">
+          {/* a public card without a headline: the first thing visitors read is missing */}
+          {published && !minor && !(entProfile.headline ?? '').trim() && (
+            <Notice tone="amber" icon="info">
+              Your card is public but has no headline yet. It is the first line a visitor reads, so add one below.
+            </Notice>
+          )}
+
           {/* the path */}
           <Card icon="trophy" title="Your path to a public card" text={`${doneCount} of ${steps.length} steps done`} delay={60}>
             <div className="mb-5 h-2 overflow-hidden rounded-full bg-[#E6F1EE]">
