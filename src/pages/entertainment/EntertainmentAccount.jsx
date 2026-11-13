@@ -4,10 +4,12 @@
 //     Profile (review), Edit profile, Security.
 // The pages themselves are in the folder ./account
 // Someone who is logged in but not in Entertainment yet sees the Join page instead.
+import { useEffect, useState } from 'react'
 import { NavLink, Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import EntAvatar from '../../components/entertainment/EntAvatar'
 import AvatarCameraButton from '../../components/entertainment/AvatarCameraButton'
+import CoverCameraButton from '../../components/entertainment/CoverCameraButton'
 import SocialIcon from '../../components/entertainment/SocialIcon'
 import { socialList } from '../../constants/socialLinks'
 import { entRoleLabel } from '../../services/entertainmentUsersService'
@@ -33,6 +35,8 @@ export default function EntertainmentAccount() {
 function AccountFrame() {
   const { user, entProfile } = useAuth()
   const name = entProfile.full_name || user.email
+  const [coverOk, setCoverOk] = useState(true) // false when the cover picture cannot be loaded
+  useEffect(() => setCoverOk(true), [entProfile.cover_url]) // a new picture: try it again
   const socials = socialList(entProfile.socials)
   const place = [entProfile.district, entProfile.province, entProfile.country].filter(Boolean).join(', ')
 
@@ -41,13 +45,35 @@ function AccountFrame() {
       <AccountStyles />
 
       <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 sm:pt-10">
-        {/* no overflow-hidden here, so the camera menu can open over the card */}
+        {/* no overflow-hidden here, so the camera menus can open over the card */}
         <div className="acc-rise rounded-3xl bg-white shadow-sm ring-1 ring-[#CDEBE2]">
-          {/* cover: green gradient with two slow moving shapes and a fine dot pattern */}
-          <div className="relative h-32 overflow-hidden rounded-t-3xl bg-gradient-to-br from-[#0A2E27] via-[#0F3D32] to-[#1B5E4F] sm:h-44">
-            <span className="acc-blob-a absolute -left-10 -top-16 size-64 rounded-full bg-[#2F9678]/40 blur-3xl" />
-            <span className="acc-blob-b absolute -bottom-24 right-0 size-72 rounded-full bg-[#9FD8C9]/25 blur-3xl" />
-            <span className="acc-dots absolute inset-0" />
+          {/* cover: the green surface. A cover picture, when there is one, fills it and the
+              green is laid over it, so the picture blends with the Peak Star colours. */}
+          <div className="relative">
+            <div className="relative h-36 overflow-hidden rounded-t-3xl bg-gradient-to-br from-[#0A2E27] via-[#0F3D32] to-[#1B5E4F] sm:h-52">
+              {!coverOk || !entProfile.cover_url ? (
+                <>
+                  <span className="acc-blob-a absolute -left-10 -top-16 size-64 rounded-full bg-[#2F9678]/40 blur-3xl" />
+                  <span className="acc-blob-b absolute -bottom-24 right-0 size-72 rounded-full bg-[#9FD8C9]/25 blur-3xl" />
+                  <span className="acc-dots absolute inset-0" />
+                </>
+              ) : (
+                <>
+                  <img
+                    key={entProfile.cover_url}
+                    src={entProfile.cover_url}
+                    alt=""
+                    onError={() => setCoverOk(false)}
+                    className="acc-cover-in absolute inset-0 h-full w-full object-cover"
+                  />
+                  {/* green laid over the picture: stronger on the left and at the bottom */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-[#0A2E27]/75 via-[#0F3D32]/30 to-[#0A2E27]/10" />
+                  <span className="absolute inset-0 bg-gradient-to-t from-[#0A2E27]/70 via-transparent to-[#0A2E27]/25" />
+                  <span className="acc-dots absolute inset-0 opacity-60" />
+                </>
+              )}
+            </div>
+            <CoverCameraButton />
           </div>
 
           <div className="px-5 pb-0 sm:px-8">

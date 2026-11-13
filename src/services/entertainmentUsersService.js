@@ -147,6 +147,29 @@ export async function removeMyAvatar(userId, oldUrl) {
   await deleteStoredAvatar(oldUrl)
 }
 
+// ── Cover picture ────────────────────────────────────────────
+// Stored in the same bucket as the profile photo, in the person's own folder.
+export async function uploadMyCover(userId, blob, oldUrl) {
+  const path = `${userId}/cover-${Date.now()}.jpg`
+  const { error: uploadError } = await supabase.storage
+    .from(AVATAR_BUCKET)
+    .upload(path, blob, { contentType: 'image/jpeg', cacheControl: '3600', upsert: false })
+  if (uploadError) throw uploadError
+
+  const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+  const { error } = await supabase.from('ent_profiles').update({ cover_url: data.publicUrl }).eq('user_id', userId)
+  if (error) throw error
+
+  await deleteStoredAvatar(oldUrl)
+  return data.publicUrl
+}
+
+export async function removeMyCover(userId, oldUrl) {
+  const { error } = await supabase.from('ent_profiles').update({ cover_url: null }).eq('user_id', userId)
+  if (error) throw error
+  await deleteStoredAvatar(oldUrl)
+}
+
 // ── For admins ───────────────────────────────────────────────
 
 // list with emails; the database only returns the roles YOU may manage

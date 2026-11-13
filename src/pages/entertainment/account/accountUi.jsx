@@ -261,7 +261,7 @@ export function Card({ icon, title, text, children, className = '', delay = 0, a
   )
 }
 
-// the animations of the profile pages (the slow cover shapes and the rise-in)
+// the animations of the profile pages (the slow cover shapes, the rise-in and the cover picture)
 export function AccountStyles() {
   return (
     <style>{`
@@ -271,11 +271,13 @@ export function AccountStyles() {
       @keyframes acc-pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
       .acc-rise { animation: acc-rise .55s cubic-bezier(.2,.8,.2,1) both; }
       .acc-pop { animation: acc-pop .35s ease-out both; }
+      @keyframes acc-cover-in { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
+      .acc-cover-in { animation: acc-cover-in .9s ease-out both; }
       .acc-blob-a { animation: acc-drift-a 14s ease-in-out infinite; }
       .acc-blob-b { animation: acc-drift-b 17s ease-in-out infinite; }
       .acc-dots { background-image: radial-gradient(rgba(159,216,201,.28) 1px, transparent 1.2px); background-size: 22px 22px; }
       @media (prefers-reduced-motion: reduce) {
-        .acc-rise, .acc-pop, .acc-blob-a, .acc-blob-b { animation: none; }
+        .acc-rise, .acc-pop, .acc-blob-a, .acc-blob-b, .acc-cover-in { animation: none; }
       }
     `}</style>
   )
